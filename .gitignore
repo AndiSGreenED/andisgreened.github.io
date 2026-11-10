@@ -1,0 +1,5 @@
+apk/node_modules/
+apk/android/
+*.jks
+*.keystore
+keystore_*.txt

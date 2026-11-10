@@ -1,0 +1,22 @@
+{
+  "appId": "de.andisgreened.app",
+  "appName": "ANDIsGREENed",
+  "webDir": "www",
+  "backgroundColor": "#0b1720",
+  "android": {
+    "appendUserAgent": "ANDIsGREENed-Android",
+    "backgroundColor": "#0b1720"
+  },
+  "server": {
+    "url": "https://BENUTZER.github.io/",
+    "androidScheme": "https",
+    "errorPath": "offline.html"
+  },
+  "plugins": {
+    "SystemBars": {
+      "style": "DARK",
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>ANDIsGREENed – keine Verbindung</title>
+<style>body{margin:0;font-family:system-ui,sans-serif;background:#0b1720;color:#edf4f7;display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center;padding:24px;box-sizing:border-box}
+main{max-width:420px}h1{font-size:1.4rem;margin:0 0 12px}p{color:#b7c9d1;line-height:1.5}button{margin-top:16px;width:100%;min-height:48px;border:0;border-radius:12px;background:#73d8d0;color:#06232a;font:inherit;font-weight:700}</style></head>
+<body><main><h1>Keine Internetverbindung</h1>
+<p>ANDIsGREENed braucht Internet für die Wind- und Wellenvorhersage. Sobald das Handy wieder online ist, geht es automatisch weiter.</p>
+<button id="retry" type="button">Erneut versuchen</button></main>
+<script>
+const APP_URL = "__APP_URL__";
+const go = () => location.replace(APP_URL);
+document.getElementById("retry").onclick = go;
+addEventListener("online", go);
+setInterval(() => { if(navigator.onLine) go(); }, 15000);
+</script></body></html>
