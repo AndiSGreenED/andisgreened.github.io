@@ -11,7 +11,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.6.1</title>
+<title>ANDIsGREENed 5.6.2</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -342,7 +342,8 @@ a.webcam-link{width:38px;height:38px;font-size:1.28rem}
 
 /* 5.6.0: Kopfzeile kompakt und einzeilig, Datenstand einklappbar */
 h1.apptitle{display:flex;align-items:center;gap:10px;font-size:clamp(1.45rem,6.4vw,2.1rem);white-space:nowrap;margin:6px 0 4px}
-h1.apptitle img{width:1.45em;height:1.45em;border-radius:22%;flex:0 0 auto}
+h1.apptitle img{height:1.6em;width:auto;flex:0 0 auto}
+.date-display{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;justify-content:center;font-size:clamp(.95rem,4.6vw,1.15rem)}
 details.statusbox{margin:4px 0 10px}
 details.statusbox>summary{cursor:pointer;list-style:none}
 details.statusbox>summary::-webkit-details-marker{display:none}
@@ -356,7 +357,7 @@ details.statusbox #status{margin:6px 0 0}
 </head>
 <body>
 <header>
-  <h1 class="apptitle"><img src="icons/icon-192.png" alt="" width="40" height="40">ANDIsGREENed</h1>
+  <h1 class="apptitle"><img src="icons/logo.png" alt="" width="44" height="40">ANDIsGREENed</h1>
 </header>
 <main>
 
@@ -1594,7 +1595,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.6.1";
+const APP_VERSION = "5.6.2";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
