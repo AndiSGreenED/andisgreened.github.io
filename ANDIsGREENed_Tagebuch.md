@@ -2,9 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.10.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.10.3** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.10.3
+- Der gewählte Tag wird gemerkt (auch nach Schließen der App), bis er vorbei ist; danach startet die App wieder mit heute.
 
 ## 5.10.2
 - Rahmen der Kästen Welle und Ø deutlicher.
