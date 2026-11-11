@@ -1,17 +1,19 @@
 name: APK bauen
-# Baut die Android-App und stellt sie unter Releases → apk-latest als Download bereit (ohne Konto abrufbar).
-# Startet automatisch, wenn sich etwas im Ordner apk/ ändert, oder von Hand: Actions → „APK bauen“ → Run workflow.
+# Baut die Android-App und stellt sie als Download bereit (ohne Konto abrufbar):
+#  - Release „v<Version>“ je App-Version (für IzzyOnDroid/F-Droid-Clients), Version = APP_VERSION in docs/index.html
+#  - Release „apk-latest“ (fester Download-Link)
+# Startet automatisch bei Änderungen in docs/ oder apk/; gebaut wird nur, wenn es die Version noch nicht gibt.
 on:
   push:
     branches: [main]
-    paths: ["apk/**", ".github/workflows/build-apk.yml"]
+    paths: ["docs/**", "apk/**", ".github/workflows/build-apk.yml"]
   workflow_dispatch:
     inputs:
       modus:
         description: "online = Oberfläche von der Webseite (Updates automatisch), eingebaut = Oberfläche in der App (für App-Stores)"
         type: choice
-        options: [online, eingebaut]
-        default: online
+        options: [eingebaut, online]
+        default: eingebaut
 permissions:
   contents: write
 concurrency:
@@ -22,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
-      MODUS: ${{ github.event.inputs.modus || 'online' }}
+      MODUS: ${{ github.event.inputs.modus || 'eingebaut' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,6 +39,7 @@ jobs:
         working-directory: apk
         env:
           APP_URL_OVERRIDE: ${{ vars.APP_URL }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           OWNER=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
           REPO="${GITHUB_REPOSITORY#*/}"
@@ -44,15 +47,20 @@ jobs:
           if [ -n "${APP_URL_OVERRIDE}" ]; then URL="${APP_URL_OVERRIDE}"
           elif [ "${REPO_LC}" = "${OWNER}.github.io" ]; then URL="https://${OWNER}.github.io/"
           else URL="https://${OWNER}.github.io/${REPO}/"; fi
-          VERSION=$(node -p "require('./package.json').version")
-          MAJOR=${VERSION%%.*}; REST=${VERSION#*.}; MINOR=${REST%%.*}
-          CODE=$(( (MAJOR*100 + MINOR) * 100000 + GITHUB_RUN_NUMBER % 100000 ))
+          VERSION=$(grep -o 'const APP_VERSION = "[0-9.]*"' ../docs/index.html | grep -o '[0-9][0-9.]*')
+          IFS=. read -r MAJOR MINOR PATCH <<< "${VERSION}"
+          CODE=$(( 60000000 + MAJOR*100000 + MINOR*1000 + PATCH*10 ))
+          if [ "${MODUS}" = "online" ]; then CODE=$(( CODE + 1 )); fi
+          if [ "${GITHUB_EVENT_NAME}" = "push" ] && gh release view "v${VERSION}" >/dev/null 2>&1; then
+            echo "SKIP=1" >> "$GITHUB_ENV"; echo "Version ${VERSION} gibt es schon, kein Bau nötig."
+          else echo "SKIP=0" >> "$GITHUB_ENV"; fi
           echo "APP_URL=${URL}" >> "$GITHUB_ENV"
           echo "APP_VERSION=${VERSION}" >> "$GITHUB_ENV"
           echo "APP_CODE=${CODE}" >> "$GITHUB_ENV"
           echo "App-Adresse: ${URL} · Version ${VERSION} · Build ${CODE} · Modus ${MODUS}"
 
       - name: App-Hülle vorbereiten
+        if: env.SKIP == '0'
         working-directory: apk
         run: |
           node scripts/configure.js "${APP_URL}" "${MODUS}"
@@ -62,6 +70,7 @@ jobs:
           npx cap sync android
 
       - name: Signaturschlüssel bereitstellen (falls hinterlegt)
+        if: env.SKIP == '0'
         env:
           KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
           KS_PW: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -78,6 +87,7 @@ jobs:
           fi
 
       - name: APK bauen
+        if: env.SKIP == '0'
         working-directory: apk/android
         run: |
           chmod +x gradlew
@@ -92,18 +102,26 @@ jobs:
           ls -la ../../ANDIsGREENed.*
 
       - uses: actions/upload-artifact@v4
+        if: env.SKIP == '0'
         with:
           name: ANDIsGREENed-${{ env.APP_VERSION }}-${{ env.APP_CODE }}
           path: ANDIsGREENed.*
 
       - name: Als Download veröffentlichen (Release apk-latest)
+        if: env.SKIP == '0'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           FILES="ANDIsGREENed.apk"
           [ -f ANDIsGREENed.aab ] && FILES="${FILES} ANDIsGREENed.aab"
           if [ "${SIGNED}" = "1" ]; then SIG="fest signiert (Updates installieren sich über die alte Version)"; else SIG="Debug-Signatur (vor Update alte App löschen)"; fi
+          NOTES="Android-App ${APP_VERSION}, Build ${APP_CODE}, Modus ${MODUS}, ${SIG}. Installation: ANDIsGREENed.apk herunterladen, öffnen, „Installation aus dieser Quelle“ einmalig erlauben."
+          if [ "${MODUS}" = "eingebaut" ] && [ "${SIGNED}" = "1" ]; then
+            cp ANDIsGREENed.apk "ANDIsGREENed-${APP_VERSION}.apk"
+            gh release delete "v${APP_VERSION}" --yes --cleanup-tag || true
+            gh release create "v${APP_VERSION}" "ANDIsGREENed-${APP_VERSION}.apk" --target "${GITHUB_SHA}" \
+              --title "ANDIsGREENed ${APP_VERSION}" --notes "${NOTES}" --latest=false
+          fi
           gh release delete apk-latest --yes --cleanup-tag || true
           gh release create apk-latest ${FILES} --target "${GITHUB_SHA}" --latest \
-            --title "ANDIsGREENed ${APP_VERSION} (Build ${APP_CODE})" \
-            --notes "Android-App ${APP_VERSION}, Build ${APP_CODE}, Modus ${MODUS}, ${SIG}. Installation: ANDIsGREENed.apk herunterladen, öffnen, „Installation aus dieser Quelle“ einmalig erlauben."
+            --title "ANDIsGREENed ${APP_VERSION} (Build ${APP_CODE})" --notes "${NOTES}"

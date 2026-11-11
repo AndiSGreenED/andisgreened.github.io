@@ -2,9 +2,17 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.6.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.7.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.7.0
+- **Weg in freie App-Kataloge (kostenlos):** IzzyOnDroid (Android, F-Droid-kompatibel) und Murena App Lounge (PWA-Katalog). Google Play (25 $) und Apple vorerst nicht.
+- **MIT-Lizenz** (`LICENSE`), Quellcode- und Datenschutz-Link in „Hinweise & Datenquellen“, neue Seite `datenschutz.html` (keine Konten, keine Werbung, kein Tracking).
+- **Android-App enthält die Oberfläche jetzt selbst** (Modus „eingebaut“, Vorgabe von IzzyOnDroid: keine reine Webseiten-Hülle). Gleicher Hostname wie die Web-Adresse, daher bleiben gespeicherte Spots und Einstellungen beim Wechsel erhalten. Folge: Änderungen an der Oberfläche brauchen jetzt eine neue APK. Das passiert automatisch: Jede neue `APP_VERSION` erzeugt ein Release `v<Version>` mit `ANDIsGREENed-<Version>.apk` (für IzzyOnDroid) und aktualisiert `apk-latest`. Versionsnummer der APK: 60000000 + Version (5.7.0 → 60507000).
+- APK ohne verschlüsselte Google-Abhängigkeitsdaten im Signaturblock (IzzyOnDroid-Vorgabe).
+- **Spotliste neutral:** Hinweis „anhand der Daily-Dose-Spotcharakter-Angabe geprüft“ entfernt („Richtungen geprüft/vorläufig“), Link heißt „Spotguide ↗“. Alle Spots, Richtungen, Links und Angaben bleiben erhalten.
+- **Store-Texte und Bilder** unter `fastlane/metadata/android/` (Deutsch, Englisch): Titel, Kurz- und Langbeschreibung, Icon, Grafik 1024×500, Änderungstext. Bildschirmfotos fehlen noch.
 
 ## 5.6.2
 - Kopfzeile: Logo ohne weißen Hintergrund (transparent, `icons/logo.png`).

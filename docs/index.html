@@ -11,7 +11,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.6.2</title>
+<title>ANDIsGREENed 5.7.0</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -393,6 +393,7 @@ details.statusbox #status{margin:6px 0 0}
   <button type="button" id="reload" style="width:100%;margin-top:8px;background:#29414c;color:#edf4f7;min-height:40px;font-size:.85rem">Neu laden (Speicher leeren)</button>
   <details class="fold"><summary>Hinweise &amp; Datenquellen</summary>
   <p class="note" id="appver" style="margin-top:6px"></p>
+  <p class="note" style="margin-top:2px"><a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a> · <a href="https://github.com/AndiSGreenED/andisgreened.github.io" target="_blank" rel="noopener">Quellcode (MIT-Lizenz)</a></p>
   <label for="googleApiKey">Google Weather API-Schlüssel (optional)</label>
   <input id="googleApiKey" type="password" autocomplete="off" placeholder="API-Schlüssel für Google-Wetterdaten">
   <p class="note" style="margin:4px 0 10px">Der Schlüssel wird lokal in diesem Browser auf diesem Gerät gespeichert. Google-Stundenwerte werden weiterhin abgerufen und in Details angezeigt; für Karte und Ranking zählt das Modell nur, wenn es im Dev-Modus aktiviert ist.</p>
@@ -1595,7 +1596,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.6.2";
+const APP_VERSION = "5.7.0";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -1818,12 +1819,12 @@ function card(spot,r,f){
       <summary>Details${hasWarn ? ' <span class="warnmark">⚠</span>' : ""}</summary>
       <div class="region">Längstes Fenster: ${best ? best.end-best.start+" h" : "–"} · gewichtete Stunden (Ranking): ${rank.eligibleHours}</div>
       <div class="region">Wind (und Welle) im Bereich: ${r.goodNoDir.length} h · ${f.usedir ? "davon passende Richtung: "+r.good.length+" h" : "Richtungsfilter aus"} · Tageslicht: ${r.day.length} h</div>
-      <div class="region">${spot.verified ? "Richtungen anhand der Daily-Dose-Spotcharakter-Angabe geprüft" : (f.usedir ? "Richtungen vorläufig, nicht unabhängig geprüft" : "Richtungen vorläufig, nicht unabhängig geprüft")}: ${esc(spot.dirs.join(", "))} · ${esc(spot.type)}</div>
+      <div class="region">${spot.verified ? "Richtungen geprüft" : "Richtungen vorläufig"}: ${esc(spot.dirs.join(", "))} · ${esc(spot.type)}</div>
       <div class="region" style="margin-top:10px">Modellvergleich: passende Stunden · niedrigster bis höchster Tageswert</div>
       <div>${modelSummary || "Keine getrennten Modellwerte verfügbar."}${$("devmode").checked && spotModels[spot.name] ? `<button type="button" class="win mod" style="cursor:pointer;border:1px solid #73d8d0;background:#143b36;color:#a4f0ce;padding:4px 7px;border-radius:7px" data-spot="${esc(spot.name)}" onclick="resetSpotModels(this.dataset.spot)" title="Eigene Modellwahl dieses Spots verwerfen">↺ Standardmodelle</button>` : ""}</div>
       ${modelErrors}${warn}
       <div class="links">
-        <a href="${spot.dd || "https://www.dailydose.de/spotguide/spotsuche.htm"}" target="_blank" rel="noopener">Daily Dose ↗</a>
+        <a href="${spot.dd || "https://www.dailydose.de/spotguide/spotsuche.htm"}" target="_blank" rel="noopener">Spotguide ↗</a>
         <a href="https://www.windguru.cz/" target="_blank" rel="noopener">Windguru ↗</a>
         <a href="https://www.windy.com/${q}?${q},11" target="_blank" rel="noopener">Windy ↗</a>
       </div>

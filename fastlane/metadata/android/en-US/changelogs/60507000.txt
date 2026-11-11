@@ -1,0 +1,1 @@
+First store release: new icon, compact header, collapsible data status, clearer warnings, share spot lists, UI bundled in the app.

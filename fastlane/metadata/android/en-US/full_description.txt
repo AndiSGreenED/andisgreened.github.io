@@ -1,0 +1,19 @@
+ANDIsGREENed shows at a glance which spots near you have the right wind and waves today (or in the next days) – for windsurfing, wingfoiling and kiting. The app is in German.
+
+<b>How it works</b>
+• Set the day, wind range (knots), wave height and maximum distance
+• Location via GPS or place search
+• Compares several weather models hour by hour (ICON, ICON-D2, GFS, ECMWF, DMI Harmonie, DWD), daylight hours only
+• Spots are ranked by matching hours, wind direction and waves
+
+<b>Features</b>
+• 480+ spots on the Baltic and North Sea, lakes, Denmark, the Netherlands and more, each with suitable wind directions
+• Hourly strip with wind, direction and waves; model comparison per spot
+• Quick links to the Windfinder app, Windy and webcams
+• Add your own spots (address, Google Maps link or coordinates), webcams and "best wave" per spot
+• Back up or share spot lists as a file
+
+<b>Free and private</b>
+No accounts, no ads, no tracking. All settings stay on your device. Open source under the MIT license.
+
+Weather data: Open-Meteo (CC BY 4.0), German Weather Service (DWD) via Bright Sky. Place search: Open-Meteo and © OpenStreetMap contributors.

@@ -39,6 +39,11 @@ g = g.replace(/versionCode \d+/, `versionCode ${Number(versionCode)}`).replace(/
 g += `
 // ANDIsGREENed: feste Signatur aus Umgebungsvariablen (GitHub-Secrets), sonst Debug-Signatur
 android {
+    // Keine verschlüsselten Abhängigkeitsdaten von Google im Signaturblock (Vorgabe von IzzyOnDroid/F-Droid)
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
     signingConfigs {
         release {
             if (System.getenv("ANDROID_KEYSTORE_FILE")) {

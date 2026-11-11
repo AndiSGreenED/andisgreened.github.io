@@ -1,0 +1,19 @@
+ANDIsGREENed zeigt dir auf einen Blick, an welchen Spots in deiner Nähe heute (oder an einem der nächsten Tage) Wind und Welle passen – für Windsurfen, Wingfoilen und Kiten.
+
+<b>So funktioniert es</b>
+• Tag, Windbereich (Knoten), Wellenhöhe und maximale Entfernung einstellen
+• Standort per GPS oder Ortssuche
+• Die App vergleicht stündlich mehrere Wettermodelle (ICON, ICON-D2, GFS, ECMWF, DMI-Harmonie, DWD) und bewertet nur Stunden mit Tageslicht
+• Spots werden nach passenden Stunden, Windrichtung und Welle sortiert
+
+<b>Funktionen</b>
+• Über 480 Spots an Ostsee, Nordsee, Binnenseen, Dänemark, Niederlande und mehr, mit passenden Windrichtungen je Spot
+• Stundenleiste mit Wind, Richtung und Welle, Modellvergleich je Spot
+• Direkt zur Windfinder-App, zu Windy und zu Webcams
+• Eigene Spots anlegen (Adresse, Google-Maps-Link oder Koordinaten), Webcams und „beste Welle“ je Spot
+• Spotlisten als Datei sichern oder per Messenger teilen
+
+<b>Frei und privat</b>
+Keine Konten, keine Werbung, kein Tracking. Alle Einstellungen bleiben auf deinem Gerät. Quelloffen unter MIT-Lizenz.
+
+Wetterdaten: Open-Meteo (CC BY 4.0), Deutscher Wetterdienst über Bright Sky. Ortssuche: Open-Meteo und © OpenStreetMap-Mitwirkende.

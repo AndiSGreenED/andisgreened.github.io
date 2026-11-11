@@ -1,0 +1,1 @@
+Erste Store-Version: neues Icon, kompakte Kopfzeile, einklappbarer Datenstand, konkrete Warnungen, Teilen von Spotlisten, Oberfläche in der App enthalten.
