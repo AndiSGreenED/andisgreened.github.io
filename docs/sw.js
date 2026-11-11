@@ -3,7 +3,7 @@
 // Updates: Die Oberfläche (index.html) wird bei jedem Start im Hintergrund neu geladen. Enthält sie eine andere
 // APP_VERSION als die angezeigte Seite, zeigt die Seite „Neue Version verfügbar“. SW_VERSION nur erhöhen, wenn sich
 // diese Datei, das Manifest oder die Icons ändern.
-const SW_VERSION = "5.6.2";
+const SW_VERSION = "5.7.2";
 const CACHE = "andisgreened-shell-" + SW_VERSION;
 const CORE = ["./", "index.html"];
 const EXTRA = ["manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "icons/logo.png"];
@@ -59,7 +59,11 @@ self.addEventListener("fetch", e => {
   const req = e.request, url = new URL(req.url);
   if(req.method !== "GET" || url.origin !== self.location.origin) return; // Wetter- und Such-APIs nie abfangen
   const scope = new URL(self.registration.scope);
-  const isShell = req.mode === "navigate" || url.pathname === scope.pathname || url.pathname === scope.pathname + "index.html";
+  const isShell = url.pathname === scope.pathname || url.pathname === scope.pathname + "index.html";
+  if(!isShell && req.mode === "navigate"){ // andere Seiten (z. B. datenschutz.html): Netz zuerst, offline aus dem Speicher
+    e.respondWith(fetch(req).catch(() => caches.open(CACHE).then(c => c.match(req, {ignoreSearch: true})).then(r => r || Response.error())));
+    return;
+  }
   if(isShell){
     e.respondWith((async () => {
       const c = await caches.open(CACHE);

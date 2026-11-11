@@ -2,9 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.7.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.7.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.7.2
+- Fehler behoben: Der Service Worker lieferte für jede Seite unter der Adresse die App aus, auch für `datenschutz.html` und `robots.txt`. Jetzt nur noch für die Startseite; andere Seiten kommen aus dem Netz (offline aus dem Speicher).
 
 ## 5.7.1
 - **Kein Store, nur Weitergabe per Link an Bekannte** (Entscheidung 11.11.2026). Store-Anmeldungen entfallen.
