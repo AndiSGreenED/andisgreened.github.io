@@ -2,9 +2,17 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.7.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.8.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.8.0
+- **Richtungen direkt auf der Karte bearbeiten (Dev-Modus):** „Bearbeiten“ zeigt alle 16 Richtungen. Tippen schaltet reihum: möglich → beste → aus → möglich. Es gibt genau eine beste Richtung (Hauptwindrichtung); wird eine andere „beste“, wird die bisherige „möglich“. Mindestens eine Richtung bleibt.
+- **Stern:** Knopf „★ Stern setzen“, dann tippen setzt/entfernt den Stern auf zusammenhängenden Richtungen (wird als Wellenstern gespeichert). Sternrichtungen stehen in der Anzeige vorne (★ONO, …).
+- **Ranking:** Stunden mit Windrichtung im Stern-Bereich zählen zusätzlich ×2 (zusätzlich zur Hauptwindrichtung).
+- **Verteilen:** Dev-Bereich „Spot-Änderungen an alle verteilen“: GitHub-Schlüssel (fine-grained, nur Contents dieses Repositorys) eintragen, „Änderungen ins Repository speichern“ schreibt `docs/spot-updates.json`. Alle anderen sehen beim Öffnen „Neue Spot-Änderungen (n) … Übernehmen / Ablehnen“. Abgelehnte Änderungen werden nicht erneut gefragt; eigene unveröffentlichte Änderungen werden nicht überschrieben.
+- Service Worker lädt `spot-updates.json` immer frisch.
+- Getestet im Browser (simulierte Wetterdaten und simulierte GitHub-Schnittstelle): Bearbeiten, Stern, Speichern mit Schlüssel, Nachfrage bei einem zweiten Nutzer, Übernehmen, keine erneute Nachfrage.
 
 ## 5.7.2
 - Fehler behoben: Der Service Worker lieferte für jede Seite unter der Adresse die App aus, auch für `datenschutz.html` und `robots.txt`. Jetzt nur noch für die Startseite; andere Seiten kommen aus dem Netz (offline aus dem Speicher).

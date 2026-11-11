@@ -3,7 +3,7 @@
 // Updates: Die Oberfläche (index.html) wird bei jedem Start im Hintergrund neu geladen. Enthält sie eine andere
 // APP_VERSION als die angezeigte Seite, zeigt die Seite „Neue Version verfügbar“. SW_VERSION nur erhöhen, wenn sich
 // diese Datei, das Manifest oder die Icons ändern.
-const SW_VERSION = "5.7.2";
+const SW_VERSION = "5.8.0";
 const CACHE = "andisgreened-shell-" + SW_VERSION;
 const CORE = ["./", "index.html"];
 const EXTRA = ["manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "icons/logo.png"];
@@ -58,6 +58,7 @@ async function revalidate(force){
 self.addEventListener("fetch", e => {
   const req = e.request, url = new URL(req.url);
   if(req.method !== "GET" || url.origin !== self.location.origin) return; // Wetter- und Such-APIs nie abfangen
+  if(url.pathname.endsWith("/spot-updates.json")) return; // Spot-Änderungen immer frisch aus dem Netz
   const scope = new URL(self.registration.scope);
   const isShell = url.pathname === scope.pathname || url.pathname === scope.pathname + "index.html";
   if(!isShell && req.mode === "navigate"){ // andere Seiten (z. B. datenschutz.html): Netz zuerst, offline aus dem Speicher

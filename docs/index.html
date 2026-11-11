@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.7.2</title>
+<title>ANDIsGREENed 5.8.0</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -354,6 +354,19 @@ details.statusbox.plain>summary{cursor:default}
 details.statusbox.plain>summary::before{content:""}
 details.statusbox .warn{color:#ffcf70}
 details.statusbox #status{margin:6px 0 0}
+/* 5.8.0: Richtungs-Editor */
+.dir-editor{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.dir-editor button{min-width:46px;padding:6px 6px;font-size:.8rem;border-radius:8px;border:1px solid #3c6470;background:#14252c;color:#6c8590;font-weight:600}
+.dir-editor button.on{background:#143b36;color:#a4f0ce;border-color:#3f9b84}
+.dir-editor button.best{background:#ffe7a0;color:#17232a;border-color:#c9a84c;font-weight:900}
+.dir-editor button.star::before{content:"★";margin-right:2px;color:#e0a100}
+.dir-editor-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:.8rem;color:#9fb4bc}
+.dir-editor-tools button{padding:5px 9px;font-size:.8rem;border-radius:8px;border:1px solid #3c6470;background:#203d48;color:#edf4f7}
+.dir-editor-tools button.active{background:#e0a100;color:#17232a;border-color:#e0a100;font-weight:800}
+#spotupdbanner{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:9998;padding:12px 14px;border-radius:12px;background:#183740;color:#edf4f7;border:1px solid #73d8d0;box-shadow:0 4px 18px rgba(0,0,0,.45);font-size:.9rem;max-height:60vh;overflow:auto}
+#spotupdbanner ul{margin:6px 0 10px;padding-left:18px}
+#spotupdbanner .row{display:flex;gap:8px}
+#spotupdbanner .row button{flex:1;min-height:42px;border-radius:10px;border:0;font:inherit;font-weight:700}
 </style>
 </head>
 <body>
@@ -462,8 +475,14 @@ details.statusbox #status{margin:6px 0 0}
     </div>
     <button type="button" id="ns-share" style="width:100%;margin-top:6px;background:#29414c;color:#edf4f7;min-height:40px;font-size:.85rem">Teilen (z. B. per Messenger)</button>
     <input id="ns-file" type="file" accept=".json,application/json" hidden>
+    <h3 style="margin:16px 0 4px;font-size:1rem">Spot-Änderungen an alle verteilen</h3>
+    <p class="note" style="margin:0 0 6px">Richtungen und Sterne, die du auf den Karten änderst (Dev-Modus → „Bearbeiten“), werden hier ins Repository gespeichert. Alle anderen werden beim nächsten Öffnen gefragt, ob sie die Änderungen übernehmen.</p>
+    <label for="gh-token">GitHub-Schlüssel (nur auf diesem Gerät gespeichert)</label>
+    <input id="gh-token" type="password" autocomplete="off" placeholder="github_pat_…">
+    <button type="button" id="gh-publish" style="width:100%;margin-top:6px;min-height:42px">Änderungen ins Repository speichern</button>
+    <div class="note" id="gh-note"></div>
   </div>
-  <p class="note">Es werden nur Spots mit mindestens einer passenden Stunde angezeigt. Ranking-Score = Summe stündlicher Beiträge aus Windfaktor × Wellenfaktor × Richtungsfaktor. Die Hauptwindrichtung erhält ×2 nur bei mindestens 3 zusammenhängenden Stunden im selben Modell.</p>
+  <p class="note">Es werden nur Spots mit mindestens einer passenden Stunde angezeigt. Ranking-Score = Summe stündlicher Beiträge aus Windfaktor × Wellenfaktor × Richtungsfaktor. Die Hauptwindrichtung erhält ×2 nur bei mindestens 3 zusammenhängenden Stunden im selben Modell. Richtungen mit Wellenstern ★ erhalten zusätzlich ×2.</p>
   <p class="note">Datenquellen (kostenlos, ohne Key): Open-Meteo (ICON, GFS, ECMWF an den Spotkoordinaten; zusätzlich ICON-D2, DMI-Harmonie und ICON See auf der nächsten Meereszelle, soweit verfügbar) sowie DWD-Stationsprognose über Bright Sky (nur Deutschland). Zusatzquellen gelten teils nur für heute bis ca. +2 Tage (DWD: gewählter Tag). Google Weather API (optional, mit eigenem Schlüssel) liefert stündliche Windwerte; der Schlüssel wird lokal im Browser gespeichert. Modelle können im Dev-Modus einzeln aktiviert werden.</p>
   <p class="footer">Wind in Knoten, Wellenhöhe in Metern, Wellenperiode in Sekunden. Windmodelle: ICON, GFS, ECMWF, ICON-D2, DMI, ICON See (Open-Meteo), DWD (Bright Sky) und Google Weather API (mit eigenem Schlüssel). Wellendaten: Open-Meteo Marine.
     <a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener">Nutzungsbedingungen</a></p>
@@ -1023,6 +1042,146 @@ function toggleMainDirEdit(name){
   if(editingMainDirs.has(name)) editingMainDirs.delete(name); else editingMainDirs.add(name);
   if(lastResults && lastFilters) paintResults(lastResults,lastErrors,lastSelectedCount,lastFilters);
 }
+// ---- 5.8.0: Richtungen auf der Karte bearbeiten ----
+const DIR16 = ["N","NNO","NO","ONO","O","OSO","SO","SSO","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+const DIRTY_KEY = "andisgreened-spot-dirty-v1", SEEN_KEY = "andisgreened-spot-updates-seen-v1", GH_TOKEN_KEY = "andisgreened-gh-token";
+const GH_REPO = "AndiSGreenED/andisgreened.github.io", UPD_PATH = "docs/spot-updates.json";
+let dirtySpots = new Set(), seenUpdates = {}, starMode = new Set();
+try { dirtySpots = new Set(JSON.parse(localStorage.getItem(DIRTY_KEY)||"[]")); } catch(e) {}
+try { seenUpdates = JSON.parse(localStorage.getItem(SEEN_KEY)||"{}") || {}; } catch(e) {}
+const jsq = s => esc(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+const starDirsOf = sp => sp.waveStar ? DIR16.filter((d,i) => angleInRange(i*22.5, sp.waveStar.min, sp.waveStar.max)) : [];
+function dirsLabel(sp){
+  const st = starDirsOf(sp).filter(d => sp.dirs.includes(d));
+  return [...st.map(d => "★"+d), ...sp.dirs.filter(d => !st.includes(d))].join(", ");
+}
+function starFromDirs(set){
+  // zusammenhängender Bereich auf der Windrose -> {min,max}
+  const idx = DIR16.map((d,i) => set.has(d) ? i : -1).filter(i => i >= 0);
+  if(!idx.length) return null;
+  let start = idx.find(i => !set.has(DIR16[(i+15)%16]));
+  if(start === undefined) start = 0; // alle 16
+  let len = 0; while(len < 16 && set.has(DIR16[(start+len)%16])) len++;
+  const names = Array.from({length:len}, (_,k) => DIR16[(start+k)%16]);
+  const norm = x => ((x%360)+360)%360;
+  return {label:"Beste Welle", min:norm(start*22.5-11.25), max:norm((start+len-1)*22.5+11.25), display:names.length > 1 ? names[0]+"–"+names[names.length-1] : names[0]};
+}
+function dirEditorHtml(sp){
+  const st = new Set(starDirsOf(sp)), n = jsq(sp.name);
+  const chips = DIR16.map(d => {
+    const cls = [sp.mainDir===d ? "best" : sp.dirs.includes(d) ? "on" : "off", st.has(d) ? "star" : ""].join(" ").trim();
+    return `<button type="button" class="${cls}" onclick="cycleDir('${n}','${d}')" aria-label="Richtung ${d}">${d}</button>`;
+  }).join("");
+  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: möglich → beste → aus → möglich"}</span></div>`;
+}
+function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); else starMode.add(name); repaintSoft(); }
+function repaintSoft(){
+  if(!(lastResults && lastFilters)) return;
+  paintResults(lastResults,lastErrors,lastSelectedCount,lastFilters);
+  const ed = document.querySelector("#cards .dir-editor"); // bearbeitete Karte im Blick behalten (Reihenfolge kann sich ändern)
+  if(ed) ed.closest(".spot").scrollIntoView({block:"nearest"});
+}
+function applySpotEdit(sp, dirs, mainDir, waveStar, opts={}){
+  sp.dirs = DIR16.filter(d => dirs.includes(d));
+  sp.mainDir = mainDir || "-"; sp.waveStar = waveStar || null;
+  mainDirs[sp.name] = sp.mainDir;
+  try{ localStorage.setItem(MAIN_DIR_KEY, JSON.stringify(mainDirs)); }catch(e){}
+  if(sp.custom){ const c = customSpots.find(x => x.name === sp.name); if(c){ c.dirs = sp.dirs; c.mainDir = sp.mainDir; if(waveStar) c.waveStar = waveStar; else delete c.waveStar; } saveCustom(); }
+  else { spotOverrides[sp.name] = {...(spotOverrides[sp.name]||{}), dirs: sp.dirs, waveStar: sp.waveStar}; try{ localStorage.setItem(OVR_KEY, JSON.stringify(spotOverrides)); }catch(e){} }
+  if(!opts.fromSync){ dirtySpots.add(sp.name); try{ localStorage.setItem(DIRTY_KEY, JSON.stringify([...dirtySpots])); }catch(e){} updatePublishButton(); }
+}
+function cycleDir(name, d){
+  const sp = SPOTS.find(x => x.name === name); if(!sp) return;
+  let dirs = [...sp.dirs], main = sp.mainDir, star = new Set(starDirsOf(sp));
+  if(starMode.has(name)){
+    if(star.has(d)){ star.delete(d); }
+    else {
+      const i = DIR16.indexOf(d), adj = star.has(DIR16[(i+1)%16]) || star.has(DIR16[(i+15)%16]);
+      if(!adj) star = new Set();
+      star.add(d); if(!dirs.includes(d)) dirs.push(d);
+    }
+    // nur der zusammenhängende Teil um die getippte Richtung bleibt
+    const ws = starFromDirs(star);
+    applySpotEdit(sp, dirs, main, ws); repaintSoft(); return;
+  }
+  if(main === d){ // beste -> aus
+    if(dirs.length <= 1){ alert("Mindestens eine Richtung muss passen."); return; }
+    dirs = dirs.filter(x => x !== d); main = "-"; star.delete(d);
+  } else if(dirs.includes(d)){ main = d; } // möglich -> beste
+  else { dirs.push(d); } // aus -> möglich
+  applySpotEdit(sp, dirs, main, starFromDirs(star)); repaintSoft();
+}
+function updatePublishButton(){
+  const b = document.getElementById("gh-publish"); if(!b) return;
+  b.textContent = dirtySpots.size ? `Änderungen ins Repository speichern (${dirtySpots.size} Spot${dirtySpots.size>1?"s":""})` : "Änderungen ins Repository speichern";
+}
+const b64enc = s => btoa(unescape(encodeURIComponent(s)));
+const b64dec = s => decodeURIComponent(escape(atob(String(s).replace(/\s/g,""))));
+const spotState = sp => ({dirs: sp.dirs, mainDir: sp.mainDir || "-", waveStar: sp.waveStar || null});
+async function publishSpotEdits(){
+  const note = $("gh-note"), token = ($("gh-token").value || "").trim();
+  if(!token){ note.textContent = "Bitte zuerst den GitHub-Schlüssel eintragen."; return; }
+  if(!dirtySpots.size){ note.textContent = "Keine neuen Änderungen. Auf einer Karte „Bearbeiten“ antippen und Richtungen ändern."; return; }
+  const api = `https://api.github.com/repos/${GH_REPO}/contents/${UPD_PATH}`;
+  const hdr = {Authorization: "Bearer " + token, Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"};
+  note.textContent = "Speichere …";
+  for(let attempt = 0; attempt < 2; attempt++){
+    try{
+      let sha, data = {changes:{}};
+      const g = await fetch(api + "?ref=main&t=" + Date.now(), {headers: hdr, cache: "no-store"});
+      if(g.status === 200){ const j = await g.json(); sha = j.sha; data = JSON.parse(b64dec(j.content)); if(!data.changes) data.changes = {}; }
+      else if(g.status !== 404){ const e = await g.json().catch(() => ({})); throw new Error(`HTTP ${g.status}: ${e.message || "Lesen fehlgeschlagen"}`); }
+      const at = new Date().toISOString(), names = [...dirtySpots];
+      names.forEach(n => { const sp = SPOTS.find(x => x.name === n); if(sp) data.changes[n] = {...spotState(sp), at}; });
+      data.updated = at;
+      const body = {message: `Spot-Änderungen: ${names.join(", ")}`.slice(0, 200), content: b64enc(JSON.stringify(data, null, 1) + "\n"), branch: "main"};
+      if(sha) body.sha = sha;
+      const r = await fetch(api, {method: "PUT", headers: {...hdr, "Content-Type": "application/json"}, body: JSON.stringify(body)});
+      if(r.status === 409 && attempt === 0) continue;
+      if(!r.ok){ const e = await r.json().catch(() => ({})); throw new Error(`HTTP ${r.status}: ${e.message || "Speichern fehlgeschlagen"}`); }
+      names.forEach(n => { seenUpdates[n] = at; });
+      try{ localStorage.setItem(SEEN_KEY, JSON.stringify(seenUpdates)); }catch(e){}
+      dirtySpots.clear(); try{ localStorage.setItem(DIRTY_KEY, "[]"); }catch(e){}
+      updatePublishButton();
+      note.textContent = `Gespeichert: ${names.join(", ")}. Die anderen sehen die Änderung in etwa 2 bis 10 Minuten beim Öffnen der App.`;
+      return;
+    }catch(e){
+      note.textContent = "Fehler: " + (e.message || e) + (String(e.message).includes("401") ? " – Schlüssel ungültig oder abgelaufen." : String(e.message).includes("403") || String(e.message).includes("404") ? " – Schlüssel braucht „Contents: Read and write“ für dieses Repository." : "");
+      return;
+    }
+  }
+}
+// Veröffentlichte Änderungen prüfen und nachfragen
+async function checkSpotUpdates(){
+  try{
+    const r = await fetch("spot-updates.json?t=" + Date.now(), {cache: "no-store"});
+    if(!r.ok) return;
+    const data = await r.json(), changes = data.changes || {};
+    const same = (sp, c) => JSON.stringify(spotState(sp)) === JSON.stringify({dirs: DIR16.filter(d => (c.dirs||[]).includes(d)), mainDir: c.mainDir || "-", waveStar: c.waveStar || null});
+    const pending = Object.entries(changes).filter(([n, c]) => {
+      const sp = SPOTS.find(x => x.name === n);
+      return sp && Array.isArray(c.dirs) && c.dirs.length && c.at && c.at > (seenUpdates[n] || "") && !dirtySpots.has(n) && !same(sp, c);
+    });
+    if(pending.length) showSpotUpdateBanner(pending);
+  }catch(e){}
+}
+function showSpotUpdateBanner(pending){
+  if(document.getElementById("spotupdbanner")) return;
+  const b = document.createElement("div"); b.id = "spotupdbanner";
+  const desc = c => { const tmp = {dirs: DIR16.filter(d => c.dirs.includes(d)), waveStar: c.waveStar || null}; return `${dirsLabel(tmp)}${c.mainDir && c.mainDir !== "-" ? " · beste " + c.mainDir : ""}`; };
+  b.innerHTML = `<b>Neue Spot-Änderungen (${pending.length})</b><ul>${pending.map(([n,c]) => `<li><b>${esc(n)}</b>: ${esc(desc(c))}</li>`).join("")}</ul><div class="row"><button type="button" id="spotupd-yes" style="background:#73d8d0;color:#06232a">Übernehmen</button><button type="button" id="spotupd-no" style="background:#29414c;color:#edf4f7">Ablehnen</button></div>`;
+  document.body.appendChild(b);
+  const done = accept => {
+    pending.forEach(([n, c]) => {
+      if(accept){ const sp = SPOTS.find(x => x.name === n); if(sp) applySpotEdit(sp, c.dirs, c.mainDir, c.waveStar && validWave(c.waveStar) ? cleanWave(c.waveStar) : null, {fromSync: true}); }
+      seenUpdates[n] = c.at;
+    });
+    try{ localStorage.setItem(SEEN_KEY, JSON.stringify(seenUpdates)); }catch(e){}
+    b.remove(); if(accept) repaintSoft();
+  };
+  $("spotupd-yes").onclick = () => done(true);
+  $("spotupd-no").onclick = () => done(false);
+}
 function setMainDir(name,dir){
   mainDirs[name]=dir;
   const sp=SPOTS.find(x=>x.name===name); if(sp) sp.mainDir=dir;
@@ -1045,7 +1204,7 @@ function calculateRank(spot,r,f){
     if(!m||!Number.isFinite(m.wind)||m.wind<f.minwind||m.wind>f.maxwind||!Number.isFinite(m.dir)||!waveOK(row)) return null;
     const dir=compass(m.dir);
     if(f.usedir&&!spot.dirs.includes(dir)) return null;
-    return {label,wind:m.wind,dir,wave:row.wave};
+    return {label,wind:m.wind,dir,deg:m.dir,wave:row.wave};
   };
   const labels=[...new Set(r.day.flatMap(row=>Object.keys(row.models||{})))];
   const qualified=new Set();
@@ -1061,12 +1220,13 @@ function calculateRank(spot,r,f){
   const hourly=[];let total=0,eligibleHours=0,directionBonusHours=0;
   for(const row of r.day){
     let candidates=labels.map(label=>candidateFor(row,label)).filter(Boolean);
-    if(!candidates.length&&!labels.length&&Number.isFinite(row.wind)&&Number.isFinite(row.dir)&&row.wind>=f.minwind&&row.wind<=f.maxwind&&waveOK(row)&&(!f.usedir||spot.dirs.includes(compass(row.dir)))) candidates=[{label:"Fallback",wind:row.wind,dir:compass(row.dir),wave:row.wave}];
+    if(!candidates.length&&!labels.length&&Number.isFinite(row.wind)&&Number.isFinite(row.dir)&&row.wind>=f.minwind&&row.wind<=f.maxwind&&waveOK(row)&&(!f.usedir||spot.dirs.includes(compass(row.dir)))) candidates=[{label:"Fallback",wind:row.wind,dir:compass(row.dir),deg:row.dir,wave:row.wave}];
     const scored=candidates.map(c=>{
       const wf=windFactor(c.wind), wavf=Number.isFinite(c.wave)?1+Math.max(0,c.wave):1;
       const mainQualified=c.dir===mainDir&&c.label!=="Fallback"&&qualified.has(`${c.label}|${row.hour}`);
-      const df=mainQualified?2:1;
-      return {...c,windFactor:wf,waveFactor:wavf,directionFactor:df,mainQualified,points:wf*wavf*df};
+      const starHit=!!spot.waveStar&&Number.isFinite(c.deg)&&angleInRange(c.deg,spot.waveStar.min,spot.waveStar.max);
+      const df=(mainQualified?2:1)*(starHit?2:1);
+      return {...c,windFactor:wf,waveFactor:wavf,directionFactor:df,mainQualified,starHit,points:wf*wavf*df};
     }).sort((a,b)=>b.points-a.points);
     const chosen=scored[0]||null;
     if(chosen){total+=chosen.points;eligibleHours++;if(chosen.mainQualified)directionBonusHours++;}
@@ -1597,7 +1757,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.7.2";
+const APP_VERSION = "5.8.0";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -1810,17 +1970,17 @@ function card(spot,r,f){
       <div class="metric"><b>${r.waveKnown ? fmt(r.meanWave)+" m" : "n. v."}</b><span>Ø Welle</span></div>
     </div>
     <div class="status">${status}</div>
-    <div class="edit-dir"><span>Hauptwindrichtung: <b>${esc(spot.mainDir || "–")}</b></span>${$("devmode").checked ? `<button type="button" class="dir-edit-toggle" onclick="toggleMainDirEdit('${esc(spot.name).replace(/'/g,"\\'")}')">${editingMainDirs.has(spot.name) ? "Fertig" : "Bearbeiten"}</button>` : ""}</div>
-    <div class="main-dir ${$("devmode").checked && editingMainDirs.has(spot.name)?"editing":""}">${spot.dirs.map(d=>`<button type="button" class="${spot.mainDir===d?"active":""}" onclick="setMainDir('${esc(spot.name).replace(/'/g,"\\'")}','${d}')" aria-label="Hauptwindrichtung ${d}">${d}</button>`).join("")}</div>
+    <div class="edit-dir"><span>Hauptwindrichtung: <b>${esc(spot.mainDir && spot.mainDir!=="-" ? spot.mainDir : "–")}</b></span>${$("devmode").checked ? `<button type="button" class="dir-edit-toggle" onclick="toggleMainDirEdit('${jsq(spot.name)}')">${editingMainDirs.has(spot.name) ? "Fertig" : "Bearbeiten"}</button>` : ""}</div>
+    ${$("devmode").checked && editingMainDirs.has(spot.name) ? dirEditorHtml(spot) : ""}
 
-    ${!f.usedir ? `<div class="warn dirwarn">⚠ Windrichtung wird NICHT berücksichtigt. ${spot.verified ? "Geprüfte Richtungen" : "Nicht unabhängig geprüfte Richtungen"}: ${esc(spot.dirs.join(", "))}</div>` : ""}
+    ${!f.usedir ? `<div class="warn dirwarn">⚠ Windrichtung wird NICHT berücksichtigt. ${spot.verified ? "Geprüfte Richtungen" : "Nicht unabhängig geprüfte Richtungen"}: ${esc(dirsLabel(spot))}</div>` : ""}
     <div>${wins}</div>
     ${hourStrip}
     <details class="more">
       <summary>Details${hasWarn ? ' <span class="warnmark">⚠</span>' : ""}</summary>
       <div class="region">Längstes Fenster: ${best ? best.end-best.start+" h" : "–"} · gewichtete Stunden (Ranking): ${rank.eligibleHours}</div>
       <div class="region">Wind (und Welle) im Bereich: ${r.goodNoDir.length} h · ${f.usedir ? "davon passende Richtung: "+r.good.length+" h" : "Richtungsfilter aus"} · Tageslicht: ${r.day.length} h</div>
-      <div class="region">${spot.verified ? "Richtungen geprüft" : "Richtungen vorläufig"}: ${esc(spot.dirs.join(", "))} · ${esc(spot.type)}</div>
+      <div class="region">${spot.verified ? "Richtungen geprüft" : "Richtungen vorläufig"}: ${esc(dirsLabel(spot))} · ${esc(spot.type)}</div>
       <div class="region" style="margin-top:10px">Modellvergleich: passende Stunden · niedrigster bis höchster Tageswert</div>
       <div>${modelSummary || "Keine getrennten Modellwerte verfügbar."}${$("devmode").checked && spotModels[spot.name] ? `<button type="button" class="win mod" style="cursor:pointer;border:1px solid #73d8d0;background:#143b36;color:#a4f0ce;padding:4px 7px;border-radius:7px" data-spot="${esc(spot.name)}" onclick="resetSpotModels(this.dataset.spot)" title="Eigene Modellwahl dieses Spots verwerfen">↺ Standardmodelle</button>` : ""}</div>
       ${modelErrors}${warn}
@@ -1893,6 +2053,12 @@ function syncStatusSummary(){
   sum.textContent = parts[0];
   if(warn.length){ const w = document.createElement("span"); w.className = "warn"; w.textContent = " · " + warn.join(" · "); sum.appendChild(w); }
 }
+try{ const t = localStorage.getItem(GH_TOKEN_KEY); if(t) $("gh-token").value = t; }catch(e){}
+$("gh-token").addEventListener("change", () => { try{ const t = $("gh-token").value.trim(); if(t) localStorage.setItem(GH_TOKEN_KEY, t); else localStorage.removeItem(GH_TOKEN_KEY); }catch(e){} });
+$("gh-publish").addEventListener("click", publishSpotEdits);
+updatePublishButton();
+setTimeout(checkSpotUpdates, 1500);
+document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible") checkSpotUpdates(); });
 new MutationObserver(syncStatusSummary).observe($("status"), {childList:true, characterData:true, subtree:true});
 $("statussum").addEventListener("click", e => { if($("statusbox").classList.contains("plain")) e.preventDefault(); });
 function setHome(lat,lon,label){
