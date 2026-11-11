@@ -11,7 +11,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.5.0</title>
+<title>ANDIsGREENed 5.6.0</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -340,11 +340,23 @@ a{font-size:.98rem;padding:9px 11px}
 a.webcam-link{width:38px;height:38px;font-size:1.28rem}
 @media(max-width:520px){body{font-size:1.17rem}.panel,.spot{padding:17px}.spot h3{font-size:1.26rem}.metric span{font-size:.88rem}.region{font-size:.96rem}}
 
+/* 5.6.0: Kopfzeile kompakt und einzeilig, Datenstand einklappbar */
+h1.apptitle{display:flex;align-items:center;gap:10px;font-size:clamp(1.45rem,6.4vw,2.1rem);white-space:nowrap;margin:6px 0 4px}
+h1.apptitle img{width:1.45em;height:1.45em;border-radius:22%;flex:0 0 auto}
+details.statusbox{margin:4px 0 10px}
+details.statusbox>summary{cursor:pointer;list-style:none}
+details.statusbox>summary::-webkit-details-marker{display:none}
+details.statusbox>summary::before{content:"▸ ";color:#73d8d0}
+details.statusbox[open]>summary::before{content:"▾ "}
+details.statusbox.plain>summary{cursor:default}
+details.statusbox.plain>summary::before{content:""}
+details.statusbox .warn{color:#ffcf70}
+details.statusbox #status{margin:6px 0 0}
 </style>
 </head>
 <body>
 <header>
-  <h1>ANDIsGREENed 🌊</h1>
+  <h1 class="apptitle"><img src="icons/icon-192.png" alt="" width="40" height="40">ANDIsGREENed</h1>
 </header>
 <main>
 
@@ -357,7 +369,7 @@ a.webcam-link{width:38px;height:38px;font-size:1.28rem}
   </div>
   <input id="date" type="hidden">
   <div class="date-time-control">
-    <label for="startHour">Uhrzeit (optional, ab dieser vollen Stunde)</label>
+    <label for="startHour">Uhrzeit</label>
     <select id="startHour"><option value="">Ganzer Tag</option></select>
   </div>
   <div class="grid2">
@@ -377,7 +389,7 @@ a.webcam-link{width:38px;height:38px;font-size:1.28rem}
   <button type="button" id="loc" style="width:100%;margin-top:12px;font-size:.85rem;background:#29414c;color:#edf4f7;min-height:44px">📍 Meinen Standort verwenden</button>
   <p class="note" id="locnote" style="margin-top:6px">Standort: Lübeck (Standard)</p>
   <button class="primary" id="apply">Live-Daten laden und vergleichen</button>
-  <button type="button" id="reload" style="width:100%;margin-top:8px;background:#29414c;color:#edf4f7;min-height:40px;font-size:.85rem">Neu laden (Zwischenspeicher leeren)</button>
+  <button type="button" id="reload" style="width:100%;margin-top:8px;background:#29414c;color:#edf4f7;min-height:40px;font-size:.85rem">Neu laden (Speicher leeren)</button>
   <details class="fold"><summary>Hinweise &amp; Datenquellen</summary>
   <p class="note" id="appver" style="margin-top:6px"></p>
   <label for="googleApiKey">Google Weather API-Schlüssel (optional)</label>
@@ -458,7 +470,8 @@ a.webcam-link{width:38px;height:38px;font-size:1.28rem}
 </section>
 <section>
   <div class="resultsHead"><span class="count" id="count">Noch nicht geladen</span></div>
-  <p class="statusline" id="status" role="status">Bedingungen einstellen und vergleichen.</p>
+  <details class="statusbox plain" id="statusbox"><summary class="statusline" id="statussum">Bedingungen einstellen und vergleichen.</summary>
+  <p class="statusline" id="status" role="status">Bedingungen einstellen und vergleichen.</p></details>
   <div class="cards" id="cards"><div class="empty">Noch keine Live-Daten geladen.</div></div>
 
 </section>
@@ -1189,7 +1202,7 @@ async function fetchJSONRaw(url,ms=15000){
   }
   let data;
   try{ data = await res.json(); }catch(e){ throw new Error(`Ungültige API-Antwort (HTTP ${res.status}).`); }
-  if(!res.ok || data.error) throw new Error(data.reason || `API-Fehler (HTTP ${res.status})`);
+  if(!res.ok || data.error) throw new Error(data.reason || (data.error && data.error.message ? `HTTP ${res.status}: ${data.error.message}` : `API-Fehler (HTTP ${res.status})`));
   return data;
 }
 async function fetchJSON(url,ms=15000){
@@ -1361,7 +1374,7 @@ const EXTRA_MODELS = [
   {id:"icon_seamless", label:"ICON See", days:8, maxDay:7, maxCell:15, box:null}
 ];
 let extraNotes = [];
-let googleApiStatus = "Google API: kein Schlüssel";
+let googleApiStatus = "";
 async function fetchExtras(spots,date,out){
   extraNotes = [];
   const keyOf = x => `${x.lat},${x.lon}`;
@@ -1423,11 +1436,11 @@ async function fetchExtras(spots,date,out){
 
 async function fetchGoogleWeatherForSpots(spots,date,byKey){
   const key=(($("googleApiKey")?.value||"").trim() || localStorage.getItem("andisgreened-google-weather-key") || "").trim();
-  googleApiStatus = "Google API: kein Schlüssel";
+  googleApiStatus = "";
   if(!key) return;
   const keyOf=x=>`${x.lat},${x.lon}`;
   const uniq=[...new Map(spots.map(x=>[keyOf(x),x])).values()];
-  let cursor=0, ok=0, failed=0;
+  let cursor=0, ok=0, failed=0, firstErr="";
   const toKnots=o=>{
     if(!o || !Number.isFinite(Number(o.value))) return NaN;
     const v=Number(o.value), u=o.unit||"KILOMETERS_PER_HOUR";
@@ -1465,13 +1478,13 @@ async function fetchGoogleWeatherForSpots(spots,date,byKey){
         const v=map.get(row.time); if(!v || !Number.isFinite(v.wind)) continue;
         row.models.Google={wind:v.wind,dir:v.dir,gust:v.gust}; n++;
       }
-      if(n) ok++; else failed++;
-    }catch(e){failed++;}
+      if(n) ok++; else { failed++; if(!firstErr) firstErr = hours.length ? "keine Stunden für den gewählten Tag" : "leere Antwort"; }
+    }catch(e){failed++; if(!firstErr) firstErr = e.message;}
     await sleep(120);
   }};
   await Promise.all(Array.from({length:Math.min(4,uniq.length)},worker));
-  googleApiStatus = `Google API: ${ok} Spots mit Daten${failed ? `, ${failed} ohne passende Werte` : ""}`;
-  if(failed) extraNotes.push(`Google Weather API: ${ok} Spots mit Daten, ${failed} ohne passende Werte (Schlüssel, Berechtigung oder Prognose prüfen)`);
+  googleApiStatus = `Google: ${ok} von ${ok+failed} Spots mit Daten`;
+  if(failed) extraNotes.push(`Google ohne Daten für ${failed} Spots (${firstErr})`);
 }
 
 async function getAllData(spots,date){
@@ -1581,7 +1594,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.5.0";
+const APP_VERSION = "5.6.0";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -1853,7 +1866,7 @@ async function run(force=false){
     const hits = results.filter(x => x.res.good.length > 0).length;
     const sun = relevant[0]?.res.sun;
     const hm = h => `${pad(Math.floor(h))}:${pad(Math.round((h%1)*60)%60)}`;
-    $("status").textContent = `Datenstand ${new Date(lastSuccessfulLoadAt).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} · ${CACHE_STATS.miss===0 && CACHE_STATS.hit>0 ? "aus Zwischenspeicher" : "frisch geladen"} · ${modelRunText(modelSync)} · ${googleApiStatus} ${(() => { const miss = [...new Set(results.flatMap(x => (x.res.modelErrors||[]).map(e => String(e).split(":")[0])))]; return miss.length ? "· ⚠ Modelle fehlen: "+miss.join(", ")+" " : ""; })()}· Tageslicht${sun && Number.isFinite(sun.sr) ? ` ${hm(sun.sr)}–${hm(sun.ss)} Uhr` : ""}${!f.usedir ? " · ⚠ Richtungsfilter aus" : ""}${extraNotes.length ? " · ⚠ Zusatzquellen teils nicht verfügbar" : ""}`;
+    $("status").textContent = `Datenstand ${new Date(lastSuccessfulLoadAt).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})} · ${CACHE_STATS.miss===0 && CACHE_STATS.hit>0 ? "aus Speicher" : "frisch geladen"} · ${modelRunText(modelSync)}${googleApiStatus ? " · "+googleApiStatus : ""} ${(() => { const miss = [...new Set(results.flatMap(x => (x.res.modelErrors||[]).map(e => String(e).split(":")[0])))]; return miss.length ? "· ⚠ Modelle fehlen: "+miss.join(", ")+" " : ""; })()}· Tageslicht${sun && Number.isFinite(sun.sr) ? ` ${hm(sun.sr)}–${hm(sun.ss)} Uhr` : ""}${!f.usedir ? " · ⚠ Richtungsfilter aus" : ""}${extraNotes.length ? " · ⚠ "+extraNotes.join(" · ⚠ ") : ""}`;
     if(!results.length && errors.length) $("status").textContent = "Keine Daten: "+errors[0]+" · Verbindung prüfen unter „Hinweise & Datenquellen“.";
   }catch(e){
     if(lastResults && previousStamp){
@@ -1867,6 +1880,18 @@ async function run(force=false){
     btn.disabled = false; btn.textContent = "Live-Daten laden und vergleichen";
   }
 }
+// 5.6.0: Datenstand eingeklappt; Warnungen (⚠) stehen in der Kurzzeile
+function syncStatusSummary(){
+  const t = $("status").textContent || "", box = $("statusbox"), sum = $("statussum");
+  const parts = t.split(" · ");
+  if(!/^Datenstand/.test(parts[0])){ box.classList.add("plain"); box.open = false; sum.textContent = t; return; }
+  box.classList.remove("plain");
+  const warn = parts.filter(x => x.includes("⚠"));
+  sum.textContent = parts[0];
+  if(warn.length){ const w = document.createElement("span"); w.className = "warn"; w.textContent = " · " + warn.join(" · "); sum.appendChild(w); }
+}
+new MutationObserver(syncStatusSummary).observe($("status"), {childList:true, characterData:true, subtree:true});
+$("statussum").addEventListener("click", e => { if($("statusbox").classList.contains("plain")) e.preventDefault(); });
 function setHome(lat,lon,label){
   HOME = {lat,lon};
   $("locnote").textContent = `Standort: ${label || lat.toFixed(2)+", "+lon.toFixed(2)}`;

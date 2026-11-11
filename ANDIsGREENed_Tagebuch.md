@@ -2,9 +2,16 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.5.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.6.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.6.0
+- **Kopfzeile kompakt:** App-Symbol statt 🌊, Name einzeilig und kleiner (auf dem Handy brach „ANDIsGREENed 🌊“ in zwei Zeilen um).
+- **Texte:** „Uhrzeit“ ohne Zusatz; „Zwischenspeicher“ heißt jetzt „Speicher“ (Knopf „Neu laden (Speicher leeren)“, Status „aus Speicher“).
+- **Datenstand eingeklappt:** Sichtbar ist nur „▸ Datenstand hh:mm“. Gibt es Warnungen (⚠), stehen sie gelb direkt dahinter. Antippen zeigt Modellläufe, Tageslicht usw.
+- **Warnungen konkret statt „Zusatzquellen teils nicht verfügbar“:** z. B. „⚠ Google ohne Daten für 69 Spots (HTTP 403: …)“ mit der Fehlermeldung von Google. Ohne Google-Schlüssel erscheint Google gar nicht mehr in der Statuszeile.
+- Getestet im Browser (Handy-Ansicht, simulierte Daten und simulierter Google-Fehler 403): keine Skriptfehler, Kopfzeile einzeilig, Ein-/Ausklappen funktioniert.
 
 ## 5.5.0
 - **Prüfung von 5.4.0** (Befunde, Grundlage dieser Version): Update-Hinweis beim Start der geschlossenen App nur in etwa der Hälfte der Fälle (8 von 16); Updates kamen nur bei geänderter `sw.js` an; APK-Hülle: Windfinder-Knopf, „Meinen Standort verwenden“ und „Als Datei speichern“ ohne Funktion, Standard-Symbol von Capacitor, Debug-Signatur.
