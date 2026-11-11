@@ -2,9 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.10.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.10.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.10.1
+- „Verbindung prüfen“ wieder volle Breite im Stil der übrigen Knöpfe, App-Version darunter.
 
 ## 5.10.0
 - **Richtungen in vier Stufen** (Ranking-Faktor je Stunde): aus · möglich ×0,5 · gut ×1 · beste ×2 (Hauptwindrichtung, weiter erst ab 3 zusammenhängenden Stunden im selben Modell). Wellenstern zusätzlich ×2. Bisherige Richtungen gelten als „gut“.
