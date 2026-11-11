@@ -23,7 +23,7 @@ fs.writeFileSync(manPath, man);
 // 3. Icons und Startbilder
 fs.cpSync(path.join(root, "native", "res"), path.join(main, "res"), {recursive: true});
 const bgPath = path.join(main, "res", "values", "ic_launcher_background.xml");
-fs.writeFileSync(bgPath, '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#13303F</color>\n</resources>\n');
+fs.writeFileSync(bgPath, '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n    <color name="ic_launcher_background">#FFFFFF</color>\n</resources>\n');
 const stylesPath = path.join(main, "res", "values", "styles.xml");
 let styles = fs.readFileSync(stylesPath, "utf8");
 must(styles.includes('name="AppTheme.NoActionBarLaunch"'), "Launch-Theme nicht gefunden");

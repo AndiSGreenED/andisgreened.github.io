@@ -2,9 +2,13 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.6.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.6.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.6.1
+- **Neues Icon (Variante B):** SurfsApp-Logo umgefärbt, Segel grün, Board orange, Welle türkis wie bei der SurfsApp. Weißer Hintergrund mit Rand, damit Android nichts abschneidet und das Logo nicht zu groß wirkt. Gilt für Web-App (Startbildschirm, Kopfzeile, Maskable) und Android-App (Symbol rund/eckig/adaptiv, Startbild). Android-App wird neu gebaut (Version 5.6.1).
+- Statuszeile: leeres „Tageslicht“ wird ausgeblendet.
 
 ## 5.6.0
 - **Kopfzeile kompakt:** App-Symbol statt 🌊, Name einzeilig und kleiner (auf dem Handy brach „ANDIsGREENed 🌊“ in zwei Zeilen um).

@@ -3,7 +3,7 @@
 // Updates: Die Oberfläche (index.html) wird bei jedem Start im Hintergrund neu geladen. Enthält sie eine andere
 // APP_VERSION als die angezeigte Seite, zeigt die Seite „Neue Version verfügbar“. SW_VERSION nur erhöhen, wenn sich
 // diese Datei, das Manifest oder die Icons ändern.
-const SW_VERSION = "5.5.0";
+const SW_VERSION = "5.6.1";
 const CACHE = "andisgreened-shell-" + SW_VERSION;
 const CORE = ["./", "index.html"];
 const EXTRA = ["manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png"];
