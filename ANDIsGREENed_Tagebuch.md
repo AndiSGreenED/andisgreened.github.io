@@ -2,9 +2,15 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.7.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.7.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.7.1
+- **Kein Store, nur Weitergabe per Link an Bekannte** (Entscheidung 11.11.2026). Store-Anmeldungen entfallen.
+- **Android-App wieder im Modus „online“:** lädt die Oberfläche von https://andisgreened.github.io/, Updates ohne neue APK. Gespeicherte Daten bleiben erhalten (gleiche Herkunft wie 5.7.0). Versionsnummer online = eingebaut + 1 (5.7.1 → 60507011), installiert sich über 5.7.0. APK-Bau nur noch bei Änderungen in `apk/`.
+- **Nicht in Suchmaschinen:** `robots.txt` (alles gesperrt) und `noindex` in App- und Datenschutzseite; Quellcode-Link aus der App entfernt. Hinweis: Das Repository ist für GitHub Pages öffentlich; wer die Adresse kennt, kann die App öffnen.
+- Bleibt bestehen: MIT-Lizenz, Datenschutzseite, neutrale Spotliste, Store-Texte in `fastlane/` (ungenutzt, für später).
 
 ## 5.7.0
 - **Weg in freie App-Kataloge (kostenlos):** IzzyOnDroid (Android, F-Droid-kompatibel) und Murena App Lounge (PWA-Katalog). Google Play (25 $) und Apple vorerst nicht.

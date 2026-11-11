@@ -2,18 +2,18 @@ name: APK bauen
 # Baut die Android-App und stellt sie als Download bereit (ohne Konto abrufbar):
 #  - Release „v<Version>“ je App-Version (für IzzyOnDroid/F-Droid-Clients), Version = APP_VERSION in docs/index.html
 #  - Release „apk-latest“ (fester Download-Link)
-# Startet automatisch bei Änderungen in docs/ oder apk/; gebaut wird nur, wenn es die Version noch nicht gibt.
+# Startet automatisch bei Änderungen in apk/. Standard: Modus „online“ (Oberfläche von der Web-Adresse, Updates ohne neue APK).
 on:
   push:
     branches: [main]
-    paths: ["docs/**", "apk/**", ".github/workflows/build-apk.yml"]
+    paths: ["apk/**", ".github/workflows/build-apk.yml"]
   workflow_dispatch:
     inputs:
       modus:
         description: "online = Oberfläche von der Webseite (Updates automatisch), eingebaut = Oberfläche in der App (für App-Stores)"
         type: choice
-        options: [eingebaut, online]
-        default: eingebaut
+        options: [online, eingebaut]
+        default: online
 permissions:
   contents: write
 concurrency:
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     env:
-      MODUS: ${{ github.event.inputs.modus || 'eingebaut' }}
+      MODUS: ${{ github.event.inputs.modus || 'online' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -51,7 +51,7 @@ jobs:
           IFS=. read -r MAJOR MINOR PATCH <<< "${VERSION}"
           CODE=$(( 60000000 + MAJOR*100000 + MINOR*1000 + PATCH*10 ))
           if [ "${MODUS}" = "online" ]; then CODE=$(( CODE + 1 )); fi
-          if [ "${GITHUB_EVENT_NAME}" = "push" ] && gh release view "v${VERSION}" >/dev/null 2>&1; then
+          if [ "${MODUS}" = "eingebaut" ] && [ "${GITHUB_EVENT_NAME}" = "push" ] && gh release view "v${VERSION}" >/dev/null 2>&1; then
             echo "SKIP=1" >> "$GITHUB_ENV"; echo "Version ${VERSION} gibt es schon, kein Bau nötig."
           else echo "SKIP=0" >> "$GITHUB_ENV"; fi
           echo "APP_URL=${URL}" >> "$GITHUB_ENV"
