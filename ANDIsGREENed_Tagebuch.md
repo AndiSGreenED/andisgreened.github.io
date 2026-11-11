@@ -2,9 +2,14 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.9.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.9.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.9.2
+- Nach „Suchen“ scrollt die App automatisch zum ersten Vorschlag.
+- Kästen: Einheiten klein und ohne Leerzeichen (z. B. „18,1kn · 0,8m“), nichts wird mehr abgeschnitten, Werte immer einzeilig.
+- Entfernung steht vor der Region („90 km · Schwansen, Ostsee“), damit sie beim Abkürzen sichtbar bleibt.
 
 ## 5.9.1
 - Datenschutz- und Wetterdaten-Links stehen am Ende von „Datenquellen und Infos“. Ganz unten: Knopf „Verbindung prüfen“, daneben die App-Version.

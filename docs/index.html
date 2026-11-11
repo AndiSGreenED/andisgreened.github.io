@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.9.1</title>
+<title>ANDIsGREENed 5.9.2</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -370,6 +370,9 @@ details.sub[open]>summary{margin-bottom:6px}
 .diagrow{display:flex;align-items:center;gap:12px;margin-top:12px}
 .diagrow button{width:auto;flex:0 0 auto;padding:8px 14px;margin:0}
 .diagrow .note{margin:0}
+.metric b small.u{font-size:.62em;font-weight:700;margin-left:1px;opacity:.85}
+#cards .spot{scroll-margin-top:8px}
+#cards .metric b{white-space:nowrap}
 .dir-editor-tools input.star-text{flex:1 1 100%;margin-top:4px}
 /* 5.8.0: Richtungs-Editor */
 .dir-editor{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
@@ -1813,7 +1816,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.9.1";
+const APP_VERSION = "5.9.2";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2024,12 +2027,12 @@ function card(spot,r,f){
   }).join("");
   const rng = (v,d=0) => v.length ? (Math.round(Math.min(...v)*10**d)/10**d===Math.round(Math.max(...v)*10**d)/10**d ? fmt(v[0],d) : fmt(Math.min(...v),d)+"–"+fmt(Math.max(...v),d)) : "n. v.";
   return `<article class="spot">
-    <div class="spotTop"><div><div class="spot-title-row"><h3><a class="spot-map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${spot.lat},${spot.lon}`)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(spot.name)} in Google Maps öffnen">${esc(spot.name)}</a></h3><a class="webcam-link${spot.cam ? " set" : ""}" href="${esc(webcamUrl(spot))}" target="_blank" rel="noopener noreferrer" aria-label="${spot.cam ? "Webcam von" : "Webcams suchen für"} ${esc(spot.name)} öffnen" title="${spot.cam ? "Eigene Webcam öffnen" : "Webcams suchen (Google)"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10l6-3v10l-6-3"/><rect x="3" y="6" width="11" height="12" rx="2"/><circle cx="8.5" cy="12" r="2.2"/></svg></a></div><div class="region area" title="${esc(spot.area)}">${esc(shortArea(spot.area))} · ${km} km</div>${hasBestWaveDirection(spot,r,f) ? `<div class="wave-star">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)}</div>` : ""}</div><div class="spotRight">${badge}${roseSvg}</div></div>
+    <div class="spotTop"><div><div class="spot-title-row"><h3><a class="spot-map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${spot.lat},${spot.lon}`)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(spot.name)} in Google Maps öffnen">${esc(spot.name)}</a></h3><a class="webcam-link${spot.cam ? " set" : ""}" href="${esc(webcamUrl(spot))}" target="_blank" rel="noopener noreferrer" aria-label="${spot.cam ? "Webcam von" : "Webcams suchen für"} ${esc(spot.name)} öffnen" title="${spot.cam ? "Eigene Webcam öffnen" : "Webcams suchen (Google)"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10l6-3v10l-6-3"/><rect x="3" y="6" width="11" height="12" rx="2"/><circle cx="8.5" cy="12" r="2.2"/></svg></a></div><div class="region area" title="${esc(spot.area)}">${km} km · ${esc(shortArea(spot.area))}</div>${hasBestWaveDirection(spot,r,f) ? `<div class="wave-star">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)}</div>` : ""}</div><div class="spotRight">${badge}${roseSvg}</div></div>
     <div class="metrics">
-      <details class="metric metric-wind-details" style="${windBoxStyle(dayWinds)}"><summary><b>${windRange(dayWinds)} kn</b><span>Wind · Einzelwerte ↗</span></summary><div class="wind-range-panel"><div class="region">Die Spanne basiert auf denselben stündlichen Modell-Medianwerten wie die Stundenleiste. „Stundenanzeige“ markiert das Modell, dessen Wert dort verwendet wird.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wind</th><th>Böen</th><th>Richtung</th></tr></thead><tbody>${windRows}</tbody></table></div></div></details>
-      <div class="metric win-box"><b>${winMain} Uhr</b><span>Bestes Fenster</span>${winMore ? `<small>auch ${winMore}</small>` : ""}</div>
-      <details class="metric metric-wave-details"><summary><b>${r.waveKnown ? rng(dayWaves,1)+" m" : "n. v."}</b><span>Welle · Einzelwerte ↗</span></summary><div class="wave-range-panel"><div class="region">Stündliche Wellenhöhe je Modell. Best Match wird für Anzeige, Filter und Bewertung bevorzugt. DWD EWAM (~5 km) dient nur als Ersatz, wenn Best Match keinen Wert liefert.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wellenhöhe</th><th>Verwendet</th></tr></thead><tbody>${waveRows}</tbody></table></div></div></details>
-      <div class="metric"><b>${fmt(dayWinds.length ? dayWinds.reduce((a,b)=>a+b,0)/dayWinds.length : NaN)} kn${r.waveKnown ? " · "+fmt(r.meanWave)+" m" : ""}</b><span>Ø Wind${r.waveKnown ? " · Welle" : ""}</span></div>
+      <details class="metric metric-wind-details" style="${windBoxStyle(dayWinds)}"><summary><b>${windRange(dayWinds)}<small class="u">kn</small></b><span>Wind · Einzelwerte ↗</span></summary><div class="wind-range-panel"><div class="region">Die Spanne basiert auf denselben stündlichen Modell-Medianwerten wie die Stundenleiste. „Stundenanzeige“ markiert das Modell, dessen Wert dort verwendet wird.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wind</th><th>Böen</th><th>Richtung</th></tr></thead><tbody>${windRows}</tbody></table></div></div></details>
+      <div class="metric win-box"><b>${winMain}<small class="u">Uhr</small></b><span>Bestes Fenster</span>${winMore ? `<small>auch ${winMore}</small>` : ""}</div>
+      <details class="metric metric-wave-details"><summary><b>${r.waveKnown ? rng(dayWaves,1)+'<small class="u">m</small>' : "n. v."}</b><span>Welle · Einzelwerte ↗</span></summary><div class="wave-range-panel"><div class="region">Stündliche Wellenhöhe je Modell. Best Match wird für Anzeige, Filter und Bewertung bevorzugt. DWD EWAM (~5 km) dient nur als Ersatz, wenn Best Match keinen Wert liefert.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wellenhöhe</th><th>Verwendet</th></tr></thead><tbody>${waveRows}</tbody></table></div></div></details>
+      <div class="metric"><b>${fmt(dayWinds.length ? dayWinds.reduce((a,b)=>a+b,0)/dayWinds.length : NaN)}<small class="u">kn</small>${r.waveKnown ? " · "+fmt(r.meanWave)+'<small class="u">m</small>' : ""}</b><span>Ø Wind${r.waveKnown ? " · Welle" : ""}</span></div>
     </div>
     <div class="edit-dir"><span>Hauptwindrichtung: <b>${esc(spot.mainDir && spot.mainDir!=="-" ? spot.mainDir : "–")}</b></span>${$("devmode").checked ? `<button type="button" class="dir-edit-toggle" onclick="toggleMainDirEdit('${jsq(spot.name)}')">${editingMainDirs.has(spot.name) ? "Fertig" : "Bearbeiten"}</button>` : ""}</div>
     ${$("devmode").checked && editingMainDirs.has(spot.name) ? dirEditorHtml(spot) : ""}
@@ -2447,7 +2450,7 @@ renderModelControls();
 syncModelControls();
 $("devmode").addEventListener("change", () => { syncModelControls(); if(lastResults && lastFilters) run().catch(e=>{$("status").textContent="Fehler: "+(e.message||e);}); });
 $("reload").addEventListener("click", () => { run(true).catch(e => { $("status").textContent = "Fehler: " + (e && e.message || e); }); });
-$("apply").addEventListener("click", () => { const fd = document.querySelector("details.fold"); if(fd) fd.open = false; run().catch(e => { $("status").textContent = "Fehler: " + (e && e.message || e); }); });
+$("apply").addEventListener("click", () => { const fd = document.querySelector("details.fold"); if(fd) fd.open = false; run().then(() => { const c = document.querySelector("#cards .spot"); if(c) c.scrollIntoView({behavior:"smooth", block:"start"}); }).catch(e => { $("status").textContent = "Fehler: " + (e && e.message || e); }); });
 window.addEventListener("error", e => { try{ $("status").textContent = "Skriptfehler: " + e.message + (e.lineno ? " (Zeile "+e.lineno+")" : ""); }catch(x){} });
 window.addEventListener("unhandledrejection", e => { try{ $("status").textContent = "Fehler: " + (e.reason && e.reason.message || e.reason); }catch(x){} });
 
