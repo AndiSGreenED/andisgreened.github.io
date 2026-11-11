@@ -1,3 +1,21 @@
 {
- "changes": {}
+ "changes": {
+  "Kühlungsborn": {
+   "dirs": [
+    "ONO",
+    "O",
+    "W",
+    "WNW"
+   ],
+   "mainDir": "WNW",
+   "waveStar": {
+    "label": "Beste Welle",
+    "min": 281.25,
+    "max": 303.75,
+    "display": "WNW"
+   },
+   "at": "2026-11-11T11:19:37.575Z"
+  }
+ },
+ "updated": "2026-11-11T11:19:37.575Z"
 }
