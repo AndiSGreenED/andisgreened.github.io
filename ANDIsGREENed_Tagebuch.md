@@ -2,9 +2,17 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.8.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.9.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.9.0
+- **Spotkarte:** „Bester Wind“ entfällt (steht in der Stundenleiste). Kästen: Wind (Farbverlauf wie die Stundenleiste, von schwächster zu stärkster Stunde) · **Bestes Fenster** (gleiches Fenster wie in der Stundenleiste hervorgehoben, weitere Fenster klein „auch …“) · Welle · Ø Wind und Welle. Die separate Zeile mit Zeitfenstern entfällt.
+- **Windrose unter den Punkten:** 16 Sektoren, passende Richtungen hellgrün, beste kräftig grün, Wellenstern gelb, Wind im besten Fenster als roter Strich bzw. rotes Tortenstück, wenn er dreht.
+- **Region einzeilig:** abgekürzt (z. B. „Meckl. Ostseeküste“, Länderzusätze als „(NL)“, „(DK)“), sonst mit „…“.
+- **Stern mit Freitext:** Im Richtungs-Editor erscheint bei gesetztem Stern ein Textfeld (z. B. „beste Welle bei WNW“).
+- **Suchen:** Knopf heißt „Suchen“, „Hinweise & Datenquellen“ klappt beim Suchen zu, Hinweis „Bedingungen einstellen und vergleichen“ entfällt.
+- **Hinweise & Datenquellen aufgeräumt:** einklappbar: Relevante Windmodelle (mit Google-Schlüssel, nur wenn Google angehakt), Windfinder-App, Eigene Spots, Webcam, Spots sichern, Änderungen verteilen, Datenquellen und Infos. Bereich „Wellenstern einem Spot hinzufügen“ entfällt (auf der Karte bearbeitbar). Google wird nur abgefragt, wenn als relevantes Modell angehakt. Ganz unten eine Zeile: Version · Datenschutz · Wetterdaten Open-Meteo (CC BY 4.0, Namensnennung nötig), DWD/Bright Sky.
 
 ## 5.8.1
 - Zählzeile kurz und einzeilig: „36 von 76 Spots passen“.

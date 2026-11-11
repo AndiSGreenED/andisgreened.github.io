@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.8.1</title>
+<title>ANDIsGREENed 5.9.0</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -356,6 +356,18 @@ details.statusbox .warn{color:#ffcf70}
 .resultsHead .count{white-space:nowrap}
 #status .warnline{color:#ffcf70;display:block;margin-top:4px}
 details.statusbox #status{margin:6px 0 0}
+/* 5.9.0: Karte und Hinweise */
+.spotTop>div:first-child{min-width:0;flex:1}
+.spot .region.area{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spotRight{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex:0 0 auto}
+.rose{width:74px;height:74px;display:block}
+.metric.win-box{border:1px solid #c9a84c}
+.metric.win-box small{display:block;color:#9fb5bf;font-size:.72rem;margin-top:2px}
+details.sub{margin:10px 0;border:1px solid #2c4752;border-radius:10px;padding:6px 10px}
+details.sub>summary{cursor:pointer;font-weight:700;color:#cfe3ea;padding:4px 0}
+details.sub[open]>summary{margin-bottom:6px}
+.note.legal{margin-top:14px;font-size:.78rem}
+.dir-editor-tools input.star-text{flex:1 1 100%;margin-top:4px}
 /* 5.8.0: Richtungs-Editor */
 .dir-editor{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
 .dir-editor button{min-width:46px;padding:6px 6px;font-size:.8rem;border-radius:8px;border:1px solid #3c6470;background:#14252c;color:#6c8590;font-weight:600}
@@ -405,32 +417,35 @@ details.statusbox #status{margin:6px 0 0}
   </select>
   <button type="button" id="loc" style="width:100%;margin-top:12px;font-size:.85rem;background:#29414c;color:#edf4f7;min-height:44px">📍 Meinen Standort verwenden</button>
   <p class="note" id="locnote" style="margin-top:6px">Standort: Lübeck (Standard)</p>
-  <button class="primary" id="apply">Live-Daten laden und vergleichen</button>
+  <button class="primary" id="apply">Suchen</button>
   <button type="button" id="reload" style="width:100%;margin-top:8px;background:#29414c;color:#edf4f7;min-height:40px;font-size:.85rem">Neu laden (Speicher leeren)</button>
   <details class="fold"><summary>Hinweise &amp; Datenquellen</summary>
-  <p class="note" id="appver" style="margin-top:6px"></p>
-  <p class="note" style="margin-top:2px"><a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a></p>
-  <label for="googleApiKey">Google Weather API-Schlüssel (optional)</label>
-  <input id="googleApiKey" type="password" autocomplete="off" placeholder="API-Schlüssel für Google-Wetterdaten">
-  <p class="note" style="margin:4px 0 10px">Der Schlüssel wird lokal in diesem Browser auf diesem Gerät gespeichert. Google-Stundenwerte werden weiterhin abgerufen und in Details angezeigt; für Karte und Ranking zählt das Modell nur, wenn es im Dev-Modus aktiviert ist.</p>
   <label style="display:flex;gap:8px;align-items:center"><input id="devmode" type="checkbox" style="width:auto"> Dev-Modus: Score-Berechnung anzeigen</label>
-  <div id="model-controls" hidden style="margin:8px 0 12px;padding:10px;border:1px solid #35545f;border-radius:10px">
-    <strong style="font-size:.85rem">Relevante Windmodelle</strong>
-    <p class="note" style="margin:4px 0 8px">Alle Modelle werden weiterhin abgerufen und in den Details angezeigt. Aktiviere/deaktiviere sie direkt im Modellvergleich der Spotkarte: Nur aktive Modelle beeinflussen die Kartenwerte und das Ranking. Die Auswahl bleibt auf diesem Gerät gespeichert.</p>
-    <div id="model-checkboxes" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px"></div>
-  </div>
   <label style="display:flex;gap:8px;align-items:center"><input id="usedir" type="checkbox" checked style="width:auto"> Spot-Windrichtungen berücksichtigen</label>
   <label for="placesearch">Oder Ort suchen</label>
   <input id="placesearch" type="search" placeholder="z. B. Travemünde oder Google-Maps-Link" autocomplete="off" enterkeyhint="search">
+  <div id="placeresults" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
+  <div id="model-controls" hidden>
+  <details class="sub"><summary>Relevante Windmodelle</summary>
+    <p class="note" style="margin:4px 0 8px">Alle Modelle werden weiterhin abgerufen und in den Details angezeigt. Aktiviere/deaktiviere sie direkt im Modellvergleich der Spotkarte: Nur aktive Modelle beeinflussen die Kartenwerte und das Ranking. Die Auswahl bleibt auf diesem Gerät gespeichert.</p>
+    <div id="model-checkboxes" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px"></div>
+  <div id="google-key-box">
+  <label for="googleApiKey">Google Weather API-Schlüssel</label>
+  <input id="googleApiKey" type="password" autocomplete="off" placeholder="API-Schlüssel für Google-Wetterdaten">
+  <p class="note" style="margin:4px 0 10px">Der Schlüssel wird lokal in diesem Browser auf diesem Gerät gespeichert. Google-Stundenwerte werden weiterhin abgerufen und in Details angezeigt; für Karte und Ranking zählt das Modell nur, wenn es im Dev-Modus aktiviert ist.</p>
+  </div>
+  </details>
+  </div>
+  <details class="sub"><summary>Windfinder-App (Android)</summary>
   <label for="wfpkg">Windfinder-App (Android)</label>
   <select id="wfpkg">
     <option value="com.studioeleven.windfinder">Play-Store-Version (kostenlos / Plus)</option>
     <option value="com.studioeleven.windfinderpaid">Alte Pro-Version</option>
     <option value="">Automatisch (Systemauswahl)</option>
   </select>
-  <div id="placeresults" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
+  </details>
   <div id="spotadmin" hidden>
-    <label>Eigene Spots hinzufügen (Dev)</label>
+  <details class="sub"><summary>Eigene Spots hinzufügen</summary>
     <input id="ns-name" type="text" placeholder="Name, z. B. Kägsdorf Ost" autocomplete="off">
     <input id="ns-area" type="text" placeholder="Region, z. B. Mecklenburgische Ostseeküste" autocomplete="off" style="margin-top:6px">
     <label for="ns-maps">Adresse, Ort, Google-Maps-Link oder Koordinaten</label>
@@ -446,16 +461,9 @@ details.statusbox #status{margin:6px 0 0}
     <input id="ns-wf" type="text" placeholder="Windfinder-Name (optional), z. B. kaegsdorf" autocomplete="off" style="margin-top:8px">
     <button class="primary" type="button" id="ns-add">Spot hinzufügen</button>
     <div id="ns-list"></div>
-    <label for="ns-ws-spot">Wellenstern einem Spot hinzufügen</label>
-    <input id="ns-ws-spot" list="ns-cam-names" type="text" placeholder="Spot-Name (aus der Liste wählen)" autocomplete="off">
-    <input id="ns-ws-label" type="text" value="Beste Welle" maxlength="40" style="margin-top:6px" aria-label="Bezeichnung">
-    <select id="ns-ws-dir" style="margin-top:6px" aria-label="Himmelsrichtung"><option value="">Himmelsrichtung wählen (setzt Von/Bis) …</option></select>
-    <div class="grid2" style="margin-top:6px"><input id="ns-ws-min" type="text" inputmode="decimal" placeholder="Von Grad, z. B. 290"><input id="ns-ws-max" type="text" inputmode="decimal" placeholder="Bis Grad, z. B. 300"></div>
-    <div class="grid2" style="margin-top:6px">
-      <button type="button" id="ns-ws-save" style="background:#29414c;color:#edf4f7;min-height:40px;font-size:.85rem">Wellenstern speichern</button>
-      <button type="button" id="ns-ws-clear" style="background:#29414c;color:#edf4f7;min-height:40px;font-size:.85rem">Wellenstern entfernen</button>
-    </div>
-    <label for="ns-cam-spot">Webcam-Link einem Spot zuordnen</label>
+  </details>
+  <details class="sub"><summary>Webcam-Link zuordnen</summary>
+    <label for="ns-cam-spot">Spot</label>
     <input id="ns-cam-spot" list="ns-cam-names" type="text" placeholder="Spot-Name (aus der Liste wählen)" autocomplete="off">
     <datalist id="ns-cam-names"></datalist>
     <input id="ns-cam-url" type="text" inputmode="url" placeholder="https://… (Link der Webcam-Seite)" autocomplete="off" style="margin-top:6px">
@@ -463,7 +471,9 @@ details.statusbox #status{margin:6px 0 0}
       <button type="button" id="ns-cam-save" style="background:#29414c;color:#edf4f7;min-height:40px;font-size:.85rem">Webcam speichern</button>
       <button type="button" id="ns-cam-clear" style="background:#29414c;color:#edf4f7;min-height:40px;font-size:.85rem">Webcam entfernen</button>
     </div>
-    <label for="ns-json">Spots sichern und übertragen</label>
+    <p class="note sec-note"></p>
+  </details>
+  <details class="sub"><summary>Spots sichern und übertragen</summary>
     <select id="ns-scope"><option value="all">Alle Spots (inkl. deiner Änderungen)</option><option value="custom">Nur eigene Spots</option></select>
     <label style="display:flex;gap:8px;align-items:center"><input id="ns-update" type="checkbox" checked style="width:auto"> Beim Import vorhandene Spots aktualisieren</label>
     <textarea id="ns-json" rows="4" style="width:100%;background:#0c1b24;color:#f4f8fa;border:1px solid #3c5965;border-radius:10px;padding:8px;font:inherit;font-size:.75rem" placeholder="Export zeigt die Liste, zum Importieren hier einfügen"></textarea>
@@ -477,25 +487,30 @@ details.statusbox #status{margin:6px 0 0}
     </div>
     <button type="button" id="ns-share" style="width:100%;margin-top:6px;background:#29414c;color:#edf4f7;min-height:40px;font-size:.85rem">Teilen (z. B. per Messenger)</button>
     <input id="ns-file" type="file" accept=".json,application/json" hidden>
-    <h3 style="margin:16px 0 4px;font-size:1rem">Spot-Änderungen an alle verteilen</h3>
+    <p class="note sec-note"></p>
+  </details>
+  <details class="sub"><summary>Spot-Änderungen an alle verteilen</summary>
     <p class="note" style="margin:0 0 6px">Richtungen und Sterne, die du auf den Karten änderst (Dev-Modus → „Bearbeiten“), werden hier ins Repository gespeichert. Alle anderen werden beim nächsten Öffnen gefragt, ob sie die Änderungen übernehmen.</p>
     <label for="gh-token">GitHub-Schlüssel (nur auf diesem Gerät gespeichert)</label>
     <input id="gh-token" type="password" autocomplete="off" placeholder="github_pat_…">
     <button type="button" id="gh-publish" style="width:100%;margin-top:6px;min-height:42px">Änderungen ins Repository speichern</button>
     <div class="note" id="gh-note"></div>
+  </details>
   </div>
+  <details class="sub"><summary>Datenquellen und Infos</summary>
   <p class="note">Es werden nur Spots mit mindestens einer passenden Stunde angezeigt. Ranking-Score = Summe stündlicher Beiträge aus Windfaktor × Wellenfaktor × Richtungsfaktor. Die Hauptwindrichtung erhält ×2 nur bei mindestens 3 zusammenhängenden Stunden im selben Modell. Richtungen mit Wellenstern ★ erhalten zusätzlich ×2.</p>
   <p class="note">Datenquellen (kostenlos, ohne Key): Open-Meteo (ICON, GFS, ECMWF an den Spotkoordinaten; zusätzlich ICON-D2, DMI-Harmonie und ICON See auf der nächsten Meereszelle, soweit verfügbar) sowie DWD-Stationsprognose über Bright Sky (nur Deutschland). Zusatzquellen gelten teils nur für heute bis ca. +2 Tage (DWD: gewählter Tag). Google Weather API (optional, mit eigenem Schlüssel) liefert stündliche Windwerte; der Schlüssel wird lokal im Browser gespeichert. Modelle können im Dev-Modus einzeln aktiviert werden.</p>
-  <p class="footer">Wind in Knoten, Wellenhöhe in Metern, Wellenperiode in Sekunden. Windmodelle: ICON, GFS, ECMWF, ICON-D2, DMI, ICON See (Open-Meteo), DWD (Bright Sky) und Google Weather API (mit eigenem Schlüssel). Wellendaten: Open-Meteo Marine.
-    <a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener">Nutzungsbedingungen</a></p>
+  <p class="footer">Wind in Knoten, Wellenhöhe in Metern, Wellenperiode in Sekunden. Windmodelle: ICON, GFS, ECMWF, ICON-D2, DMI, ICON See (Open-Meteo), DWD (Bright Sky) und Google Weather API (mit eigenem Schlüssel). Wellendaten: Open-Meteo Marine.</p>
   <button type="button" id="diag" class="mt">Verbindung prüfen</button>
   <div class="note" id="diagout"></div>
+  </details>
+  <p class="note legal"><span id="appver"></span> · <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a> · Wetterdaten: <a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0), DWD/Bright Sky</p>
   </details>
 </section>
 <section>
   <div class="resultsHead"><span class="count" id="count">Noch nicht geladen</span></div>
-  <details class="statusbox plain" id="statusbox"><summary class="statusline" id="statussum">Bedingungen einstellen und vergleichen.</summary>
-  <p class="statusline" id="status" role="status">Bedingungen einstellen und vergleichen.</p></details>
+  <details class="statusbox plain" id="statusbox" hidden><summary class="statusline" id="statussum"></summary>
+  <p class="statusline" id="status" role="status"></p></details>
   <div class="cards" id="cards"><div class="empty">Noch keine Live-Daten geladen.</div></div>
 
 </section>
@@ -1053,6 +1068,41 @@ try { dirtySpots = new Set(JSON.parse(localStorage.getItem(DIRTY_KEY)||"[]")); }
 try { seenUpdates = JSON.parse(localStorage.getItem(SEEN_KEY)||"{}") || {}; } catch(e) {}
 const jsq = s => esc(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'");
 const starDirsOf = sp => sp.waveStar ? DIR16.filter((d,i) => angleInRange(i*22.5, sp.waveStar.min, sp.waveStar.max)) : [];
+const WIND_LEVEL_COLORS = [["#0e202a","#2c4752"],["#17465a","#28728b"],["#185b69","#2b9aa6"],["#376044","#7aa64d"],["#77602a","#c4a342"],["#85472d","#d87948"],["#7b3039","#d75b68"]];
+const windLevelOf = kn => !Number.isFinite(kn) || kn < 20 ? 0 : Math.min(6, 1 + Math.floor((kn-20)/4));
+function windBoxStyle(winds){
+  if(!winds.length) return "";
+  const a = WIND_LEVEL_COLORS[windLevelOf(Math.min(...winds))], b = WIND_LEVEL_COLORS[windLevelOf(Math.max(...winds))];
+  return `background:linear-gradient(90deg,${a[0]},${b[0]});border:1px solid ${b[1]}`;
+}
+const AREA_SHORT = [[/,\s*(Deutschland|Germany)$/,""],[/,\s*(Niederlande|Netherlands)$/," (NL)"],[/,\s*Dänemark$/," (DK)"],[/,\s*Canary Islands$/," (Kan.)"],[/,\s*Griechenland$/," (GR)"],[/,\s*South Africa$/," (ZA)"],[/,\s*Frankreich$/," (F)"],
+  [/Mecklenburgische/,"Meckl."],[/(.+),\s*Schleswig-Holstein/,"$1, SH"],[/Nordrhein-Westfalen/,"NRW"],[/Saxony-Anhalt/,"Sachsen-Anh."],[/Rhineland-Palatinate/,"Rheinl.-Pf."],[/Nordjütland/,"Nordjütl."],[/Dominican Republic/,"DOM"],[/Trinidad and Tobago/,"TT"],[/\s*\(Dakhla-Oued Ed Dahab\)/,""],[/Dänische Nordseeküste/,"DK-Nordsee"]];
+function shortArea(a){ let s = String(a||""); AREA_SHORT.forEach(([re,to]) => { s = s.replace(re,to); }); return s; }
+function windRoseSvg(sp, degs){
+  // Windrose: möglich schwach, beste kräftig, Stern sehr kräftig; roter Bereich = Wind im besten Fenster
+  const c = 50, R = 46, st = new Set(starDirsOf(sp));
+  const pt = (deg, r) => { const a = (deg - 90) * Math.PI / 180; return [(c + r*Math.cos(a)).toFixed(2), (c + r*Math.sin(a)).toFixed(2)]; };
+  const wedge = (from, to, r) => { const [x1,y1] = pt(from, r), [x2,y2] = pt(to, r), large = ((to-from+360)%360) > 180 ? 1 : 0; return `M${c},${c} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z`; };
+  const secs = DIR16.map((d,i) => {
+    const fill = st.has(d) && sp.dirs.includes(d) ? "#ffcf40" : sp.mainDir === d ? "#3fd0a4" : sp.dirs.includes(d) ? "rgba(115,216,208,.38)" : "#132a33";
+    return `<path d="${wedge(i*22.5-11.25, i*22.5+11.25, R)}" fill="${fill}" stroke="#0b1720" stroke-width="1"/>`;
+  }).join("");
+  let wind = "";
+  if(degs.length){
+    const s = [...degs].map(x => ((x%360)+360)%360).sort((a,b) => a-b);
+    let gap = -1, at = 0;
+    s.forEach((x,i) => { const nx = i+1 < s.length ? s[i+1] : s[0]+360, g = nx - x; if(g > gap){ gap = g; at = i; } });
+    const from = s.length > 1 ? s[(at+1) % s.length] : s[0], span = s.length > 1 ? 360 - gap : 0;
+    wind = span < 8 ? (() => { const [x,y] = pt(from + span/2, R+2); return `<line x1="${c}" y1="${c}" x2="${x}" y2="${y}" stroke="#ff3b3b" stroke-width="4" stroke-linecap="round"/>`; })()
+      : `<path d="${wedge(from, from+span, R+2)}" fill="rgba(255,59,59,.45)" stroke="#ff3b3b" stroke-width="2.5"/>`;
+  }
+  const n = pt(0, R-7);
+  return `<svg class="rose" viewBox="0 0 100 100" role="img" aria-label="Windrose: Spot-Richtungen und Wind im besten Fenster"><title>Grün: passende Richtungen (kräftig = beste), Gelb: Wellenstern, Rot: Wind im besten Fenster</title><circle cx="50" cy="50" r="49.5" fill="#0b1720"/>${secs}${wind}<circle cx="50" cy="50" r="3" fill="#edf4f7"/><text x="${n[0]}" y="${Number(n[1])+3}" text-anchor="middle" font-size="9" font-weight="800" fill="#edf4f7" stroke="#0b1720" stroke-width="2.5" paint-order="stroke">N</text></svg>`;
+}
+function setStarText(name, text){
+  const sp = SPOTS.find(x => x.name === name); if(!sp || !sp.waveStar) return;
+  applySpotEdit(sp, sp.dirs, sp.mainDir, {...sp.waveStar, label: (String(text||"").trim() || "Beste Welle").slice(0,60)}); repaintSoft();
+}
 function dirsLabel(sp){
   const st = starDirsOf(sp).filter(d => sp.dirs.includes(d));
   return [...st.map(d => "★"+d), ...sp.dirs.filter(d => !st.includes(d))].join(", ");
@@ -1074,7 +1124,7 @@ function dirEditorHtml(sp){
     const cls = [sp.mainDir===d ? "best" : sp.dirs.includes(d) ? "on" : "off", st.has(d) ? "star" : ""].join(" ").trim();
     return `<button type="button" class="${cls}" onclick="cycleDir('${n}','${d}')" aria-label="Richtung ${d}">${d}</button>`;
   }).join("");
-  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: möglich → beste → aus → möglich"}</span></div>`;
+  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: möglich → beste → aus → möglich"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div>`;
 }
 function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); else starMode.add(name); repaintSoft(); }
 function repaintSoft(){
@@ -1600,7 +1650,7 @@ async function fetchExtras(spots,date,out){
 }
 
 async function fetchGoogleWeatherForSpots(spots,date,byKey){
-  const key=(($("googleApiKey")?.value||"").trim() || localStorage.getItem("andisgreened-google-weather-key") || "").trim();
+  const key=getActiveModels().has("Google") ? (($("googleApiKey")?.value||"").trim() || localStorage.getItem("andisgreened-google-weather-key") || "").trim() : "";
   googleApiStatus = "";
   if(!key) return;
   const keyOf=x=>`${x.lat},${x.lon}`;
@@ -1760,7 +1810,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.8.1";
+const APP_VERSION = "5.9.0";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -1777,6 +1827,7 @@ function renderModelControls(){
   box.querySelectorAll("input[data-model]").forEach(input=>input.addEventListener("change",()=>{
     const selected=[...box.querySelectorAll("input[data-model]:checked")].map(x=>x.dataset.model);
     try{localStorage.setItem(MODEL_PREF_KEY,JSON.stringify(selected));}catch(e){}
+    syncModelControls();
     if(lastResults && lastFilters) run().catch(e=>{$("status").textContent="Fehler: "+(e.message||e);});
   }));
 }
@@ -1793,7 +1844,7 @@ function toggleModelActive(label,spotName){
   rerunAfterModelChange();
 }
 function resetSpotModels(spotName){ delete spotModels[spotName]; saveSpotModels(); rerunAfterModelChange(); }
-function syncModelControls(){ $("model-controls").hidden=!$("devmode").checked; }
+function syncModelControls(){ $("model-controls").hidden=!$("devmode").checked; const g=$("google-key-box"); if(g) g.hidden=!getActiveModels().has("Google"); }
 
 function getFilters(){
   const f = {date:$("date").value, startHour:$("startHour").value==="" ? null : Number($("startHour").value), usedir:$("usedir").checked};
@@ -1923,7 +1974,12 @@ function card(spot,r,f){
   const status = r.peak
     ? `<details class="peak-details"><summary>Bester Wind: <b>${fmt(r.peak.wind)} kn</b> aus ${compass(r.peak.dir)} um ${pad(r.peak.hour)}:00 Uhr</summary><div class="region">Der Spitzenwert stammt aus Modell <b>${esc(r.peak.modelLabel||"nicht zugeordnet")}</b> und ist der prognostizierte mittlere Wind, keine Böe. Modellwerte für diese Stunde:</div><div style="overflow-x:auto"><table><thead><tr><th>Modell</th><th>Wind</th><th>Böen</th><th>Richtung</th></tr></thead><tbody>${peakModels || "<tr><td colspan=\"4\">Keine Einzelmodellwerte verfügbar.</td></tr>"}</tbody></table></div></details>`
     : "Kein passendes Stundenfenster für diese Filter.";
-  const wins = r.windows.slice(0,3).map(w => `<span class="win">${pad(w.start)}–${pad(w.end)} Uhr</span>`).join("");
+  // 5.9.0: bestes Zeitfenster als eigener Kasten, Windrose mit Wind des besten Fensters
+  const bestArr = [...bestHours].sort((a,b) => a-b);
+  const winMain = bestArr.length ? `${pad(bestArr[0])}–${pad((bestArr[bestArr.length-1]+1)%24)}` : (best ? `${pad(best.start)}–${pad(best.end)}` : "–");
+  const winMore = r.windows.filter(w => !bestArr.length || w.end <= bestArr[0] || w.start > bestArr[bestArr.length-1]).slice(0,2).map(w => `${pad(w.start)}–${pad(w.end)}`).join(", ");
+  const roseHours = bestArr.length ? r.day.filter(x => bestHours.has(x.hour)) : r.good;
+  const roseSvg = windRoseSvg(spot, roseHours.map(x => hourWindModel(x)).filter(m => m && Number.isFinite(m.dir)).map(m => m.dir));
   const modelSummary = Object.entries(r.modelStats||{}).map(([name,m])=>{
     const style=`${m.active?"":"opacity:.45;text-decoration:line-through;"}${$("devmode").checked?"cursor:pointer;border:1px solid #45616b;background:#14252c;color:inherit;padding:4px 7px;border-radius:7px;":""}`;
     const label=`${esc(name)}: ${m.good} h · ${fmt(m.min)}–${fmt(m.max)} kn${m.active?"":" · aus"}`;
@@ -1965,19 +2021,17 @@ function card(spot,r,f){
   }).join("");
   const rng = (v,d=0) => v.length ? (Math.round(Math.min(...v)*10**d)/10**d===Math.round(Math.max(...v)*10**d)/10**d ? fmt(v[0],d) : fmt(Math.min(...v),d)+"–"+fmt(Math.max(...v),d)) : "n. v.";
   return `<article class="spot">
-    <div class="spotTop"><div><div class="spot-title-row"><h3><a class="spot-map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${spot.lat},${spot.lon}`)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(spot.name)} in Google Maps öffnen">${esc(spot.name)}</a></h3><a class="webcam-link${spot.cam ? " set" : ""}" href="${esc(webcamUrl(spot))}" target="_blank" rel="noopener noreferrer" aria-label="${spot.cam ? "Webcam von" : "Webcams suchen für"} ${esc(spot.name)} öffnen" title="${spot.cam ? "Eigene Webcam öffnen" : "Webcams suchen (Google)"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10l6-3v10l-6-3"/><rect x="3" y="6" width="11" height="12" rx="2"/><circle cx="8.5" cy="12" r="2.2"/></svg></a></div><div class="region">${esc(spot.area)} · ${km} km</div>${hasBestWaveDirection(spot,r,f) ? `<div class="wave-star">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)}</div>` : ""}</div>${badge}</div>
+    <div class="spotTop"><div><div class="spot-title-row"><h3><a class="spot-map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${spot.lat},${spot.lon}`)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(spot.name)} in Google Maps öffnen">${esc(spot.name)}</a></h3><a class="webcam-link${spot.cam ? " set" : ""}" href="${esc(webcamUrl(spot))}" target="_blank" rel="noopener noreferrer" aria-label="${spot.cam ? "Webcam von" : "Webcams suchen für"} ${esc(spot.name)} öffnen" title="${spot.cam ? "Eigene Webcam öffnen" : "Webcams suchen (Google)"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10l6-3v10l-6-3"/><rect x="3" y="6" width="11" height="12" rx="2"/><circle cx="8.5" cy="12" r="2.2"/></svg></a></div><div class="region area" title="${esc(spot.area)}">${esc(shortArea(spot.area))} · ${km} km</div>${hasBestWaveDirection(spot,r,f) ? `<div class="wave-star">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)}</div>` : ""}</div><div class="spotRight">${badge}${roseSvg}</div></div>
     <div class="metrics">
-      <details class="metric metric-wind-details"><summary><b>${windRange(dayWinds)} kn</b><span>Wind · Einzelwerte ↗</span></summary><div class="wind-range-panel"><div class="region">Die Spanne basiert auf denselben stündlichen Modell-Medianwerten wie die Stundenleiste. „Stundenanzeige“ markiert das Modell, dessen Wert dort verwendet wird.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wind</th><th>Böen</th><th>Richtung</th></tr></thead><tbody>${windRows}</tbody></table></div></div></details>
+      <details class="metric metric-wind-details" style="${windBoxStyle(dayWinds)}"><summary><b>${windRange(dayWinds)} kn</b><span>Wind · Einzelwerte ↗</span></summary><div class="wind-range-panel"><div class="region">Die Spanne basiert auf denselben stündlichen Modell-Medianwerten wie die Stundenleiste. „Stundenanzeige“ markiert das Modell, dessen Wert dort verwendet wird.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wind</th><th>Böen</th><th>Richtung</th></tr></thead><tbody>${windRows}</tbody></table></div></div></details>
+      <div class="metric win-box"><b>${winMain} Uhr</b><span>Bestes Fenster</span>${winMore ? `<small>auch ${winMore}</small>` : ""}</div>
       <details class="metric metric-wave-details"><summary><b>${r.waveKnown ? rng(dayWaves,1)+" m" : "n. v."}</b><span>Welle · Einzelwerte ↗</span></summary><div class="wave-range-panel"><div class="region">Stündliche Wellenhöhe je Modell. Best Match wird für Anzeige, Filter und Bewertung bevorzugt. DWD EWAM (~5 km) dient nur als Ersatz, wenn Best Match keinen Wert liefert.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wellenhöhe</th><th>Verwendet</th></tr></thead><tbody>${waveRows}</tbody></table></div></div></details>
-      <div class="metric"><b>${fmt(dayWinds.length ? dayWinds.reduce((a,b)=>a+b,0)/dayWinds.length : NaN)} kn</b><span>Ø Wind · Tageslicht</span></div>
-      <div class="metric"><b>${r.waveKnown ? fmt(r.meanWave)+" m" : "n. v."}</b><span>Ø Welle</span></div>
+      <div class="metric"><b>${fmt(dayWinds.length ? dayWinds.reduce((a,b)=>a+b,0)/dayWinds.length : NaN)} kn${r.waveKnown ? " · "+fmt(r.meanWave)+" m" : ""}</b><span>Ø Wind${r.waveKnown ? " · Welle" : ""}</span></div>
     </div>
-    <div class="status">${status}</div>
     <div class="edit-dir"><span>Hauptwindrichtung: <b>${esc(spot.mainDir && spot.mainDir!=="-" ? spot.mainDir : "–")}</b></span>${$("devmode").checked ? `<button type="button" class="dir-edit-toggle" onclick="toggleMainDirEdit('${jsq(spot.name)}')">${editingMainDirs.has(spot.name) ? "Fertig" : "Bearbeiten"}</button>` : ""}</div>
     ${$("devmode").checked && editingMainDirs.has(spot.name) ? dirEditorHtml(spot) : ""}
 
     ${!f.usedir ? `<div class="warn dirwarn">⚠ Windrichtung wird NICHT berücksichtigt. ${spot.verified ? "Geprüfte Richtungen" : "Nicht unabhängig geprüfte Richtungen"}: ${esc(dirsLabel(spot))}</div>` : ""}
-    <div>${wins}</div>
     ${hourStrip}
     <details class="more">
       <summary>Details${hasWarn ? ' <span class="warnmark">⚠</span>' : ""}</summary>
@@ -2049,6 +2103,7 @@ async function run(force=false){
 // 5.6.0: Datenstand eingeklappt; Warnungen (⚠) stehen in der Kurzzeile
 function syncStatusSummary(){
   const t = $("status").textContent || "", box = $("statusbox"), sum = $("statussum");
+  box.hidden = !t.trim();
   const parts = t.split(" · ");
   if(!/^Datenstand/.test(parts[0])){ box.classList.add("plain"); box.open = false; sum.textContent = t; return; }
   box.classList.remove("plain");
@@ -2062,6 +2117,7 @@ $("gh-publish").addEventListener("click", publishSpotEdits);
 updatePublishButton();
 setTimeout(checkSpotUpdates, 1500);
 document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible") checkSpotUpdates(); });
+new MutationObserver(() => { const t = $("ns-note").textContent; document.querySelectorAll(".sec-note").forEach(x => { x.textContent = t; }); }).observe($("ns-note"), {childList:true, characterData:true, subtree:true});
 new MutationObserver(syncStatusSummary).observe($("status"), {childList:true, characterData:true, subtree:true});
 $("statussum").addEventListener("click", e => { if($("statusbox").classList.contains("plain")) e.preventDefault(); });
 function setHome(lat,lon,label){
@@ -2243,22 +2299,6 @@ function setWaveStar(name, ws){
   else { spotOverrides[sp.name] = {...(spotOverrides[sp.name]||{}), waveStar: ws || null}; try{ localStorage.setItem(OVR_KEY, JSON.stringify(spotOverrides)); }catch(e){} }
   return null;
 }
-{
-  const sel = $("ns-ws-dir"); ALL_DIRS.forEach((d,i) => { const o = document.createElement("option"); o.value = String(i*22.5); o.textContent = `${d} (${i*22.5}°)`; o.dataset.name = d; sel.appendChild(o); });
-  const norm = x => ((x % 360) + 360) % 360, r1 = x => Math.round(x*10)/10;
-  sel.addEventListener("change", () => { if(sel.value === "") return; const deg = Number(sel.value); $("ns-ws-min").value = r1(norm(deg-11.25)); $("ns-ws-max").value = r1(norm(deg+11.25)); });
-  $("ns-ws-spot").addEventListener("change", () => { const sp = SPOTS.find(x => x.name.toLowerCase() === $("ns-ws-spot").value.trim().toLowerCase()); if(sp && sp.waveStar){ $("ns-ws-label").value = sp.waveStar.label; $("ns-ws-min").value = sp.waveStar.min; $("ns-ws-max").value = sp.waveStar.max; $("ns-note").textContent = `Aktueller Wellenstern von „${sp.name}“: ${sp.waveStar.label} ${sp.waveStar.display}.`; } });
-  $("ns-ws-save").addEventListener("click", () => {
-    const n = $("ns-ws-spot").value.trim(), min = Number(String($("ns-ws-min").value).replace(",",".")), max = Number(String($("ns-ws-max").value).replace(",","."));
-    if(!Number.isFinite(min) || !Number.isFinite(max) || $("ns-ws-min").value.trim()==="" || $("ns-ws-max").value.trim()===""){ $("ns-note").textContent = "Bitte Von- und Bis-Grad eintragen oder eine Himmelsrichtung wählen."; return; }
-    const lo = norm(min), hi = norm(max), width = norm(hi - lo), mid = norm(lo + width/2);
-    const opt = $("ns-ws-dir").selectedOptions[0], named = opt && opt.dataset.name && r1(norm(Number($("ns-ws-dir").value)-11.25)) === r1(lo) && r1(norm(Number($("ns-ws-dir").value)+11.25)) === r1(hi);
-    const ws = {label:($("ns-ws-label").value.trim() || "Beste Welle").slice(0,40), min:r1(lo), max:r1(hi), display: named ? opt.dataset.name : `${Math.round(mid)}° ±${Math.round(width/2)}°`};
-    const e = setWaveStar(n, ws);
-    camNote(e, `Wellenstern für „${n}“ gespeichert: ${ws.label} ${ws.display}.`);
-  });
-  $("ns-ws-clear").addEventListener("click", () => { const n = $("ns-ws-spot").value.trim(); camNote(setWaveStar(n, null), `Wellenstern von „${n}“ entfernt.`); });
-}
 const camNote = (e, ok) => { $("ns-note").textContent = e || ok; if(!e && typeof lastResults !== "undefined" && lastResults && lastFilters) paintResults(lastResults,lastErrors,lastSelectedCount,lastFilters); };
 $("ns-cam-save").addEventListener("click", () => { const n = $("ns-cam-spot").value.trim(); if(!$("ns-cam-url").value.trim()){ $("ns-note").textContent = "Bitte einen Webcam-Link eintragen."; return; } camNote(setCam(n, $("ns-cam-url").value), `Webcam für „${n}“ gespeichert. Das Webcam-Symbol der Karte ist jetzt grün.`); if(!$("ns-note").textContent.includes("nicht") && !$("ns-note").textContent.includes("muss")) $("ns-cam-url").value = ""; });
 $("ns-cam-clear").addEventListener("click", () => { const n = $("ns-cam-spot").value.trim(); camNote(setCam(n, ""), `Webcam für „${n}“ entfernt. Das Symbol sucht wieder per Google.`); });
@@ -2404,7 +2444,7 @@ renderModelControls();
 syncModelControls();
 $("devmode").addEventListener("change", () => { syncModelControls(); if(lastResults && lastFilters) run().catch(e=>{$("status").textContent="Fehler: "+(e.message||e);}); });
 $("reload").addEventListener("click", () => { run(true).catch(e => { $("status").textContent = "Fehler: " + (e && e.message || e); }); });
-$("apply").addEventListener("click", () => { run().catch(e => { $("status").textContent = "Fehler: " + (e && e.message || e); }); });
+$("apply").addEventListener("click", () => { const fd = document.querySelector("details.fold"); if(fd) fd.open = false; run().catch(e => { $("status").textContent = "Fehler: " + (e && e.message || e); }); });
 window.addEventListener("error", e => { try{ $("status").textContent = "Skriptfehler: " + e.message + (e.lineno ? " (Zeile "+e.lineno+")" : ""); }catch(x){} });
 window.addEventListener("unhandledrejection", e => { try{ $("status").textContent = "Fehler: " + (e.reason && e.reason.message || e.reason); }catch(x){} });
 
