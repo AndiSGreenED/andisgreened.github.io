@@ -2,9 +2,15 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.9.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.10.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.10.0
+- **Richtungen in vier Stufen** (Ranking-Faktor je Stunde): aus · möglich ×0,5 · gut ×1 · beste ×2 (Hauptwindrichtung, weiter erst ab 3 zusammenhängenden Stunden im selben Modell). Wellenstern zusätzlich ×2. Bisherige Richtungen gelten als „gut“.
+- Editor: Tippen schaltet aus → möglich → gut → beste → aus. „Möglich“ gestrichelt, in der Windrose blass, in Texten „(mögl.)“.
+- Neue Stufe wird gespeichert, veröffentlicht, bei der Übernahme-Nachfrage angezeigt und ist in Export/Import enthalten (`weakDirs`).
+- Alle Kästen der Karte haben einen Rahmen (Fenster-Kasten weiter gold).
 
 ## 5.9.2
 - Nach „Suchen“ scrollt die App automatisch zum ersten Vorschlag.

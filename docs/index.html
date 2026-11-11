@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.9.2</title>
+<title>ANDIsGREENed 5.10.0</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -373,10 +373,13 @@ details.sub[open]>summary{margin-bottom:6px}
 .metric b small.u{font-size:.62em;font-weight:700;margin-left:1px;opacity:.85}
 #cards .spot{scroll-margin-top:8px}
 #cards .metric b{white-space:nowrap}
+#cards .metric{border:1px solid #2c4752}
+#cards .metric.win-box{border-color:#c9a84c}
 .dir-editor-tools input.star-text{flex:1 1 100%;margin-top:4px}
 /* 5.8.0: Richtungs-Editor */
 .dir-editor{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
 .dir-editor button{min-width:46px;padding:6px 6px;font-size:.8rem;border-radius:8px;border:1px solid #3c6470;background:#14252c;color:#6c8590;font-weight:600}
+.dir-editor button.weak{background:#14252c;color:#8fc9bb;border:1px dashed #3f9b84}
 .dir-editor button.on{background:#143b36;color:#a4f0ce;border-color:#3f9b84}
 .dir-editor button.best{background:#ffe7a0;color:#17232a;border-color:#c9a84c;font-weight:900}
 .dir-editor button.star::before{content:"★";margin-right:2px;color:#e0a100}
@@ -504,7 +507,7 @@ details.sub[open]>summary{margin-bottom:6px}
   </details>
   </div>
   <details class="sub"><summary>Datenquellen und Infos</summary>
-  <p class="note">Es werden nur Spots mit mindestens einer passenden Stunde angezeigt. Ranking-Score = Summe stündlicher Beiträge aus Windfaktor × Wellenfaktor × Richtungsfaktor. Die Hauptwindrichtung erhält ×2 nur bei mindestens 3 zusammenhängenden Stunden im selben Modell. Richtungen mit Wellenstern ★ erhalten zusätzlich ×2.</p>
+  <p class="note">Es werden nur Spots mit mindestens einer passenden Stunde angezeigt. Ranking-Score = Summe stündlicher Beiträge aus Windfaktor × Wellenfaktor × Richtungsfaktor. Die Hauptwindrichtung erhält ×2 nur bei mindestens 3 zusammenhängenden Stunden im selben Modell. Richtungen mit Wellenstern ★ erhalten zusätzlich ×2, als „möglich“ markierte Richtungen ×0,5.</p>
   <p class="note">Datenquellen (kostenlos, ohne Key): Open-Meteo (ICON, GFS, ECMWF an den Spotkoordinaten; zusätzlich ICON-D2, DMI-Harmonie und ICON See auf der nächsten Meereszelle, soweit verfügbar) sowie DWD-Stationsprognose über Bright Sky (nur Deutschland). Zusatzquellen gelten teils nur für heute bis ca. +2 Tage (DWD: gewählter Tag). Google Weather API (optional, mit eigenem Schlüssel) liefert stündliche Windwerte; der Schlüssel wird lokal im Browser gespeichert. Modelle können im Dev-Modus einzeln aktiviert werden.</p>
   <p class="footer">Wind in Knoten, Wellenhöhe in Metern, Wellenperiode in Sekunden. Windmodelle: ICON, GFS, ECMWF, ICON-D2, DMI, ICON See (Open-Meteo), DWD (Bright Sky) und Google Weather API (mit eigenem Schlüssel). Wellendaten: Open-Meteo Marine.</p>
   <p class="note legal"><a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a> · Wetterdaten: <a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0), DWD/Bright Sky</p>
@@ -1040,7 +1043,7 @@ let spotOverrides = {};
 try { spotOverrides = JSON.parse(localStorage.getItem(OVR_KEY)||"{}") || {}; } catch(e) {}
 SPOTS.forEach(sp => { const o = spotOverrides[sp.name]; if(o && !sp.custom){
   if(Array.isArray(o.dirs) && o.dirs.length) sp.dirs = o.dirs;
-  ["area","lat","lon","wf","type","dd","waveStar"].forEach(k => { if(o[k] !== undefined) sp[k] = o[k]; }); } });
+  ["area","lat","lon","wf","type","dd","waveStar","weakDirs"].forEach(k => { if(o[k] !== undefined) sp[k] = o[k]; }); } });
 SPOTS.forEach(sp => { sp.mainDir = mainDirs[sp.name] || sp.dirs[0] || ""; });
 // ---- Webcams (5.1.0): eigener Link je Spot, sonst Google-Suche "<Spot> Webcam live" (nie ein toter Link) ----
 const CAM_KEY = "andisgreened-cams-v1";
@@ -1090,7 +1093,8 @@ function windRoseSvg(sp, degs){
   const pt = (deg, r) => { const a = (deg - 90) * Math.PI / 180; return [(c + r*Math.cos(a)).toFixed(2), (c + r*Math.sin(a)).toFixed(2)]; };
   const wedge = (from, to, r) => { const [x1,y1] = pt(from, r), [x2,y2] = pt(to, r), large = ((to-from+360)%360) > 180 ? 1 : 0; return `M${c},${c} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z`; };
   const secs = DIR16.map((d,i) => {
-    const fill = st.has(d) && sp.dirs.includes(d) ? "#ffcf40" : sp.mainDir === d ? "#3fd0a4" : sp.dirs.includes(d) ? "rgba(115,216,208,.38)" : "#132a33";
+    const weak = (sp.weakDirs || []).includes(d) && sp.mainDir !== d;
+    const fill = st.has(d) && sp.dirs.includes(d) ? "#ffcf40" : sp.mainDir === d ? "#3fd0a4" : !sp.dirs.includes(d) ? "#132a33" : weak ? "rgba(115,216,208,.16)" : "rgba(115,216,208,.42)";
     return `<path d="${wedge(i*22.5-11.25, i*22.5+11.25, R)}" fill="${fill}" stroke="#0b1720" stroke-width="1"/>`;
   }).join("");
   let wind = "";
@@ -1103,15 +1107,16 @@ function windRoseSvg(sp, degs){
       : `<path d="${wedge(from, from+span, R+2)}" fill="rgba(255,59,59,.45)" stroke="#ff3b3b" stroke-width="2.5"/>`;
   }
   const n = pt(0, R-7);
-  return `<svg class="rose" viewBox="0 0 100 100" role="img" aria-label="Windrose: Spot-Richtungen und Wind im besten Fenster"><title>Grün: passende Richtungen (kräftig = beste), Gelb: Wellenstern, Rot: Wind im besten Fenster</title><circle cx="50" cy="50" r="49.5" fill="#0b1720"/>${secs}${wind}<circle cx="50" cy="50" r="3" fill="#edf4f7"/><text x="${n[0]}" y="${Number(n[1])+3}" text-anchor="middle" font-size="9" font-weight="800" fill="#edf4f7" stroke="#0b1720" stroke-width="2.5" paint-order="stroke">N</text></svg>`;
+  return `<svg class="rose" viewBox="0 0 100 100" role="img" aria-label="Windrose: Spot-Richtungen und Wind im besten Fenster"><title>Grün: Richtungen (blass = möglich, hell = gut, kräftig = beste), Gelb: Wellenstern, Rot: Wind im besten Fenster</title><circle cx="50" cy="50" r="49.5" fill="#0b1720"/>${secs}${wind}<circle cx="50" cy="50" r="3" fill="#edf4f7"/><text x="${n[0]}" y="${Number(n[1])+3}" text-anchor="middle" font-size="9" font-weight="800" fill="#edf4f7" stroke="#0b1720" stroke-width="2.5" paint-order="stroke">N</text></svg>`;
 }
 function setStarText(name, text){
   const sp = SPOTS.find(x => x.name === name); if(!sp || !sp.waveStar) return;
-  applySpotEdit(sp, sp.dirs, sp.mainDir, {...sp.waveStar, label: (String(text||"").trim() || "Beste Welle").slice(0,60)}); repaintSoft();
+  applySpotEdit(sp, sp.dirs, sp.mainDir, {...sp.waveStar, label: (String(text||"").trim() || "Beste Welle").slice(0,60)}, sp.weakDirs); repaintSoft();
 }
 function dirsLabel(sp){
-  const st = starDirsOf(sp).filter(d => sp.dirs.includes(d));
-  return [...st.map(d => "★"+d), ...sp.dirs.filter(d => !st.includes(d))].join(", ");
+  const st = starDirsOf(sp).filter(d => sp.dirs.includes(d)), weak = new Set(sp.weakDirs || []);
+  const lab = d => d + (weak.has(d) && d !== sp.mainDir ? " (mögl.)" : "");
+  return [...st.map(d => "★"+lab(d)), ...sp.dirs.filter(d => !st.includes(d)).map(lab)].join(", ");
 }
 function starFromDirs(set){
   // zusammenhängender Bereich auf der Windrose -> {min,max}
@@ -1127,10 +1132,11 @@ function starFromDirs(set){
 function dirEditorHtml(sp){
   const st = new Set(starDirsOf(sp)), n = jsq(sp.name);
   const chips = DIR16.map(d => {
-    const cls = [sp.mainDir===d ? "best" : sp.dirs.includes(d) ? "on" : "off", st.has(d) ? "star" : ""].join(" ").trim();
+    const weak = (sp.weakDirs || []).includes(d);
+    const cls = [sp.mainDir===d ? "best" : !sp.dirs.includes(d) ? "off" : weak ? "weak" : "on", st.has(d) ? "star" : ""].join(" ").trim();
     return `<button type="button" class="${cls}" onclick="cycleDir('${n}','${d}')" aria-label="Richtung ${d}">${d}</button>`;
   }).join("");
-  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: möglich → beste → aus → möglich"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div>`;
+  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div>`;
 }
 function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); else starMode.add(name); repaintSoft(); }
 function repaintSoft(){
@@ -1139,18 +1145,19 @@ function repaintSoft(){
   const ed = document.querySelector("#cards .dir-editor"); // bearbeitete Karte im Blick behalten (Reihenfolge kann sich ändern)
   if(ed) ed.closest(".spot").scrollIntoView({block:"nearest"});
 }
-function applySpotEdit(sp, dirs, mainDir, waveStar, opts={}){
+function applySpotEdit(sp, dirs, mainDir, waveStar, weakDirs, opts={}){
   sp.dirs = DIR16.filter(d => dirs.includes(d));
+  sp.weakDirs = DIR16.filter(d => (weakDirs || []).includes(d) && sp.dirs.includes(d) && d !== mainDir);
   sp.mainDir = mainDir || "-"; sp.waveStar = waveStar || null;
   mainDirs[sp.name] = sp.mainDir;
   try{ localStorage.setItem(MAIN_DIR_KEY, JSON.stringify(mainDirs)); }catch(e){}
-  if(sp.custom){ const c = customSpots.find(x => x.name === sp.name); if(c){ c.dirs = sp.dirs; c.mainDir = sp.mainDir; if(waveStar) c.waveStar = waveStar; else delete c.waveStar; } saveCustom(); }
-  else { spotOverrides[sp.name] = {...(spotOverrides[sp.name]||{}), dirs: sp.dirs, waveStar: sp.waveStar}; try{ localStorage.setItem(OVR_KEY, JSON.stringify(spotOverrides)); }catch(e){} }
+  if(sp.custom){ const c = customSpots.find(x => x.name === sp.name); if(c){ c.dirs = sp.dirs; c.weakDirs = sp.weakDirs; c.mainDir = sp.mainDir; if(waveStar) c.waveStar = waveStar; else delete c.waveStar; } saveCustom(); }
+  else { spotOverrides[sp.name] = {...(spotOverrides[sp.name]||{}), dirs: sp.dirs, weakDirs: sp.weakDirs, waveStar: sp.waveStar}; try{ localStorage.setItem(OVR_KEY, JSON.stringify(spotOverrides)); }catch(e){} }
   if(!opts.fromSync){ dirtySpots.add(sp.name); try{ localStorage.setItem(DIRTY_KEY, JSON.stringify([...dirtySpots])); }catch(e){} updatePublishButton(); }
 }
 function cycleDir(name, d){
   const sp = SPOTS.find(x => x.name === name); if(!sp) return;
-  let dirs = [...sp.dirs], main = sp.mainDir, star = new Set(starDirsOf(sp));
+  let dirs = [...sp.dirs], main = sp.mainDir, star = new Set(starDirsOf(sp)), weak = new Set(sp.weakDirs || []);
   if(starMode.has(name)){
     if(star.has(d)){ star.delete(d); }
     else {
@@ -1158,16 +1165,17 @@ function cycleDir(name, d){
       if(!adj) star = new Set();
       star.add(d); if(!dirs.includes(d)) dirs.push(d);
     }
-    // nur der zusammenhängende Teil um die getippte Richtung bleibt
-    const ws = starFromDirs(star);
-    applySpotEdit(sp, dirs, main, ws); repaintSoft(); return;
+    applySpotEdit(sp, dirs, main, starFromDirs(star), [...weak]); repaintSoft(); return;
   }
-  if(main === d){ // beste -> aus
+  // Reihenfolge: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus
+  if(!dirs.includes(d)){ dirs.push(d); weak.add(d); }
+  else if(main === d){
     if(dirs.length <= 1){ alert("Mindestens eine Richtung muss passen."); return; }
-    dirs = dirs.filter(x => x !== d); main = "-"; star.delete(d);
-  } else if(dirs.includes(d)){ main = d; } // möglich -> beste
-  else { dirs.push(d); } // aus -> möglich
-  applySpotEdit(sp, dirs, main, starFromDirs(star)); repaintSoft();
+    dirs = dirs.filter(x => x !== d); main = "-"; star.delete(d); weak.delete(d);
+  }
+  else if(weak.has(d)){ weak.delete(d); }
+  else { main = d; weak.delete(d); }
+  applySpotEdit(sp, dirs, main, starFromDirs(star), [...weak]); repaintSoft();
 }
 function updatePublishButton(){
   const b = document.getElementById("gh-publish"); if(!b) return;
@@ -1175,7 +1183,7 @@ function updatePublishButton(){
 }
 const b64enc = s => btoa(unescape(encodeURIComponent(s)));
 const b64dec = s => decodeURIComponent(escape(atob(String(s).replace(/\s/g,""))));
-const spotState = sp => ({dirs: sp.dirs, mainDir: sp.mainDir || "-", waveStar: sp.waveStar || null});
+const spotState = sp => ({dirs: sp.dirs, weakDirs: sp.weakDirs || [], mainDir: sp.mainDir || "-", waveStar: sp.waveStar || null});
 async function publishSpotEdits(){
   const note = $("gh-note"), token = ($("gh-token").value || "").trim();
   if(!token){ note.textContent = "Bitte zuerst den GitHub-Schlüssel eintragen."; return; }
@@ -1215,7 +1223,7 @@ async function checkSpotUpdates(){
     const r = await fetch("spot-updates.json?t=" + Date.now(), {cache: "no-store"});
     if(!r.ok) return;
     const data = await r.json(), changes = data.changes || {};
-    const same = (sp, c) => JSON.stringify(spotState(sp)) === JSON.stringify({dirs: DIR16.filter(d => (c.dirs||[]).includes(d)), mainDir: c.mainDir || "-", waveStar: c.waveStar || null});
+    const same = (sp, c) => JSON.stringify(spotState(sp)) === JSON.stringify({dirs: DIR16.filter(d => (c.dirs||[]).includes(d)), weakDirs: DIR16.filter(d => (c.weakDirs||[]).includes(d)), mainDir: c.mainDir || "-", waveStar: c.waveStar || null});
     const pending = Object.entries(changes).filter(([n, c]) => {
       const sp = SPOTS.find(x => x.name === n);
       return sp && Array.isArray(c.dirs) && c.dirs.length && c.at && c.at > (seenUpdates[n] || "") && !dirtySpots.has(n) && !same(sp, c);
@@ -1226,12 +1234,12 @@ async function checkSpotUpdates(){
 function showSpotUpdateBanner(pending){
   if(document.getElementById("spotupdbanner")) return;
   const b = document.createElement("div"); b.id = "spotupdbanner";
-  const desc = c => { const tmp = {dirs: DIR16.filter(d => c.dirs.includes(d)), waveStar: c.waveStar || null}; return `${dirsLabel(tmp)}${c.mainDir && c.mainDir !== "-" ? " · beste " + c.mainDir : ""}`; };
+  const desc = c => { const tmp = {dirs: DIR16.filter(d => c.dirs.includes(d)), weakDirs: c.weakDirs || [], mainDir: c.mainDir, waveStar: c.waveStar || null}; return `${dirsLabel(tmp)}${c.mainDir && c.mainDir !== "-" ? " · beste " + c.mainDir : ""}`; };
   b.innerHTML = `<b>Neue Spot-Änderungen (${pending.length})</b><ul>${pending.map(([n,c]) => `<li><b>${esc(n)}</b>: ${esc(desc(c))}</li>`).join("")}</ul><div class="row"><button type="button" id="spotupd-yes" style="background:#73d8d0;color:#06232a">Übernehmen</button><button type="button" id="spotupd-no" style="background:#29414c;color:#edf4f7">Ablehnen</button></div>`;
   document.body.appendChild(b);
   const done = accept => {
     pending.forEach(([n, c]) => {
-      if(accept){ const sp = SPOTS.find(x => x.name === n); if(sp) applySpotEdit(sp, c.dirs, c.mainDir, c.waveStar && validWave(c.waveStar) ? cleanWave(c.waveStar) : null, {fromSync: true}); }
+      if(accept){ const sp = SPOTS.find(x => x.name === n); if(sp) applySpotEdit(sp, c.dirs, c.mainDir, c.waveStar && validWave(c.waveStar) ? cleanWave(c.waveStar) : null, Array.isArray(c.weakDirs) ? c.weakDirs : [], {fromSync: true}); }
       seenUpdates[n] = c.at;
     });
     try{ localStorage.setItem(SEEN_KEY, JSON.stringify(seenUpdates)); }catch(e){}
@@ -1283,7 +1291,8 @@ function calculateRank(spot,r,f){
       const wf=windFactor(c.wind), wavf=Number.isFinite(c.wave)?1+Math.max(0,c.wave):1;
       const mainQualified=c.dir===mainDir&&c.label!=="Fallback"&&qualified.has(`${c.label}|${row.hour}`);
       const starHit=!!spot.waveStar&&Number.isFinite(c.deg)&&angleInRange(c.deg,spot.waveStar.min,spot.waveStar.max);
-      const df=(mainQualified?2:1)*(starHit?2:1);
+      const weakHit=Array.isArray(spot.weakDirs)&&spot.weakDirs.includes(c.dir)&&c.dir!==mainDir;
+      const df=(mainQualified?2:1)*(starHit?2:1)*(weakHit?0.5:1);
       return {...c,windFactor:wf,waveFactor:wavf,directionFactor:df,mainQualified,starHit,points:wf*wavf*df};
     }).sort((a,b)=>b.points-a.points);
     const chosen=scored[0]||null;
@@ -1816,7 +1825,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.9.2";
+const APP_VERSION = "5.10.0";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2221,6 +2230,7 @@ function addCustomSpot(c){
   if(/^[a-z0-9_-]+$/i.test(slug)) spot.wf = "https://www.windfinder.com/forecast/" + slug.toLowerCase();
   if(typeof c.dd === "string" && /^https:\/\/www\.dailydose\.de\//.test(c.dd)) spot.dd = c.dd;
   if(validWave(c.waveStar)) spot.waveStar = cleanWave(c.waveStar);
+  if(Array.isArray(c.weakDirs)) spot.weakDirs = c.weakDirs.filter(d => dirs.includes(d) && d !== main);
   if(typeof c.type === "string" && c.type.trim() && c.type !== "Eigener Spot") spot.type = c.type.trim().slice(0,60);
   customSpots.push(spot); SPOTS.push({...spot, type:spot.type||"Eigener Spot", verified:false, custom:true});
   setMainDir(name, main); saveCustom(); renderNsList();
@@ -2309,7 +2319,7 @@ const camNote = (e, ok) => { $("ns-note").textContent = e || ok; if(!e && typeof
 $("ns-cam-save").addEventListener("click", () => { const n = $("ns-cam-spot").value.trim(); if(!$("ns-cam-url").value.trim()){ $("ns-note").textContent = "Bitte einen Webcam-Link eintragen."; return; } camNote(setCam(n, $("ns-cam-url").value), `Webcam für „${n}“ gespeichert. Das Webcam-Symbol der Karte ist jetzt grün.`); if(!$("ns-note").textContent.includes("nicht") && !$("ns-note").textContent.includes("muss")) $("ns-cam-url").value = ""; });
 $("ns-cam-clear").addEventListener("click", () => { const n = $("ns-cam-spot").value.trim(); camNote(setCam(n, ""), `Webcam für „${n}“ entfernt. Das Symbol sucht wieder per Google.`); });
 { const dl = $("ns-cam-names"); const fill = () => { if(!dl.children.length) SPOTS.forEach(sp => { const o = document.createElement("option"); o.value = sp.name; dl.appendChild(o); }); }; $("devmode").addEventListener("change", fill); fill(); }
-const spotExportRow = sp => { const r = {name:sp.name, area:sp.area, lat:sp.lat, lon:sp.lon, dirs:sp.dirs, mainDir:sp.mainDir};
+const spotExportRow = sp => { const r = {name:sp.name, area:sp.area, lat:sp.lat, lon:sp.lon, dirs:sp.dirs, mainDir:sp.mainDir}; if(sp.weakDirs && sp.weakDirs.length) r.weakDirs = sp.weakDirs;
   ["wf","dd","type","cam"].forEach(k => { if(sp[k]) r[k] = sp[k]; }); if(sp.waveStar) r.waveStar = sp.waveStar; if(Array.isArray(spotModels[sp.name]) && spotModels[sp.name].length) r.models = [...spotModels[sp.name]]; if(sp.verified !== undefined) r.verified = !!sp.verified; return r; };
 function buildExport(){
   const all = $("ns-scope").value === "all";
@@ -2343,12 +2353,13 @@ function importSpots(text, update){
     const lat = Number(raw.lat), lon = Number(raw.lon);
     const next = {dirs:dirs.length ? dirs : ex.dirs, area:raw.area || ex.area,
       lat:Number.isFinite(lat) && Math.abs(lat) <= 90 ? lat : ex.lat, lon:Number.isFinite(lon) && Math.abs(lon) <= 180 ? lon : ex.lon, wf:raw.wf || ex.wf, type:(typeof raw.type === "string" && raw.type.trim()) ? raw.type.trim().slice(0,60) : ex.type, dd:validDD(raw.dd) ? raw.dd : ex.dd, waveStar:validWave(raw.waveStar) ? cleanWave(raw.waveStar) : ex.waveStar};
+    next.weakDirs = Array.isArray(raw.weakDirs) ? raw.weakDirs.filter(d => next.dirs.includes(d)) : (ex.weakDirs || []).filter(d => next.dirs.includes(d));
     const main = next.dirs.includes(raw.mainDir) ? raw.mainDir : (next.dirs.includes(ex.mainDir) ? ex.mainDir : next.dirs[0]);
-    const changed = next.dirs.join() !== ex.dirs.join() || next.area !== ex.area || next.lat !== ex.lat || next.lon !== ex.lon || next.wf !== ex.wf || next.type !== ex.type || next.dd !== ex.dd || JSON.stringify(next.waveStar||null) !== JSON.stringify(ex.waveStar||null) || main !== ex.mainDir;
+    const changed = next.dirs.join() !== ex.dirs.join() || next.area !== ex.area || next.lat !== ex.lat || next.lon !== ex.lon || next.wf !== ex.wf || next.type !== ex.type || next.dd !== ex.dd || JSON.stringify(next.waveStar||null) !== JSON.stringify(ex.waveStar||null) || main !== ex.mainDir || next.weakDirs.join() !== (ex.weakDirs||[]).join();
     if(!changed){ same++; continue; }
     Object.assign(ex, next);
     if(ex.custom){ const c = customSpots.find(x => x.name === ex.name); if(c) Object.assign(c, next, {mainDir:main}); }
-    else spotOverrides[ex.name] = {dirs:next.dirs, area:next.area, lat:next.lat, lon:next.lon, wf:next.wf, type:next.type, dd:next.dd, waveStar:next.waveStar};
+    else spotOverrides[ex.name] = {dirs:next.dirs, weakDirs:next.weakDirs, area:next.area, lat:next.lat, lon:next.lon, wf:next.wf, type:next.type, dd:next.dd, waveStar:next.waveStar};
     setMainDir(ex.name, main); updated++;
   }
   saveCustom(); try{ localStorage.setItem(OVR_KEY, JSON.stringify(spotOverrides)); }catch(e){}
