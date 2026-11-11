@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.8.0</title>
+<title>ANDIsGREENed 5.8.1</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -353,6 +353,8 @@ details.statusbox[open]>summary::before{content:"▾ "}
 details.statusbox.plain>summary{cursor:default}
 details.statusbox.plain>summary::before{content:""}
 details.statusbox .warn{color:#ffcf70}
+.resultsHead .count{white-space:nowrap}
+#status .warnline{color:#ffcf70;display:block;margin-top:4px}
 details.statusbox #status{margin:6px 0 0}
 /* 5.8.0: Richtungs-Editor */
 .dir-editor{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
@@ -1358,7 +1360,7 @@ async function fetchJSONRaw(url,ms=15000){
   finally{ clearTimeout(timer); }
   if(res.status===429){
     const retryAfter = Number(res.headers.get("Retry-After"));
-    const err = new Error("Open-Meteo-Limit erreicht (HTTP 429). Anfrage wird mit Wartezeit erneut versucht.");
+    const err = new Error(/googleapis\.com/.test(url) ? "Google-Abfragelimit erreicht (HTTP 429)" : "Open-Meteo-Limit erreicht (HTTP 429). Anfrage wird mit Wartezeit erneut versucht.");
     err.rateLimited = true;
     err.retryAfterMs = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 0;
     throw err;
@@ -1603,7 +1605,7 @@ async function fetchGoogleWeatherForSpots(spots,date,byKey){
   if(!key) return;
   const keyOf=x=>`${x.lat},${x.lon}`;
   const uniq=[...new Map(spots.map(x=>[keyOf(x),x])).values()];
-  let cursor=0, ok=0, failed=0, firstErr="";
+  let cursor=0, ok=0, failed=0, firstErr="", stop=false;
   const toKnots=o=>{
     if(!o || !Number.isFinite(Number(o.value))) return NaN;
     const v=Number(o.value), u=o.unit||"KILOMETERS_PER_HOUR";
@@ -1619,7 +1621,7 @@ async function fetchGoogleWeatherForSpots(spots,date,byKey){
     const o=Object.fromEntries(parts.map(p=>[p.type,p.value]));
     return `${o.year}-${o.month}-${o.day}T${o.hour}:00`;
   };
-  const worker=async()=>{while(cursor<uniq.length){
+  const worker=async()=>{while(cursor<uniq.length && !stop){
     const spot=uniq[cursor++], k=keyOf(spot), entry=byKey.get(k); if(!entry?.rows) continue;
     try{
       const baseUrl=`https://weather.googleapis.com/v1/forecast/hours:lookup?key=${encodeURIComponent(key)}&location.latitude=${spot.lat}&location.longitude=${spot.lon}&hours=240&pageSize=24`;
@@ -1642,11 +1644,12 @@ async function fetchGoogleWeatherForSpots(spots,date,byKey){
         row.models.Google={wind:v.wind,dir:v.dir,gust:v.gust}; n++;
       }
       if(n) ok++; else { failed++; if(!firstErr) firstErr = hours.length ? "keine Stunden für den gewählten Tag" : "leere Antwort"; }
-    }catch(e){failed++; if(!firstErr) firstErr = e.message;}
+    }catch(e){failed++; if(!firstErr) firstErr = e.message; if(e.rateLimited || /HTTP 40[13]/.test(e.message||"")) stop=true;}
     await sleep(120);
   }};
   await Promise.all(Array.from({length:Math.min(4,uniq.length)},worker));
-  googleApiStatus = `Google: ${ok} von ${ok+failed} Spots mit Daten`;
+  if(stop) failed += uniq.length - ok - failed;
+  googleApiStatus = `Google: ${ok} von ${uniq.length} Spots mit Daten`;
   if(failed) extraNotes.push(`Google ohne Daten für ${failed} Spots (${firstErr})`);
 }
 
@@ -1757,7 +1760,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.8.0";
+const APP_VERSION = "5.8.1";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2001,7 +2004,7 @@ function paintResults(results,errors,selectedCount,f){
   $("cards").innerHTML = relevant.map(x => card(x.spot,x.res,f)).join("") || `<div class="empty">${!results.length && errors.length ? "Keine Daten geladen. Verbindung prüfen und erneut versuchen." : "Kein Spot erfüllt gleichzeitig Windrichtung, Windstärke und Wellenfilter."}</div>`;
   if(errors.length) $("cards").insertAdjacentHTML("beforeend", `<div class="empty">${errors.length} Spots ohne Daten. Beispiel:<br>${esc(errors[0])}</div>`);
   else if(!results.length) $("cards").innerHTML = "<div class='empty'>Keine Spots im gewählten Umkreis.</div>";
-  $("count").textContent = `${results.filter(x => x.res.good.length > 0).length} passende Spots · ${selectedCount} Spots geprüft`;
+  $("count").textContent = `${results.filter(x => x.res.good.length > 0).length} von ${selectedCount} Spots passen`;
   return relevant;
 }
 
@@ -2051,7 +2054,7 @@ function syncStatusSummary(){
   box.classList.remove("plain");
   const warn = parts.filter(x => x.includes("⚠"));
   sum.textContent = parts[0];
-  if(warn.length){ const w = document.createElement("span"); w.className = "warn"; w.textContent = " · " + warn.join(" · "); sum.appendChild(w); }
+  if(warn.length){ const w = document.createElement("span"); w.className = "warn"; w.textContent = " ⚠"; w.title = warn.join(" · "); sum.appendChild(w); }
 }
 try{ const t = localStorage.getItem(GH_TOKEN_KEY); if(t) $("gh-token").value = t; }catch(e){}
 $("gh-token").addEventListener("change", () => { try{ const t = $("gh-token").value.trim(); if(t) localStorage.setItem(GH_TOKEN_KEY, t); else localStorage.removeItem(GH_TOKEN_KEY); }catch(e){} });

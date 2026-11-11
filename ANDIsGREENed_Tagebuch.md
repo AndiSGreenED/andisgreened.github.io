@@ -2,9 +2,14 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.8.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.8.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.8.1
+- Zählzeile kurz und einzeilig: „36 von 76 Spots passen“.
+- Eingeklappter Datenstand zeigt nur noch „▸ Datenstand 12:20 ⚠“; die Warnungen stehen beim Aufklappen.
+- Google-Limit (HTTP 429) wurde fälschlich als „Open-Meteo-Limit“ gemeldet, jetzt „Google-Abfragelimit erreicht“.
 
 ## 5.8.0
 - **Richtungen direkt auf der Karte bearbeiten (Dev-Modus):** „Bearbeiten“ zeigt alle 16 Richtungen. Tippen schaltet reihum: möglich → beste → aus → möglich. Es gibt genau eine beste Richtung (Hauptwindrichtung); wird eine andere „beste“, wird die bisherige „möglich“. Mindestens eine Richtung bleibt.
