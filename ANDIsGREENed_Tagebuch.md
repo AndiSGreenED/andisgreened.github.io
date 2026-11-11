@@ -2,9 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.9.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.9.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.9.1
+- Datenschutz- und Wetterdaten-Links stehen am Ende von „Datenquellen und Infos“. Ganz unten: Knopf „Verbindung prüfen“, daneben die App-Version.
 
 ## 5.9.0
 - **Spotkarte:** „Bester Wind“ entfällt (steht in der Stundenleiste). Kästen: Wind (Farbverlauf wie die Stundenleiste, von schwächster zu stärkster Stunde) · **Bestes Fenster** (gleiches Fenster wie in der Stundenleiste hervorgehoben, weitere Fenster klein „auch …“) · Welle · Ø Wind und Welle. Die separate Zeile mit Zeitfenstern entfällt.

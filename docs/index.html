@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.9.0</title>
+<title>ANDIsGREENed 5.9.1</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -366,7 +366,10 @@ details.statusbox #status{margin:6px 0 0}
 details.sub{margin:10px 0;border:1px solid #2c4752;border-radius:10px;padding:6px 10px}
 details.sub>summary{cursor:pointer;font-weight:700;color:#cfe3ea;padding:4px 0}
 details.sub[open]>summary{margin-bottom:6px}
-.note.legal{margin-top:14px;font-size:.78rem}
+.note.legal{margin-top:10px;font-size:.78rem}
+.diagrow{display:flex;align-items:center;gap:12px;margin-top:12px}
+.diagrow button{width:auto;flex:0 0 auto;padding:8px 14px;margin:0}
+.diagrow .note{margin:0}
 .dir-editor-tools input.star-text{flex:1 1 100%;margin-top:4px}
 /* 5.8.0: Richtungs-Editor */
 .dir-editor{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
@@ -501,10 +504,10 @@ details.sub[open]>summary{margin-bottom:6px}
   <p class="note">Es werden nur Spots mit mindestens einer passenden Stunde angezeigt. Ranking-Score = Summe stündlicher Beiträge aus Windfaktor × Wellenfaktor × Richtungsfaktor. Die Hauptwindrichtung erhält ×2 nur bei mindestens 3 zusammenhängenden Stunden im selben Modell. Richtungen mit Wellenstern ★ erhalten zusätzlich ×2.</p>
   <p class="note">Datenquellen (kostenlos, ohne Key): Open-Meteo (ICON, GFS, ECMWF an den Spotkoordinaten; zusätzlich ICON-D2, DMI-Harmonie und ICON See auf der nächsten Meereszelle, soweit verfügbar) sowie DWD-Stationsprognose über Bright Sky (nur Deutschland). Zusatzquellen gelten teils nur für heute bis ca. +2 Tage (DWD: gewählter Tag). Google Weather API (optional, mit eigenem Schlüssel) liefert stündliche Windwerte; der Schlüssel wird lokal im Browser gespeichert. Modelle können im Dev-Modus einzeln aktiviert werden.</p>
   <p class="footer">Wind in Knoten, Wellenhöhe in Metern, Wellenperiode in Sekunden. Windmodelle: ICON, GFS, ECMWF, ICON-D2, DMI, ICON See (Open-Meteo), DWD (Bright Sky) und Google Weather API (mit eigenem Schlüssel). Wellendaten: Open-Meteo Marine.</p>
-  <button type="button" id="diag" class="mt">Verbindung prüfen</button>
-  <div class="note" id="diagout"></div>
+  <p class="note legal"><a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a> · Wetterdaten: <a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0), DWD/Bright Sky</p>
   </details>
-  <p class="note legal"><span id="appver"></span> · <a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a> · Wetterdaten: <a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0), DWD/Bright Sky</p>
+  <div class="diagrow"><button type="button" id="diag">Verbindung prüfen</button><span class="note" id="appver"></span></div>
+  <div class="note" id="diagout"></div>
   </details>
 </section>
 <section>
@@ -1810,7 +1813,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.9.0";
+const APP_VERSION = "5.9.1";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
