@@ -2,9 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.11.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.11.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.11.2
+- Windrose: Stufen deutlicher unterscheidbar (aus fast schwarz, möglich dunkelgrün, gut mittelgrün, beste hellgrün, Stern gelb). „Möglich“ war vorher kaum von „aus“ zu unterscheiden.
 
 ## 5.11.1
 - Wellenstern-Kasten nur noch, wenn er zutrifft: In einer passenden Stunde kommt das mittlere Modell aus der Stern-Richtung. Im Dev-Modus erscheint er immer, bei „nicht aktiv“ blass und gestrichelt mit Hinweis.
