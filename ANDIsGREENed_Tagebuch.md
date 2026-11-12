@@ -2,9 +2,14 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.10.4** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.11.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.11.0
+- **Ein Maßstab für alles: das mittlere Modell.** Je Stunde zählt das Modell mit dem mittleren Windwert aller aktiven Modelle (Median). Danach richten sich: ob die Stunde passt (Wind, Welle, Richtung), die Punkte, die Stundenleiste und die Windrose. Vorher reichte für „passt“ ein beliebiges Modell, und die Punkte nahmen je Stunde das punktbeste Modell; dadurch zeigte z. B. Kühlungsborn in der Stundenleiste W, bewertet wurde aber WNW mit ×4.
+- Hauptrichtung ×2 jetzt ab 3 zusammenhängenden Stunden, in denen das mittlere Modell aus dieser Richtung kommt.
+- Folge: weniger, dafür verlässlichere Treffer (offener Punkt 1 „irgendein Modell reicht“ damit erledigt).
 
 ## 5.10.4
 - Fehler behoben: Die aufgeklappte Punkte-Tabelle ragte seit 5.9.0 links aus der Karte und ließ sich nicht zurückscrollen. Sie nutzt jetzt die volle Kartenbreite und scrollt bei Bedarf innerhalb der Karte.
@@ -250,7 +255,7 @@ Aktuelle Version: **5.10.4** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`
 ---
 
 ## Offene Punkte
-1. **„Passend“ = irgendein Modell reicht:** Bewertung optimistisch. Vorschlag: mindestens zwei Modelle oder Median, Anzeige „x von 7 Modellen“.
+1. ~~„Passend“ = irgendein Modell reicht~~ – erledigt in 5.11.0 (mittleres Modell).
 2. **Richtungslisten der Spots** (z. B. Kägsdorf nur SW, WSW, W): nicht verifiziert, bei Stammspots gegen Erfahrung prüfen.
 3. **Windfinder-App im Opera-Browser (Android):** Übergabe per Intent noch nicht bestätigt; Test mit anderer App-Variante bzw. Chrome steht aus.
 4. **Metadaten-Adresse (`meta.json`)** für Modelläufe nicht belegt, Funktion bei Fehlschlag nur eingeschränkt.
