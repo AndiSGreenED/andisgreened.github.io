@@ -2,9 +2,13 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.14.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.14.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.14.2
+- Position: Koordinaten mit deutschem Komma („54,5307, 11,0831“) und in Grad/Minuten/Sekunden werden jetzt erkannt.
+- „auf Karte prüfen“ als schlichter Link in eigener Zeile (vorher verrutschter Rahmen).
 
 ## 5.14.1
 - Knopf heißt jetzt „📍 Ich steh am Strand 😀“.

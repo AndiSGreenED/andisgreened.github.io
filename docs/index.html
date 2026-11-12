@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.14.1</title>
+<title>ANDIsGREENed 5.14.2</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -105,7 +105,8 @@ a.spot-map-link:hover,a.spot-map-link:focus-visible{text-decoration:underline;co
 #toast{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:9999;padding:12px 14px;border-radius:12px;background:#183740;color:#edf4f7;border:1px solid #73d8d0;box-shadow:0 4px 18px rgba(0,0,0,.45);font-size:.88rem;opacity:0;transform:translateY(20px);transition:opacity .2s,transform .2s;pointer-events:none}
 #toast.show{opacity:1;transform:none}
 .dir-editor-tools.tokbox input,.dir-editor-tools.posbox input{flex:1 1 100%}
-.dir-editor-tools.posbox a{color:#73d8d0}
+.dir-editor-tools.posbox span{flex:1 1 100%}
+.dir-editor-tools.posbox a{color:#73d8d0;border:0;padding:0;border-radius:0;font-size:inherit;display:inline;text-decoration:underline}
 .dir-edit-toggle{min-width:96px}
 .wave-star.inactive{opacity:.55;border-style:dashed}
 .wave-star{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:5px 8px;border:1px solid #c9a84c;border-radius:9px;background:#3b3218;color:#ffe7a0;font-size:.78rem;font-weight:800}.source-warning{font-size:.76rem;color:#f3c18c;margin-top:8px}
@@ -1186,7 +1187,7 @@ function dirEditorHtml(sp){
     const cls = [sp.mainDir===d ? "best" : !sp.dirs.includes(d) ? "off" : weak ? "weak" : "on", st.has(d) ? "star" : ""].join(" ").trim();
     return `<button type="button" class="${cls}" onclick="cycleDir('${n}','${d}')" aria-label="Richtung ${d}">${d}</button>`;
   }).join("");
-  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div><div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}" placeholder="Google-Maps-Link oder 54.4245, 11.0981"><button type="button" onclick="setSpotPos('${n}','pos-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}')">Übernehmen</button><button type="button" onclick="setSpotPosGps('${n}')">📍 Ich steh am Strand 😀</button></div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>Zum Verteilen einmalig den GitHub-Schlüssel einfügen (bleibt nur auf diesem Gerät):</span><input type="password" id="tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}" placeholder="github_pat_…" autocomplete="off"><button type="button" onclick="saveTokenAndPublish('${n}','tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}')">Schlüssel merken &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
+  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div><div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}" placeholder="Google-Maps-Link oder 54,4245, 11,0981"><button type="button" onclick="setSpotPos('${n}','pos-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}')">Übernehmen</button><button type="button" onclick="setSpotPosGps('${n}')">📍 Ich steh am Strand 😀</button></div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>Zum Verteilen einmalig den GitHub-Schlüssel einfügen (bleibt nur auf diesem Gerät):</span><input type="password" id="tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}" placeholder="github_pat_…" autocomplete="off"><button type="button" onclick="saveTokenAndPublish('${n}','tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}')">Schlüssel merken &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
 }
 function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); else starMode.add(name); repaintSoft(); }
 function repaintSoft(){
@@ -1880,7 +1881,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.14.1";
+const APP_VERSION = "5.14.2";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2254,6 +2255,11 @@ function parseMapsLink(text){
   const t = String(text||"").trim(); if(!t) return null;
   if(/maps\.app\.goo\.gl|goo\.gl\/maps/i.test(t)) return {short:true};
   let s = t; try{ s = decodeURIComponent(t); }catch(e){}
+  // 5.14.1: deutsche Schreibweise „54,5307, 11,0831“ und Grad/Minuten/Sekunden „54°31'50.7"N 11°04'59.3"E“
+  const de = s.match(/^\s*(-?\d{1,3}),(\d+)\s*[,;\s]\s*(-?\d{1,3}),(\d+)\s*$/);
+  if(de) s = `${de[1]}.${de[2]}, ${de[3]}.${de[4]}`;
+  const dms = s.replace(/[′’']/g,"'").replace(/[″”"]/g,'"').match(/(\d{1,3})°\s*(\d{1,2})'\s*([\d.,]+)"?\s*([NS])[\s,;]*(\d{1,3})°\s*(\d{1,2})'\s*([\d.,]+)"?\s*([EOW])/i);
+  if(dms){ const v = (d,m,x,h) => (Number(d) + Number(m)/60 + Number(String(x).replace(",","."))/3600) * (/[SW]/i.test(h) ? -1 : 1); s = `${v(dms[1],dms[2],dms[3],dms[4]).toFixed(6)}, ${v(dms[5],dms[6],dms[7],dms[8]).toFixed(6)}`; }
   const n = "(-?\\d{1,3}(?:\\.\\d+)?)";
   const pats = [
     new RegExp("!3d"+n+"!4d"+n),
