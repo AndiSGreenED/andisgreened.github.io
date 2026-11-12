@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.13.2</title>
+<title>ANDIsGREENed 5.13.3</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -729,7 +729,7 @@ const SPOTS_RAW = [
 {name:"Püttsee",area:"Fehmarn, Ostsee",lat:54.47,lon:11.02,dirs:["SW","N"],type:"Kleine Welle + Kabbelwelle, Naturschutzgebiet beachten",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=253",verified:false,wf:"https://www.windfinder.com/forecast/puettsee"},
 {name:"Wulfener Hals Burger Binnensee",area:"Fehmarn, Ostsee",lat:54.41,lon:11.18,dirs:["NO","O","SO"],type:"Flachwasser + Stehrevier, steiniger Einstieg",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=250",verified:false,wf:"https://www.windfinder.com/forecast/wulfener_hals"},
 {name:"Presen",area:"Fehmarn, Ostsee",lat:54.48,lon:11.25,dirs:["N","NO","O","SO"],type:"Ostseerevier, steiniger Uferbereich",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Presen",verified:false,wf:"https://www.windfinder.com/forecast/presen"},
-{name:"Teichhof",area:"Fehmarn, Ostsee",lat:54.54,lon:11.06,dirs:["NW","NO","O"],type:"Kleine Welle + Kabbelwelle, offene Küste",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Teichhof",verified:false,wf:"https://www.windfinder.com/forecast/teichhof"},
+{name:"Teichhof",area:"Fehmarn, Ostsee",lat:54.528,lon:11.116,dirs:["NW","NO","O"],type:"Kleine Welle + Kabbelwelle, offene Küste",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Teichhof",verified:false,wf:"https://www.windfinder.com/forecast/teichhof"},
 {name:"Blankenberge",area:"Belgische Küste",lat:51.31,lon:3.13,dirs:["WSW","W","NO","ONO"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.htm?spot_a=Blankenberge",verified:false,wf:"https://www.windfinder.com/forecast/blankenberge"},
 {name:"Vrouwenpolder Breezand",area:"Walcheren, Niederlande",lat:51.59,lon:3.62,dirs:["W","WNW","NW","NO"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=25",verified:false,wf:"https://www.windfinder.com/forecast/vrouwenpolder"},
 {name:"Vrouwenpolder Veerse Dam",area:"Veerse Meer, Niederlande",lat:51.59,lon:3.67,dirs:["O","SO","S"],type:"Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=44",verified:false,wf:"https://www.windfinder.com/forecast/vrouwenpolder"},
@@ -1860,7 +1860,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.13.2";
+const APP_VERSION = "5.13.3";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}

@@ -2,9 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.13.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.13.3** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.13.3
+- Teichhof (Fehmarn): Koordinaten korrigiert von 54.54/11.06 (lag in der Ostsee westlich) auf 54.528/11.116 (Strand Teichhof bei Wenkendorf, Nordküste; abgeglichen mit Windfinder und unplug-kitesurf). Betrifft Entfernung, Karte und Wetterzelle.
 
 ## 5.13.2
 - Ø-Kasten ohne Einheiten in der Zahl („26,8 · 2,1“), Einheiten stehen in der Beschriftung („Ø Wind kn · Welle m“).
