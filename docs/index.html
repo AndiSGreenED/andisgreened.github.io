@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.11.2</title>
+<title>ANDIsGREENed 5.12.0</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -102,6 +102,10 @@ a.spot-map-link:hover,a.spot-map-link:focus-visible{text-decoration:underline;co
 .hr.wind-level-6{background:#7b3039;border-color:#d75b68;color:#ffe0e4}
 .hr.cell.best-hour{outline:3px solid #a4f0ce;outline-offset:-3px;box-shadow:0 0 0 2px #10232d inset}
 .hour-legend{font-size:.76rem;color:#a4f0ce;margin-top:5px}
+#toast{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:9999;padding:12px 14px;border-radius:12px;background:#183740;color:#edf4f7;border:1px solid #73d8d0;box-shadow:0 4px 18px rgba(0,0,0,.45);font-size:.88rem;opacity:0;transform:translateY(20px);transition:opacity .2s,transform .2s;pointer-events:none}
+#toast.show{opacity:1;transform:none}
+.dir-editor-tools.tokbox input{flex:1 1 100%}
+.dir-edit-toggle{min-width:96px}
 .wave-star.inactive{opacity:.55;border-style:dashed}
 .wave-star{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:5px 8px;border:1px solid #c9a84c;border-radius:9px;background:#3b3218;color:#ffe7a0;font-size:.78rem;font-weight:800}.source-warning{font-size:.76rem;color:#f3c18c;margin-top:8px}
 .more{margin-top:10px;border-top:1px solid #29414c;padding-top:8px}
@@ -1069,8 +1073,28 @@ const validWave = w => !!w && Number.isFinite(Number(w.min)) && Number.isFinite(
 const cleanWave = w => ({label:String(w.label).slice(0,60), min:Number(w.min), max:Number(w.max), display:String(w.display).slice(0,60)});
 const validDD = u => typeof u === "string" && /^https:\/\/www\.dailydose\.de\//.test(u);
 const webcamUrl = sp => sp.cam || `https://www.google.com/search?q=${encodeURIComponent(`${sp.name} ${sp.area||""} Webcam live`.replace(/\s+/g," ").trim())}`;
+// 5.12.0: „Speichern“ direkt auf der Karte verteilt die Änderungen an alle
+const needToken = new Set();
+function ghToken(){ let t = ($("gh-token") && $("gh-token").value || "").trim(); if(!t){ try{ t = localStorage.getItem(GH_TOKEN_KEY) || ""; }catch(e){} } return t; }
+function toast(msg){
+  let t = document.getElementById("toast");
+  if(!t){ t = document.createElement("div"); t.id = "toast"; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add("show"); clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.remove("show"), 6000);
+}
+async function saveFromCard(name){
+  if(!ghToken()){ needToken.add(name); repaintSoft(); return; }
+  needToken.delete(name); editingMainDirs.delete(name); starMode.delete(name); repaintSoft();
+  toast("Speichere …"); await publishSpotEdits(); toast($("gh-note").textContent);
+}
+function saveTokenAndPublish(name, inputId){
+  const v = (document.getElementById(inputId)?.value || "").trim();
+  if(!v){ toast("Bitte den GitHub-Schlüssel einfügen."); return; }
+  $("gh-token").value = v; try{ localStorage.setItem(GH_TOKEN_KEY, v); }catch(e){}
+  saveFromCard(name);
+}
 function toggleMainDirEdit(name){
-  if(editingMainDirs.has(name)) editingMainDirs.delete(name); else editingMainDirs.add(name);
+  if(editingMainDirs.has(name) && dirtySpots.has(name)){ saveFromCard(name); return; }
+  if(editingMainDirs.has(name)){ editingMainDirs.delete(name); needToken.delete(name); starMode.delete(name); } else editingMainDirs.add(name);
   if(lastResults && lastFilters) paintResults(lastResults,lastErrors,lastSelectedCount,lastFilters);
 }
 // ---- 5.8.0: Richtungen auf der Karte bearbeiten ----
@@ -1141,7 +1165,7 @@ function dirEditorHtml(sp){
     const cls = [sp.mainDir===d ? "best" : !sp.dirs.includes(d) ? "off" : weak ? "weak" : "on", st.has(d) ? "star" : ""].join(" ").trim();
     return `<button type="button" class="${cls}" onclick="cycleDir('${n}','${d}')" aria-label="Richtung ${d}">${d}</button>`;
   }).join("");
-  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div>`;
+  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>Zum Verteilen einmalig den GitHub-Schlüssel einfügen (bleibt nur auf diesem Gerät):</span><input type="password" id="tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}" placeholder="github_pat_…" autocomplete="off"><button type="button" onclick="saveTokenAndPublish('${n}','tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}')">Schlüssel merken &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
 }
 function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); else starMode.add(name); repaintSoft(); }
 function repaintSoft(){
@@ -1834,7 +1858,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.11.2";
+const APP_VERSION = "5.12.0";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2049,7 +2073,7 @@ function card(spot,r,f){
       <details class="metric metric-wave-details"><summary><b>${r.waveKnown ? rng(dayWaves,1)+'<small class="u">m</small>' : "n. v."}</b><span>Welle · Einzelwerte ↗</span></summary><div class="wave-range-panel"><div class="region">Stündliche Wellenhöhe je Modell. Best Match wird für Anzeige, Filter und Bewertung bevorzugt. DWD EWAM (~5 km) dient nur als Ersatz, wenn Best Match keinen Wert liefert.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wellenhöhe</th><th>Verwendet</th></tr></thead><tbody>${waveRows}</tbody></table></div></div></details>
       <div class="metric"><b>${fmt(dayWinds.length ? dayWinds.reduce((a,b)=>a+b,0)/dayWinds.length : NaN)}<small class="u">kn</small>${r.waveKnown ? " · "+fmt(r.meanWave)+'<small class="u">m</small>' : ""}</b><span>Ø Wind${r.waveKnown ? " · Welle" : ""}</span></div>
     </div>
-    <div class="edit-dir"><span>Hauptwindrichtung: <b>${esc(spot.mainDir && spot.mainDir!=="-" ? spot.mainDir : "–")}</b></span>${$("devmode").checked ? `<button type="button" class="dir-edit-toggle" onclick="toggleMainDirEdit('${jsq(spot.name)}')">${editingMainDirs.has(spot.name) ? "Fertig" : "Bearbeiten"}</button>` : ""}</div>
+    <div class="edit-dir"><span>Hauptwindrichtung: <b>${esc(spot.mainDir && spot.mainDir!=="-" ? spot.mainDir : "–")}</b></span>${$("devmode").checked ? `<button type="button" class="dir-edit-toggle" onclick="toggleMainDirEdit('${jsq(spot.name)}')">${editingMainDirs.has(spot.name) ? (dirtySpots.has(spot.name) ? "Speichern" : "Fertig") : "Bearbeiten"}</button>` : ""}</div>
     ${$("devmode").checked && editingMainDirs.has(spot.name) ? dirEditorHtml(spot) : ""}
 
     ${!f.usedir ? `<div class="warn dirwarn">⚠ Windrichtung wird NICHT berücksichtigt. ${spot.verified ? "Geprüfte Richtungen" : "Nicht unabhängig geprüfte Richtungen"}: ${esc(dirsLabel(spot))}</div>` : ""}

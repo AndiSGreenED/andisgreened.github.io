@@ -2,9 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.11.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.12.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.12.0
+- **Speichern direkt auf der Karte:** Nach einer Änderung heißt der Knopf „Speichern“. Antippen schließt den Editor und verteilt die Änderung sofort an alle (Meldung unten eingeblendet). Fehlt der GitHub-Schlüssel, erscheint auf der Karte ein Feld, um ihn einmalig einzufügen. Der Bereich unter „Hinweise & Datenquellen“ bleibt als Alternative.
 
 ## 5.11.2
 - Windrose: Stufen deutlicher unterscheidbar (aus fast schwarz, möglich dunkelgrün, gut mittelgrün, beste hellgrün, Stern gelb). „Möglich“ war vorher kaum von „aus“ zu unterscheiden.
