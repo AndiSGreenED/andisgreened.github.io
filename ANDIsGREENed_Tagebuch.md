@@ -2,9 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.13.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.13.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.13.1
+- Handy: weniger Innenabstand der Karte und der Kästen, schmalerer Trenner im Ø-Kasten, damit „20,5kn · 1,5m“ auch bei großer Systemschrift ganz passt.
 
 ## 5.13.0
 - **Welle: DWD EWAM ist jetzt Standard,** Best Match nur noch Ersatz (z. B. nach ca. 3 Tagen, wenn EWAM endet). Anlass: Freitag 13.11. Altenteil EWAM 1,9–2,2 m (wie Windfinder ~2 m), Best Match 1,1 m; ähnlich Gold/Heiligenhafen (1,3–1,7 vs. 0,9–1,0 m) und Kühlungsborn (1,8–2,3 vs. 1,4–1,5 m). Best Match lieferte zudem fast konstante Werte.

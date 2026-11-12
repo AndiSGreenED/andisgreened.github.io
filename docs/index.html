@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.13.0</title>
+<title>ANDIsGREENed 5.13.1</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -383,6 +383,7 @@ details.sub[open]>summary{margin-bottom:6px}
 #cards .spot{scroll-margin-top:8px}
 #cards .metric b{white-space:nowrap}
 #cards .metric{border:1px solid #4a7482}
+@media(max-width:560px){#cards .spot{padding-left:9px;padding-right:9px}#cards .metric{padding-left:2px;padding-right:2px}#cards .metrics{gap:6px}}
 #cards .metric.win-box{border-color:#c9a84c}
 .dir-editor-tools input.star-text{flex:1 1 100%;margin-top:4px}
 /* 5.8.0: Richtungs-Editor */
@@ -1859,7 +1860,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.13.0";
+const APP_VERSION = "5.13.1";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2086,7 +2087,7 @@ function card(spot,r,f){
       <details class="metric metric-wind-details" style="${windBoxStyle(dayWinds)}"><summary><b>${windRange(dayWinds)}<small class="u">kn</small></b><span>Wind · Einzelwerte ↗</span></summary><div class="wind-range-panel"><div class="region">Die Spanne basiert auf denselben stündlichen Modell-Medianwerten wie die Stundenleiste. „Stundenanzeige“ markiert das Modell, dessen Wert dort verwendet wird.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wind</th><th>Böen</th><th>Richtung</th></tr></thead><tbody>${windRows}</tbody></table></div></div></details>
       <div class="metric win-box"><b>${winMain}<small class="u">Uhr</small></b><span>Bestes Fenster</span>${winMore ? `<small>auch ${winMore}</small>` : ""}</div>
       <details class="metric metric-wave-details"><summary><b>${r.waveKnown ? rng(dayWaves,1)+'<small class="u">m</small>' : "n. v."}</b><span>Welle · Einzelwerte ↗</span></summary><div class="wave-range-panel"><div class="region">Stündliche Wellenhöhe je Modell. Verwendet wird ${waveSrcOf(spot.name)==="bm" ? "für diesen Spot Best Match" : "DWD EWAM (~5 km, bis ca. 3 Tage)"}; fehlt der Wert, springt das andere Modell ein.</div>${$("devmode").checked ? `<div class="dir-editor-tools">Wellenquelle für diesen Spot: <button type="button" class="${waveSrcOf(spot.name)==="ewam"?"active":""}" onclick="setSpotWave('${jsq(spot.name)}','ewam')">DWD EWAM</button><button type="button" class="${waveSrcOf(spot.name)==="bm"?"active":""}" onclick="setSpotWave('${jsq(spot.name)}','bm')">Best Match</button></div>` : ""}<div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wellenhöhe</th><th>Verwendet</th></tr></thead><tbody>${waveRows}</tbody></table></div></div></details>
-      <div class="metric"><b>${fmt(dayWinds.length ? dayWinds.reduce((a,b)=>a+b,0)/dayWinds.length : NaN)}<small class="u">kn</small>${r.waveKnown ? " · "+fmt(r.meanWave)+'<small class="u">m</small>' : ""}</b><span>Ø Wind${r.waveKnown ? " · Welle" : ""}</span></div>
+      <div class="metric"><b>${fmt(dayWinds.length ? dayWinds.reduce((a,b)=>a+b,0)/dayWinds.length : NaN)}<small class="u">kn</small>${r.waveKnown ? "\u202f·\u202f"+fmt(r.meanWave)+'<small class="u">m</small>' : ""}</b><span>Ø Wind${r.waveKnown ? " · Welle" : ""}</span></div>
     </div>
     <div class="edit-dir"><span>Hauptwindrichtung: <b>${esc(spot.mainDir && spot.mainDir!=="-" ? spot.mainDir : "–")}</b></span>${$("devmode").checked ? `<button type="button" class="dir-edit-toggle" onclick="toggleMainDirEdit('${jsq(spot.name)}')">${dirtySpots.has(spot.name) ? "Speichern" : editingMainDirs.has(spot.name) ? "Fertig" : "Bearbeiten"}</button>` : ""}</div>
     ${$("devmode").checked && editingMainDirs.has(spot.name) ? dirEditorHtml(spot) : ""}
