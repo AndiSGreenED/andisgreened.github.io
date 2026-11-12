@@ -70,7 +70,22 @@
    ],
    "wave": null,
    "at": "2026-11-12T10:44:23.095Z"
+  },
+  "Orth": {
+   "dirs": [
+    "S",
+    "SSW",
+    "SW",
+    "WSW",
+    "W"
+   ],
+   "weakDirs": [],
+   "mainDir": "S",
+   "waveStar": null,
+   "models": null,
+   "wave": null,
+   "at": "2026-11-12T10:46:00.720Z"
   }
  },
- "updated": "2026-11-12T10:45:24.865Z"
+ "updated": "2026-11-12T10:46:00.720Z"
 }
