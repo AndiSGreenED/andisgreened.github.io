@@ -42,15 +42,11 @@
     "NW",
     "NNW"
    ],
-   "weakDirs": [
-    "WSW",
-    "WNW",
-    "NNW"
-   ],
+   "weakDirs": [],
    "mainDir": "SW",
    "waveStar": null,
-   "at": "2026-11-12T08:33:16.915Z"
+   "at": "2026-11-12T08:44:02.006Z"
   }
  },
- "updated": "2026-11-12T08:33:16.915Z"
+ "updated": "2026-11-12T08:44:02.006Z"
 }
