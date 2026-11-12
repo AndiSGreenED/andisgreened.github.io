@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.13.3</title>
+<title>ANDIsGREENed 5.14.0</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -104,7 +104,8 @@ a.spot-map-link:hover,a.spot-map-link:focus-visible{text-decoration:underline;co
 .hour-legend{font-size:.76rem;color:#a4f0ce;margin-top:5px}
 #toast{position:fixed;left:12px;right:12px;bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:9999;padding:12px 14px;border-radius:12px;background:#183740;color:#edf4f7;border:1px solid #73d8d0;box-shadow:0 4px 18px rgba(0,0,0,.45);font-size:.88rem;opacity:0;transform:translateY(20px);transition:opacity .2s,transform .2s;pointer-events:none}
 #toast.show{opacity:1;transform:none}
-.dir-editor-tools.tokbox input{flex:1 1 100%}
+.dir-editor-tools.tokbox input,.dir-editor-tools.posbox input{flex:1 1 100%}
+.dir-editor-tools.posbox a{color:#73d8d0}
 .dir-edit-toggle{min-width:96px}
 .wave-star.inactive{opacity:.55;border-style:dashed}
 .wave-star{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:5px 8px;border:1px solid #c9a84c;border-radius:9px;background:#3b3218;color:#ffe7a0;font-size:.78rem;font-weight:800}.source-warning{font-size:.76rem;color:#f3c18c;margin-top:8px}
@@ -539,14 +540,14 @@ details.sub[open]>summary{margin-bottom:6px}
 let HOME = {lat:53.8655, lon:10.6866};
 const MAX_DAYS = 7; // heute + 7 Tage = 8 Vorhersagetage
 const SPOTS_RAW = [
-{name:"Altenteil",area:"Fehmarn",lat:54.51,lon:11.02,dirs:["WNW", "NW"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Altenteil",verified:true,wf:"https://www.windfinder.com/forecast/altenteil"},
-{name:"Bojendorf",area:"Fehmarn",lat:54.49,lon:11.04,dirs:["SW", "N"],type:"Wave",wf:"https://www.windfinder.com/forecast/bojendorf",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=254",verified:true},
-{name:"Gold",area:"Fehmarn",lat:54.44,lon:11.10,dirs:["SW", "W", "NW", "N"],type:"Flachwasser",wf:"https://www.windfinder.com/forecast/gold_fehrmarn",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Gold&spot_b=Orther+Reede",verified:true},
-{name:"Orth",area:"Fehmarn",lat:54.44,lon:11.02,dirs:["S","SW","W"],type:"Flachwasser",wf:"https://www.windfinder.com/forecast/orth_fehrmarn",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=248",verified:false},
-{name:"Grüner Brink",area:"Fehmarn",lat:54.53,lon:11.20,dirs:["O","NO"],type:"Wave",wf:"https://www.windfinder.com/forecast/gruener_brink",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=263",verified:false},
-{name:"Westermarkelsdorf",area:"Fehmarn",lat:54.53,lon:11.06,dirs:["SSW","SW","WSW"],type:"Wave",wf:"https://www.windfinder.com/forecast/westermarkelsdorf",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=261",verified:false},
+{name:"Altenteil",area:"Fehmarn",lat:54.529,lon:11.099,dirs:["WNW", "NW"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Altenteil",verified:true,wf:"https://www.windfinder.com/forecast/altenteil"},
+{name:"Bojendorf",area:"Fehmarn",lat:54.4905,lon:11.0292,dirs:["SW", "N"],type:"Wave",wf:"https://www.windfinder.com/forecast/bojendorf",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=254",verified:true},
+{name:"Gold",area:"Fehmarn",lat:54.4245,lon:11.0981,dirs:["SW", "W", "NW", "N"],type:"Flachwasser",wf:"https://www.windfinder.com/forecast/gold_fehrmarn",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Gold&spot_b=Orther+Reede",verified:true},
+{name:"Orth",area:"Fehmarn",lat:54.4471,lon:11.0515,dirs:["S","SW","W"],type:"Flachwasser",wf:"https://www.windfinder.com/forecast/orth_fehrmarn",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=248",verified:false},
+{name:"Grüner Brink",area:"Fehmarn",lat:54.5166,lon:11.1781,dirs:["O","NO"],type:"Wave",wf:"https://www.windfinder.com/forecast/gruener_brink",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=263",verified:false},
+{name:"Westermarkelsdorf",area:"Fehmarn",lat:54.5256,lon:11.058,dirs:["SSW","SW","WSW"],type:"Wave",wf:"https://www.windfinder.com/forecast/westermarkelsdorf",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=261",verified:false},
 {name:"Heiligenhafen",area:"Ostholstein",lat:54.38,lon:10.98,dirs:["W", "WNW", "NW"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=118",verified:true,wf:"https://www.windfinder.com/forecast/heiligenhafen"},
-{name:"Großenbrode Am Kai",area:"Ostholstein",lat:54.36,lon:11.09,dirs:["NO","W"],type:"Wave",wf:"https://www.windfinder.com/forecast/grossenbrode",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=432",verified:false},
+{name:"Großenbrode Am Kai",area:"Ostholstein",lat:54.3556,lon:11.0821,dirs:["NO","W"],type:"Wave",wf:"https://www.windfinder.com/forecast/grossenbrode",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=432",verified:false},
 {name:"Dahmeshöved",area:"Ostholstein",lat:54.21,lon:11.08,dirs:["NNO","NO","ONO"],type:"Wave",waveStar:{label:"Beste Welle",min:56.25,max:78.75,display:"ONO"},dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Dahmesh%C3%B6ved",verified:false,wf:"https://www.windfinder.com/forecast/dahmeshooved"},
 ,
 {name:"Grömitz",area:"Lübecker Bucht",lat:54.15,lon:10.96,dirs:["ONO"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=470",wf:"https://www.windfinder.com/forecast/groemitz",verified:true},
@@ -584,9 +585,9 @@ const SPOTS_RAW = [
 {name:"Weiße Düne",area:"Norderney",lat:53.72,lon:7.20,dirs:["W","WNW","ONO","O"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=101",verified:false,wf:"https://www.windfinder.com/forecast/weisse_duene_norderney"},
 {name:"Hüde",area:"Dümmer",lat:52.49,lon:8.36,dirs:["SW","W","NW","N"],type:"Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=311",verified:false,wf:"https://www.windfinder.com/forecast/huede"},
 {name:"Hvide Sande Süd",area:"Ringkøbing Fjord",lat:55.99,lon:8.13,dirs:["N","NO","O","SO"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=83",verified:false,wf:"https://www.windfinder.com/forecast/hvide_sande"},
-{name:"Mommark",area:"Als, Dänemark",lat:54.92,lon:9.96,dirs:["SSO","SO","NNW","N","NNO"],type:"Kleine Welle + Kabbel",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=171",verified:false,wf:"https://www.windfinder.com/forecast/mommark"},
+{name:"Mommark",area:"Als, Dänemark",lat:54.9214,lon:10.0403,dirs:["SSO","SO","NNW","N","NNO"],type:"Kleine Welle + Kabbel",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=171",verified:false,wf:"https://www.windfinder.com/forecast/mommark"},
 {name:"Hørup Hav",area:"Als, Dänemark",lat:54.91,lon:9.88,dirs:["NO","ONO","O","OSO"],type:"Flachwasser + Stehrevier",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=170",verified:false,wf:"https://www.windfinder.com/forecast/hoerup_hav"},
-{name:"Vangså",area:"Thy, Dänemark",lat:57.08,lon:8.43,dirs:["SSW","SW","NNO","NO"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=302",verified:false,wf:"https://www.windfinder.com/forecast/vangsa"},
+{name:"Vangså",area:"Thy, Dänemark",lat:57.0068,lon:8.4479,dirs:["SSW","SW","NNO","NO"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=302",verified:false,wf:"https://www.windfinder.com/forecast/vangsa"},
 {name:"Zoutelande Westerstrand",area:"Zeeland, Niederlande",lat:51.50,lon:3.48,dirs:["SO","NW"],type:"Kleine Welle + Kabbel",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=27",verified:false,wf:"https://www.windfinder.com/forecast/zoutelande"},
 {name:"Breskens 't Fort",area:"Zeeland, Niederlande",lat:51.40,lon:3.56,dirs:["WNW","NW","O","OSO"],type:"Kleine Welle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=331",verified:false,wf:"https://www.windfinder.com/forecast/breskens"},
 {name:"Sennels",area:"Thisted Bredning, Dänemark",lat:56.99,lon:8.67,dirs:["ONO","O","OSO","SO","SSO","S","SSW"],type:"Flachwasser + Kabbel",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=471",verified:false,wf:"https://www.windfinder.com/forecast/sennels"},
@@ -594,11 +595,11 @@ const SPOTS_RAW = [
 {name:"Makkum",area:"IJsselmeer, Niederlande",lat:53.05,lon:5.40,dirs:["SW","NW"],type:"Flachwasser + Stehrevier",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=58",verified:false,wf:"https://www.windfinder.com/forecast/makkum"},
 {name:"Nørre Vorupør Mole",area:"Thy, Dänemark",lat:56.96,lon:8.37,dirs:["NNO","NO"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=86",verified:false,wf:"https://www.windfinder.com/forecast/norre_vorupor"},
 {name:"Vejers Strand",area:"Westjütland, Dänemark",lat:55.62,lon:8.17,dirs:["SSW","SW","NNO"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=80",verified:false,wf:"https://www.windfinder.com/forecast/vejers_strand"},
-{name:"Stenbjerg",area:"Thy, Dänemark",lat:56.88,lon:8.37,dirs:["SSW","SW"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=303",verified:false,wf:"https://www.windfinder.com/forecast/stenbjerg"},
+{name:"Stenbjerg",area:"Thy, Dänemark",lat:56.9203,lon:8.3588,dirs:["SSW","SW"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=303",verified:false,wf:"https://www.windfinder.com/forecast/stenbjerg"},
 {name:"Kiel Falkensteiner Strand",area:"Kieler Förde",lat:54.39,lon:10.18,dirs:["N","NNO","NO","ONO","O","OSO","SSO"],type:"Flachwasser + Stehrevier",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=174",verified:false,wf:"https://www.windfinder.com/forecast/falkensteiner_strand"},
 {name:"Ruiterplaat Bootsrampe",area:"Veerse Meer, Niederlande",lat:51.58,lon:3.69,dirs:["SO","S","SW","W","NW"],type:"Flachwasser + Kabbel",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=287",verified:false,wf:"https://www.windfinder.com/forecast/ruiterplaat"},
-{name:"Amtoft Havn",area:"Thisted Bredning, Dänemark",lat:56.92,lon:8.94,dirs:["NO","ONO","O"],type:"Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=452",verified:false,wf:"https://www.windfinder.com/forecast/amtoft_havn"},
-{name:"Krik Vig",area:"Nissum Bredning, Dänemark",lat:56.78,lon:8.25,dirs:["SO","SSO","S","SSW","SW","WSW","W","WNW"],type:"Flachwasser + Stehrevier",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=382",verified:false,wf:"https://www.windfinder.com/forecast/krik_vig"},
+{name:"Amtoft Havn",area:"Thisted Bredning, Dänemark",lat:57.0075,lon:8.9392,dirs:["NO","ONO","O"],type:"Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=452",verified:false,wf:"https://www.windfinder.com/forecast/amtoft_havn"},
+{name:"Krik Vig",area:"Nissum Bredning, Dänemark",lat:56.7562,lon:8.2836,dirs:["SO","SSO","S","SSW","SW","WSW","W","WNW"],type:"Flachwasser + Stehrevier",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=382",verified:false,wf:"https://www.windfinder.com/forecast/krik_vig"},
 {name:"Harderwijk",area:"Veluwemeer, Niederlande",lat:52.35,lon:5.62,dirs:["SW","W"],type:"Flachwasser + Stehrevier",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Harderwijk",verified:false,wf:"https://www.windfinder.com/forecast/harderwijk"},
 {name:"Workum",area:"IJsselmeer, Niederlande",lat:52.98,lon:5.43,dirs:["SW","NW"],type:"Flachwasser + Stehrevier",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Workum",verified:false,wf:"https://www.windfinder.com/forecast/workum"},
 {name:"Staveren",area:"IJsselmeer, Niederlande",lat:52.89,lon:5.36,dirs:["SW","W","NW"],type:"Kleine Welle + Kabbel",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=56",verified:false,wf:"https://www.windfinder.com/forecast/staveren"},
@@ -626,10 +627,10 @@ const SPOTS_RAW = [
 ,{name:"Strande",area:"Kieler Förde",lat:54.44,lon:10.17,dirs:["S","SSO","SO","OSO","O"],type:"Flachwasser + Kabbel",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=111",verified:false,wf:"https://www.windfinder.com/forecast/strande"}
 ,{name:"Damp Südstrand",area:"Schwansen, Ostsee",lat:54.58,lon:10.02,dirs:["N","NNO","NO","ONO"],type:"Kleine Welle + Kabbel",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=107",verified:false,wf:"https://www.windfinder.com/forecast/damp"}
 
-,{name:"Blåvand",area:"Westküste, Dänemark",lat:55.56,lon:8.13,dirs:["SO","WNW"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Blavand",verified:false,wf:"https://www.windfinder.com/forecast/blavand"}
-,{name:"Hamborg",area:"Hanstholm, Dänemark",lat:57.12,lon:8.60,dirs:["WNW","NW","O"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=96",verified:false,wf:"https://www.windfinder.com/forecast/hanstholm"}
-,{name:"Kegnæs",area:"Als, Dänemark",lat:54.87,lon:9.99,dirs:["O","OSO","SO"],type:"Wave + kleine Welle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=98",verified:false,wf:"https://www.windfinder.com/forecast/kegnaes"}
-,{name:"Vemmingbund",area:"Sønderborg, Dänemark",lat:54.90,lon:9.67,dirs:["O","OSO","SO"],type:"Kleine Welle + Kabbel",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=99",verified:false,wf:"https://www.windfinder.com/forecast/vemmingbund"}
+,{name:"Blåvand",area:"Westküste, Dänemark",lat:55.5575,lon:8.0828,dirs:["SO","WNW"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Blavand",verified:false,wf:"https://www.windfinder.com/forecast/blavand"}
+,{name:"Hamborg",area:"Hanstholm, Dänemark",lat:57.1183,lon:8.6532,dirs:["WNW","NW","O"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=96",verified:false,wf:"https://www.windfinder.com/forecast/hanstholm"}
+,{name:"Kegnæs",area:"Als, Dänemark",lat:54.8531,lon:9.9876,dirs:["O","OSO","SO"],type:"Wave + kleine Welle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=98",verified:false,wf:"https://www.windfinder.com/forecast/kegnaes"}
+,{name:"Vemmingbund",area:"Sønderborg, Dänemark",lat:54.8974,lon:9.7017,dirs:["O","OSO","SO"],type:"Kleine Welle + Kabbel",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=99",verified:false,wf:"https://www.windfinder.com/forecast/vemmingbund"}
 ,{name:"Lynæs",area:"Isefjord, Dänemark",lat:55.95,lon:11.85,dirs:["O","SW","W"],type:"Flachwasser + Kabbel",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=336",verified:false,wf:"https://www.windfinder.com/forecast/lynaes"}
 ,{name:"Ristinge Strand",area:"Langeland, Dänemark",lat:54.82,lon:10.63,dirs:["SO","S","SW","W","NW"],type:"Kleine Welle + Kabbel + Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=398",verified:false,wf:"https://www.windfinder.com/forecast/ristinge"}
 ,{name:"Agger Dorf",area:"Thy, Dänemark",lat:56.78,lon:8.25,dirs:["SSO","S"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.htm?spot_a=Agger&spot_b=Dorf",verified:false,wf:"https://www.windfinder.com/forecast/agger"}
@@ -642,7 +643,7 @@ const SPOTS_RAW = [
 ,{name:"Wijk aan Zee Noordpier",area:"Nordholland, Niederlande",lat:52.49,lon:4.59,dirs:["SSO","S","SSW"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=24",verified:false,wf:"https://www.windfinder.com/forecast/wijk_aan_zee"}
 ,{name:"Wangerooge",area:"Ostfriesische Inseln",lat:53.79,lon:7.90,dirs:["WSW","W","WNW","O","OSO"],type:"Wave + Kabbel + Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=385",verified:false,wf:"https://www.windfinder.com/forecast/wangerooge"}
 ,{name:"Mellensee Festwiese",area:"Brandenburg",lat:52.12,lon:13.39,dirs:["NNW","N","NO","SO","S"],type:"Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=459",verified:false,wf:"https://www.windfinder.com/forecast/mellensee"}
-,{name:"Vandet Sø Ostufer",area:"Thy, Dänemark",lat:56.96,lon:8.72,dirs:["SW","W","NW","O","SO"],type:"Flachwasser + Stehrevier",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=93",verified:false,wf:"https://www.windfinder.com/forecast/vandet_so"}
+,{name:"Vandet Sø Ostufer",area:"Thy, Dänemark",lat:57.0232,lon:8.5587,dirs:["SW","W","NW","O","SO"],type:"Flachwasser + Stehrevier",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=93",verified:false,wf:"https://www.windfinder.com/forecast/vandet_so"}
 ,{name:"Hvide Sande Aargab",area:"Ringkøbing Fjord, Dänemark",lat:55.97,lon:8.14,dirs:["N","NO","O","SO"],type:"Flachwasser + Kabbel",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=83",verified:false,wf:"https://www.windfinder.com/forecast/hvide_sande"}
 ,{name:"Hvide Sande Nord Aqua Sports Zone",area:"Ringkøbing Fjord, Dänemark",lat:56.01,lon:8.13,dirs:["NW","N","NO","SO","S"],type:"Flachwasser + Stehrevier",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=434",verified:false,wf:"https://www.windfinder.com/forecast/hvide_sande"}
 ,{name:"Rømø Surfstrand",area:"Südliche Nordsee, Dänemark",lat:55.15,lon:8.48,dirs:["S","SSW","NNW","N"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=R%C3%B6m%C3%B6&spot_b=Surfstrand",verified:false,wf:"https://www.windfinder.com/forecast/romo"}
@@ -657,7 +658,7 @@ const SPOTS_RAW = [
 {name:"Dänisch Nienhof Badestrand",area:"Kieler Bucht",lat:54.47,lon:10.14,dirs:["W","WNW","NO","ONO","O"],type:"Kleine Welle + Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=161",verified:false,wf:"https://www.windfinder.com/forecast/daenisch_nienhof"},
 {name:"Noer",area:"Eckernförder Bucht",lat:54.47,lon:9.98,dirs:["W","WNW","NO","ONO"],type:"Kleine Welle + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=340",verified:false,wf:"https://www.windfinder.com/forecast/noer"},
 {name:"Füsing",area:"Schlei",lat:54.52,lon:9.60,dirs:["O"],type:"Flachwasser + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=394",verified:false,wf:"https://www.windfinder.com/forecast/fuesing"},
-{name:"Flügger Leuchtturm",area:"Fehmarn",lat:54.49,lon:11.02,dirs:["W","WNW"],type:"Kleine Welle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=251",verified:false,wf:"https://www.windfinder.com/forecast/fluegger_leuchtturm"},
+{name:"Flügger Leuchtturm",area:"Fehmarn",lat:54.4397,lon:11.0148,dirs:["W","WNW"],type:"Kleine Welle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=251",verified:false,wf:"https://www.windfinder.com/forecast/fluegger_leuchtturm"},
 {name:"Januskopf",area:"Norderney",lat:53.72,lon:7.16,dirs:["WSW","W","WNW","NO","ONO"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=100",verified:false,wf:"https://www.windfinder.com/forecast/januskopf"},
 {name:"Wilhelmshaven Südstrand",area:"Jadebusen",lat:53.51,lon:8.14,dirs:["O","SO","S","SW","W"],type:"Flachwasser + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=437",verified:false,wf:"https://www.windfinder.com/forecast/wilhelmshaven"},
 ,{name:"Kellenhusen Südstrand",area:"Ostholstein",lat:54.19,lon:11.07,dirs:["ONO","NO","NNO"],type:"Stehrevier + Brandung bei Ostnordost",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=463",verified:false,wf:"https://www.windfinder.com/forecast/kellenhusen"}
@@ -665,10 +666,10 @@ const SPOTS_RAW = [
 
 {name:"Hoerup Hav",area:"Süddänische Ostsee",lat:54.87,lon:9.98,dirs:["NO","ONO","O","OSO"],type:"Flachwasser + Stehrevier",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=170",verified:false,wf:"https://www.windfinder.com/forecast/hoerup_hav"},
 {name:"Kegnaes",area:"Süddänische Ostsee",lat:54.87,lon:9.97,dirs:["OSO","SO"],type:"Wave + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=98",verified:false,wf:"https://www.windfinder.com/forecast/kegnaes"},
-{name:"Klausdorfer Strand",area:"Fehmarn",lat:54.47,lon:11.16,dirs:["N","SO"],type:"Wave + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Klausdorfer+Strand",verified:false,wf:"https://www.windfinder.com/forecast/klausdorfer_strand"},
+{name:"Klausdorfer Strand",area:"Fehmarn",lat:54.4577,lon:11.2737,dirs:["N","SO"],type:"Wave + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Klausdorfer+Strand",verified:false,wf:"https://www.windfinder.com/forecast/klausdorfer_strand"},
 {name:"Timmendorfer Strand",area:"Lübecker Bucht",lat:53.99,lon:10.78,dirs:["N","NNO","ONO","O"],type:"Kabbelwelle + Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Timmendorfer+Strand",verified:false,wf:"https://www.windfinder.com/forecast/timmendorfer_strand"},
-{name:"Blavand",area:"Dänische Nordseeküste",lat:55.55,lon:8.13,dirs:["SO","WNW"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Blavand",verified:false,wf:"https://www.windfinder.com/forecast/blavand"},
-{name:"Vangsa",area:"Thy / Dänische Nordseeküste",lat:57.04,lon:8.43,dirs:["SSW","SW","NNO","NO"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=302",verified:false,wf:"https://www.windfinder.com/forecast/vangsa"},
+{name:"Blavand",area:"Dänische Nordseeküste",lat:55.5575,lon:8.0828,dirs:["SO","WNW"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Blavand",verified:false,wf:"https://www.windfinder.com/forecast/blavand"},
+{name:"Vangsa",area:"Thy / Dänische Nordseeküste",lat:57.0068,lon:8.4479,dirs:["SSW","SW","NNO","NO"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=302",verified:false,wf:"https://www.windfinder.com/forecast/vangsa"},
 {name:"Weidefeld - Weidefelder Strand",area:"Schlei / Kappeln",lat:54.65,lon:10.02,dirs:["NNO","NO","SSO","S"],type:"Flachwasser + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=298",verified:false,wf:"https://www.windfinder.com/forecast/weidefeld"},
 {name:"Nordhagen - Schönhagen",area:"Schlei / Schwansen",lat:54.63,lon:10.02,dirs:["N","NNO","O","SSO","SO"],type:"Kabbelwelle + kleine Welle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=297",verified:false,wf:"https://www.windfinder.com/forecast/schoenhagen"},
 ,
@@ -680,13 +681,13 @@ const SPOTS_RAW = [
 {name:"Svinkløv",area:"Jammerbucht / Dänemark",lat:57.16,lon:9.31,dirs:["WSW","W"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=496",verified:false,wf:"https://www.windfinder.com/forecast/svinklov"},
 {name:"Lønstrup",area:"Nordjütland / Dänemark",lat:57.47,lon:9.79,dirs:["SW","WSW"],type:"Wave + Brandung, anspruchsvoll",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=498",verified:false,wf:"https://www.windfinder.com/forecast/lonstrup"},
 
-,{name:"Vigsø",area:"Thy / Dänemark",lat:57.08,lon:8.98,dirs:["WNW","NW","OSO","O"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=97",verified:false,wf:"https://www.windfinder.com/forecast/vigso"}
+,{name:"Vigsø",area:"Thy / Dänemark",lat:57.096,lon:8.7197,dirs:["WNW","NW","OSO","O"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=97",verified:false,wf:"https://www.windfinder.com/forecast/vigso"}
 ,{name:"Thorup Sande",area:"Jammerbucht / Dänemark",lat:57.13,lon:9.12,dirs:["WNW","NW"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=497",verified:false,wf:"https://www.windfinder.com/forecast/thorup_sande"}
 ,{name:"Schönberger Strand",area:"Kieler Bucht",lat:54.42,lon:10.42,dirs:["NW","NNW","SO","OSO"],type:"Kleine Welle + Kabbelwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Sch%C3%B6nberger+Strand",verified:false,wf:"https://www.windfinder.com/forecast/schoenberger_strand"}
 ,{name:"Hohenfelde Hubertsberg",area:"Hohwachter Bucht",lat:54.37,lon:10.49,dirs:["W","O"],type:"Kleine Welle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=316",verified:false,wf:"https://www.windfinder.com/forecast/hohenfelde"}
 ,
 {name:"Møns Klint",area:"Møn, Dänemark",lat:54.96,lon:12.54,dirs:["O"],type:"Große Welle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=478",verified:false,wf:"https://www.windfinder.com/forecast/mons_klint"},
-{name:"Gammelmark",area:"Sønderborg Bugt, Dänemark",lat:54.87,lon:9.65,dirs:["O","OSO","SO"],type:"Flachwasser + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=169",verified:false,wf:"https://www.windfinder.com/forecast/gammelmark"},
+{name:"Gammelmark",area:"Sønderborg Bugt, Dänemark",lat:54.8863,lon:9.73,dirs:["O","OSO","SO"],type:"Flachwasser + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=169",verified:false,wf:"https://www.windfinder.com/forecast/gammelmark"},
 {name:"Norddeich",area:"Ostfriesland",lat:53.62,lon:7.16,dirs:["W","NW","WNW","N","NO","ONO"],type:"Flachwasser + kleine Welle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=461",verified:false,wf:"https://www.windfinder.com/forecast/norddeich"},
 {name:"Aschau",area:"Eckernförder Bucht",lat:54.49,lon:10.00,dirs:["WSW","W","WNW","NO"],type:"Flachwasser + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=157",verified:false,wf:"https://www.windfinder.com/forecast/aschau"},
 {name:"Lindhöft",area:"Eckernförder Bucht",lat:54.48,lon:10.03,dirs:["W","O"],type:"Kabbelwelle + Dünung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=158",verified:false,wf:"https://www.windfinder.com/forecast/lindhoeft"},
@@ -704,13 +705,13 @@ const SPOTS_RAW = [
 ,{name:"Laboe",area:"Kieler Förde, Ostsee",lat:54.40,lon:10.22,dirs:["SSW","SW","WSW","W"],type:"Flachwasser + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=115",verified:false,wf:"https://www.windfinder.com/forecast/laboe"}
 ,{name:"Hohenfelder Strand",area:"Kieler Bucht, Ostsee",lat:54.37,lon:10.49,dirs:["SE","E","NW","NNW"],type:"Kleine Welle + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Hohenfelde&spot_b=Hohenfelder+Strand",verified:false,wf:"https://www.windfinder.com/forecast/hohenfelde"}
 ,{name:"Westerland Brandenburger Strand",area:"Sylt, Nordsee",lat:54.91,lon:8.30,dirs:["SSW","SW"],type:"Wave + anspruchsvolle Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=105",verified:false,wf:"https://www.windfinder.com/forecast/westerland"}
-,{name:"Gahlendorf",area:"Fehmarn, Ostsee",lat:54.45,lon:11.08,dirs:["N","SE"],type:"Kleine Welle + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Gahlendorf",verified:false,wf:"https://www.windfinder.com/forecast/gahlendorf"}
+,{name:"Gahlendorf",area:"Fehmarn, Ostsee",lat:54.4479,lon:11.2524,dirs:["N","SE"],type:"Kleine Welle + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Gahlendorf",verified:false,wf:"https://www.windfinder.com/forecast/gahlendorf"}
 ,{name:"Insel Poel Timmendorf",area:"Insel Poel, Ostsee",lat:53.99,lon:11.38,dirs:["W","N","NNE","NE"],type:"Flachwasser + kleine Welle, Stehrevier",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=468",verified:false,wf:"https://www.windfinder.com/forecast/timmendorf_poel"}
-,{name:"Fehmarnsund Miramar",area:"Fehmarn, Ostsee",lat:54.40,lon:11.11,dirs:["E","SE","SW","W"],type:"Flachwasser + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=175",verified:false,wf:"https://www.windfinder.com/forecast/fehmarnsund"}
+,{name:"Fehmarnsund Miramar",area:"Fehmarn, Ostsee",lat:54.4043,lon:11.1421,dirs:["E","SE","SW","W"],type:"Flachwasser + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=175",verified:false,wf:"https://www.windfinder.com/forecast/fehmarnsund"}
 ,{name:"Meeschendorf Südstrand",area:"Fehmarn, Ostsee",lat:54.41,lon:11.27,dirs:["SE","S","SW"],type:"Flachwasser + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=265",verified:false,wf:"https://www.windfinder.com/forecast/meeschendorf"}
 ,{name:"Meeschendorf Camping Europa",area:"Fehmarn, Ostsee",lat:54.41,lon:11.28,dirs:["SE","S","SW"],type:"Flachwasser + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=266",verified:false,wf:"https://www.windfinder.com/forecast/meeschendorf"}
 ,{name:"Ahrenshoop",area:"Fischland-Darß, Ostsee",lat:54.38,lon:12.43,dirs:["SW","WSW","W","N","NNE","NE"],type:"Kleine Welle + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=433",verified:false,wf:"https://www.windfinder.com/forecast/ahrenshoop"}
-,{name:"Staberhuk",area:"Fehmarn, Ostsee",lat:54.39,lon:11.31,dirs:["N","SE"],type:"Kleine Welle + Kabbelwelle, steiniger Spot",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=260",verified:false,wf:"https://www.windfinder.com/forecast/staberhuk"}
+,{name:"Staberhuk",area:"Fehmarn, Ostsee",lat:54.4028,lon:11.3112,dirs:["N","SE"],type:"Kleine Welle + Kabbelwelle, steiniger Spot",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=260",verified:false,wf:"https://www.windfinder.com/forecast/staberhuk"}
 ,
 {name:"Hanstholm Middles",area:"Thy, Dänemark",lat:57.12,lon:8.59,dirs:["WNW","NW","NNW"],type:"Anspruchsvoller Wavespot, hohe Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Hanstholm&spot_b=Middles",verified:false,wf:"https://www.windfinder.com/forecast/hanstholm"},
 {name:"Hanstholm Fischfabrik",area:"Thy, Dänemark",lat:57.12,lon:8.59,dirs:["W","WNW","NW","NNW"],type:"Nordseebrandung, anspruchsvoller Spot",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Hanstholm&spot_b=Fischfabrik",verified:false,wf:"https://www.windfinder.com/forecast/hanstholm"},
@@ -719,14 +720,14 @@ const SPOTS_RAW = [
 {name:"Kalifornien",area:"Kieler Bucht, Ostsee",lat:54.42,lon:10.38,dirs:["WNW","NW","ONO","O"],type:"Kleine Welle + Kabbelwelle, Sandbank",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=113",verified:false,wf:"https://www.windfinder.com/forecast/kalifornien"},
 {name:"Burgtiefe Südstrand",area:"Fehmarn, Ostsee",lat:54.41,lon:11.20,dirs:["SO","S","SW"],type:"Flachwasser + Kabbelwelle, Badebetrieb beachten",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=267",verified:false,wf:"https://www.windfinder.com/forecast/burgtiefe"},
 {name:"Burger Binnensee",area:"Fehmarn, Ostsee",lat:54.41,lon:11.20,dirs:["NO","O","W"],type:"Flachwasser + Stehrevier",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=249",verified:false,wf:"https://www.windfinder.com/forecast/burger_binnensee"},
-{name:"Katharinenhof",area:"Fehmarn, Ostsee",lat:54.44,lon:11.28,dirs:["N","SO"],type:"Kleine Welle + Kabbelwelle, große Steine im Wasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=264",verified:false,wf:"https://www.windfinder.com/forecast/katharinenhof"},
-{name:"Marienleuchte",area:"Fehmarn, Ostsee",lat:54.51,lon:11.24,dirs:["N","SO"],type:"Kleine Welle + Kabbelwelle, steiniger Strand",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=257",verified:false,wf:"https://www.windfinder.com/forecast/marienleuchte"},
+{name:"Katharinenhof",area:"Fehmarn, Ostsee",lat:54.4349,lon:11.2828,dirs:["N","SO"],type:"Kleine Welle + Kabbelwelle, große Steine im Wasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=264",verified:false,wf:"https://www.windfinder.com/forecast/katharinenhof"},
+{name:"Marienleuchte",area:"Fehmarn, Ostsee",lat:54.495,lon:11.2382,dirs:["N","SO"],type:"Kleine Welle + Kabbelwelle, steiniger Strand",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=257",verified:false,wf:"https://www.windfinder.com/forecast/marienleuchte"},
 {name:"Nieblum",area:"Föhr, Nordsee",lat:54.69,lon:8.43,dirs:["O","S","W"],type:"Flachwasser + Kabbelwelle, tideabhängig",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=482",verified:false,wf:"https://www.windfinder.com/forecast/nieblum"},
 {name:"Meldorf Speicherkoog",area:"Dithmarschen, Nordsee",lat:54.08,lon:8.96,dirs:["S","SW","W","NW","N","NO","O","SO"],type:"Flachwasser + Stehrevier, Schutzgebiet beachten",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Meldorf&spot_b=Meldorfer+Speicherkoog",verified:false,wf:"https://www.windfinder.com/forecast/meldorf"},
 {name:"Meldorf Meldorfer Bucht",area:"Dithmarschen, Nordsee",lat:54.08,lon:8.95,dirs:["S","SSO","SW","W","WNW","NW","NNW"],type:"Gezeitenrevier, bei Ebbe sehr flach",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Meldorf&spot_b=Meldorfer+Bucht",verified:false,wf:"https://www.windfinder.com/forecast/meldorf"},
-{name:"Flügger Strand",area:"Fehmarn, Ostsee",lat:54.46,lon:11.02,dirs:["N","S"],type:"Kleine Welle + Kabbelwelle, Steine am Einstieg",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=252",verified:false,wf:"https://www.windfinder.com/forecast/fluegger_strand"},
-{name:"Lemkenhafen Orther Reede",area:"Fehmarn, Ostsee",lat:54.44,lon:11.10,dirs:["S","SW","W"],type:"Flachwasser + Stehrevier, sehr flaches Wasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=247",verified:false,wf:"https://www.windfinder.com/forecast/lemkenhafen"},
-{name:"Püttsee",area:"Fehmarn, Ostsee",lat:54.47,lon:11.02,dirs:["SW","N"],type:"Kleine Welle + Kabbelwelle, Naturschutzgebiet beachten",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=253",verified:false,wf:"https://www.windfinder.com/forecast/puettsee"},
+{name:"Flügger Strand",area:"Fehmarn, Ostsee",lat:54.4523,lon:11.005,dirs:["N","S"],type:"Kleine Welle + Kabbelwelle, Steine am Einstieg",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=252",verified:false,wf:"https://www.windfinder.com/forecast/fluegger_strand"},
+{name:"Lemkenhafen Orther Reede",area:"Fehmarn, Ostsee",lat:54.4467,lon:11.0882,dirs:["S","SW","W"],type:"Flachwasser + Stehrevier, sehr flaches Wasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=247",verified:false,wf:"https://www.windfinder.com/forecast/lemkenhafen"},
+{name:"Püttsee",area:"Fehmarn, Ostsee",lat:54.4613,lon:11.024,dirs:["SW","N"],type:"Kleine Welle + Kabbelwelle, Naturschutzgebiet beachten",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=253",verified:false,wf:"https://www.windfinder.com/forecast/puettsee"},
 {name:"Wulfener Hals Burger Binnensee",area:"Fehmarn, Ostsee",lat:54.41,lon:11.18,dirs:["NO","O","SO"],type:"Flachwasser + Stehrevier, steiniger Einstieg",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=250",verified:false,wf:"https://www.windfinder.com/forecast/wulfener_hals"},
 {name:"Presen",area:"Fehmarn, Ostsee",lat:54.48,lon:11.25,dirs:["N","NO","O","SO"],type:"Ostseerevier, steiniger Uferbereich",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Presen",verified:false,wf:"https://www.windfinder.com/forecast/presen"},
 {name:"Teichhof",area:"Fehmarn, Ostsee",lat:54.528,lon:11.116,dirs:["NW","NO","O"],type:"Kleine Welle + Kabbelwelle, offene Küste",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Teichhof",verified:false,wf:"https://www.windfinder.com/forecast/teichhof"},
@@ -771,8 +772,8 @@ const SPOTS_RAW = [
 {name:"Köln Westhoven",area:"Nordrhein-Westfalen, Deutschland",lat:50.91,lon:7.02,dirs:["WSW", "W", "WNW"],type:"Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=342",verified:false,wf:"https://www.windfinder.com/forecast/koeln_westhoven"},
 {name:"Auesee",area:"Wesel, Deutschland",lat:51.67,lon:6.6,dirs:["S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW", "N", "NNO", "NO", "ONO", "O", "SO"],type:"Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Auesee",verified:false,wf:"https://www.windfinder.com/forecast/auesee"},
 {name:"Havstokken",area:"Seeland, Dänemark",lat:55.73,lon:11.98,dirs:["WSW","WNW"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=488",verified:false,wf:"https://www.windfinder.com/forecast/havstokken"},
-{name:"Skaven Strand",area:"Ringkøbing Fjord, Dänemark",lat:55.91,lon:8.39,dirs:["SW","W","NW","NNW"],type:"Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=453",verified:false,wf:"https://www.windfinder.com/forecast/skaven_strand"},
-{name:"Ristinge Havn",area:"Langeland, Dänemark",lat:54.82,lon:10.61,dirs:["N","NNO","NO","ONO","O","OSO","SO","SSO","SSW","SW","WSW","W","WNW","NW","NNW"],type:"Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Ristinge%20Havn",verified:false,wf:"https://www.windfinder.com/forecast/ristinge_havn"},
+{name:"Skaven Strand",area:"Ringkøbing Fjord, Dänemark",lat:55.893,lon:8.3568,dirs:["SW","W","NW","NNW"],type:"Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=453",verified:false,wf:"https://www.windfinder.com/forecast/skaven_strand"},
+{name:"Ristinge Havn",area:"Langeland, Dänemark",lat:54.8329,lon:10.6374,dirs:["N","NNO","NO","ONO","O","OSO","SO","SSO","SSW","SW","WSW","W","WNW","NW","NNW"],type:"Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Ristinge%20Havn",verified:false,wf:"https://www.windfinder.com/forecast/ristinge_havn"},
 {name:"Klitmøller Muschelriff",area:"Thy, Dänemark",lat:57.04,lon:8.48,dirs:["SSW","SW"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=89",verified:false,wf:"https://www.windfinder.com/forecast/klitmoller"},
 {name:"Klitmøller Bucht",area:"Thy, Dänemark",lat:57.04,lon:8.48,dirs:["W","WNW"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=90",verified:false,wf:"https://www.windfinder.com/forecast/klitmoller_bucht"},
 {name:"Bude Whitemouth Bay",area:"Cornwall, England",lat:50.85,lon:-4.56,dirs:["W", "SW", "NW"],type:"Wave",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Bude%20Whitemouth%20Bay",verified:false,wf:"https://www.windfinder.com/forecast/bude"},
@@ -1143,6 +1144,25 @@ function setStarText(name, text){
   const sp = SPOTS.find(x => x.name === name); if(!sp || !sp.waveStar) return;
   applySpotEdit(sp, sp.dirs, sp.mainDir, {...sp.waveStar, label: (String(text||"").trim() || "Beste Welle").slice(0,60)}, sp.weakDirs); repaintSoft();
 }
+function setSpotPos(name, inputId){
+  const sp = SPOTS.find(x => x.name === name); if(!sp) return;
+  const v = (document.getElementById(inputId)?.value || "").trim();
+  const m = parseMapsLink(v);
+  if(!m || m.short || !Number.isFinite(Number(m.lat)) || !Number.isFinite(Number(m.lon))){ toast(m && m.short ? "Kurzlinks gehen nicht. Lange Google-Maps-Adresse oder Koordinaten (z. B. 54.4245, 11.0981) einfügen." : "Keine Koordinaten erkannt. Google-Maps-Link oder „Breite, Länge“ einfügen."); return; }
+  applySpotPos(sp, Number(m.lat), Number(m.lon));
+}
+function setSpotPosGps(name){
+  const sp = SPOTS.find(x => x.name === name); if(!sp || !navigator.geolocation) return;
+  toast("Standort wird ermittelt …");
+  navigator.geolocation.getCurrentPosition(p => applySpotPos(sp, p.coords.latitude, p.coords.longitude), () => toast("Standort nicht verfügbar."), {enableHighAccuracy:true, timeout:15000});
+}
+function applySpotPos(sp, lat, lon, opts={}){
+  if(!(Math.abs(lat) <= 90 && Math.abs(lon) <= 180)) return;
+  sp.lat = Math.round(lat*10000)/10000; sp.lon = Math.round(lon*10000)/10000;
+  if(sp.custom){ const c = customSpots.find(x => x.name === sp.name); if(c){ c.lat = sp.lat; c.lon = sp.lon; } saveCustom(); }
+  else { spotOverrides[sp.name] = {...(spotOverrides[sp.name]||{}), lat: sp.lat, lon: sp.lon}; try{ localStorage.setItem(OVR_KEY, JSON.stringify(spotOverrides)); }catch(e){} }
+  if(!opts.fromSync){ markSpotDirty(sp.name); toast(`Position gesetzt: ${sp.lat}, ${sp.lon}. „Speichern“ verteilt sie, „Suchen“ lädt das Wetter für den neuen Punkt.`); repaintSoft(); }
+}
 function dirsLabel(sp){
   const st = starDirsOf(sp).filter(d => sp.dirs.includes(d)), weak = new Set(sp.weakDirs || []);
   const lab = d => d + (weak.has(d) && d !== sp.mainDir ? " (mögl.)" : "");
@@ -1166,7 +1186,7 @@ function dirEditorHtml(sp){
     const cls = [sp.mainDir===d ? "best" : !sp.dirs.includes(d) ? "off" : weak ? "weak" : "on", st.has(d) ? "star" : ""].join(" ").trim();
     return `<button type="button" class="${cls}" onclick="cycleDir('${n}','${d}')" aria-label="Richtung ${d}">${d}</button>`;
   }).join("");
-  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>Zum Verteilen einmalig den GitHub-Schlüssel einfügen (bleibt nur auf diesem Gerät):</span><input type="password" id="tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}" placeholder="github_pat_…" autocomplete="off"><button type="button" onclick="saveTokenAndPublish('${n}','tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}')">Schlüssel merken &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
+  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div><div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}" placeholder="Google-Maps-Link oder 54.4245, 11.0981"><button type="button" onclick="setSpotPos('${n}','pos-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}')">Übernehmen</button><button type="button" onclick="setSpotPosGps('${n}')">📍 Ich stehe am Spot</button></div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>Zum Verteilen einmalig den GitHub-Schlüssel einfügen (bleibt nur auf diesem Gerät):</span><input type="password" id="tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}" placeholder="github_pat_…" autocomplete="off"><button type="button" onclick="saveTokenAndPublish('${n}','tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}')">Schlüssel merken &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
 }
 function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); else starMode.add(name); repaintSoft(); }
 function repaintSoft(){
@@ -1214,7 +1234,7 @@ function updatePublishButton(){
 }
 const b64enc = s => btoa(unescape(encodeURIComponent(s)));
 const b64dec = s => decodeURIComponent(escape(atob(String(s).replace(/\s/g,""))));
-const spotState = sp => ({dirs: sp.dirs, weakDirs: sp.weakDirs || [], mainDir: sp.mainDir || "-", waveStar: sp.waveStar || null, models: Array.isArray(spotModels[sp.name]) && spotModels[sp.name].length ? [...spotModels[sp.name]].sort() : null, wave: spotWave[sp.name] || null});
+const spotState = sp => ({dirs: sp.dirs, weakDirs: sp.weakDirs || [], mainDir: sp.mainDir || "-", waveStar: sp.waveStar || null, models: Array.isArray(spotModels[sp.name]) && spotModels[sp.name].length ? [...spotModels[sp.name]].sort() : null, wave: spotWave[sp.name] || null, lat: sp.lat, lon: sp.lon});
 async function publishSpotEdits(){
   const note = $("gh-note"), token = ($("gh-token").value || "").trim();
   if(!token){ note.textContent = "Bitte zuerst den GitHub-Schlüssel eintragen."; return; }
@@ -1254,7 +1274,7 @@ async function checkSpotUpdates(){
     const r = await fetch("spot-updates.json?t=" + Date.now(), {cache: "no-store"});
     if(!r.ok) return;
     const data = await r.json(), changes = data.changes || {};
-    const same = (sp, c) => JSON.stringify(spotState(sp)) === JSON.stringify({dirs: DIR16.filter(d => (c.dirs||[]).includes(d)), weakDirs: DIR16.filter(d => (c.weakDirs||[]).includes(d)), mainDir: c.mainDir || "-", waveStar: c.waveStar || null, models: c.models === undefined ? spotState(sp).models : (Array.isArray(c.models) && c.models.length ? [...c.models].sort() : null), wave: c.wave === undefined ? spotState(sp).wave : (c.wave === "bm" ? "bm" : null)});
+    const same = (sp, c) => JSON.stringify(spotState(sp)) === JSON.stringify({dirs: DIR16.filter(d => (c.dirs||[]).includes(d)), weakDirs: DIR16.filter(d => (c.weakDirs||[]).includes(d)), mainDir: c.mainDir || "-", waveStar: c.waveStar || null, models: c.models === undefined ? spotState(sp).models : (Array.isArray(c.models) && c.models.length ? [...c.models].sort() : null), wave: c.wave === undefined ? spotState(sp).wave : (c.wave === "bm" ? "bm" : null), lat: Number.isFinite(c.lat) ? c.lat : sp.lat, lon: Number.isFinite(c.lon) ? c.lon : sp.lon});
     const pending = Object.entries(changes).filter(([n, c]) => {
       const sp = SPOTS.find(x => x.name === n);
       return sp && Array.isArray(c.dirs) && c.dirs.length && c.at && c.at > (seenUpdates[n] || "") && !dirtySpots.has(n) && !same(sp, c);
@@ -1265,12 +1285,12 @@ async function checkSpotUpdates(){
 function showSpotUpdateBanner(pending){
   if(document.getElementById("spotupdbanner")) return;
   const b = document.createElement("div"); b.id = "spotupdbanner";
-  const desc = c => { const tmp = {dirs: DIR16.filter(d => c.dirs.includes(d)), weakDirs: c.weakDirs || [], mainDir: c.mainDir, waveStar: c.waveStar || null}; return `${dirsLabel(tmp)}${c.mainDir && c.mainDir !== "-" ? " · beste " + c.mainDir : ""}${Array.isArray(c.models) && c.models.length ? " · Modelle: " + c.models.join(", ") : c.models === null ? " · Standardmodelle" : ""}${c.wave === "bm" ? " · Welle: Best Match" : c.wave === null ? " · Welle: EWAM" : ""}`; };
+  const desc = c => { const tmp = {dirs: DIR16.filter(d => c.dirs.includes(d)), weakDirs: c.weakDirs || [], mainDir: c.mainDir, waveStar: c.waveStar || null}; return `${dirsLabel(tmp)}${c.mainDir && c.mainDir !== "-" ? " · beste " + c.mainDir : ""}${Array.isArray(c.models) && c.models.length ? " · Modelle: " + c.models.join(", ") : c.models === null ? " · Standardmodelle" : ""}${c.wave === "bm" ? " · Welle: Best Match" : c.wave === null ? " · Welle: EWAM" : ""}${Number.isFinite(c.lat) && Number.isFinite(c.lon) ? " · Position " + c.lat + ", " + c.lon : ""}`; };
   b.innerHTML = `<b>Neue Spot-Änderungen (${pending.length})</b><ul>${pending.map(([n,c]) => `<li><b>${esc(n)}</b>: ${esc(desc(c))}</li>`).join("")}</ul><div class="row"><button type="button" id="spotupd-yes" style="background:#73d8d0;color:#06232a">Übernehmen</button><button type="button" id="spotupd-no" style="background:#29414c;color:#edf4f7">Ablehnen</button></div>`;
   document.body.appendChild(b);
   const done = accept => {
     pending.forEach(([n, c]) => {
-      if(accept){ const sp = SPOTS.find(x => x.name === n); if(sp) applySpotEdit(sp, c.dirs, c.mainDir, c.waveStar && validWave(c.waveStar) ? cleanWave(c.waveStar) : null, Array.isArray(c.weakDirs) ? c.weakDirs : [], {fromSync: true}); if(Array.isArray(c.models) && c.models.length) applySpotModels(n, c.models); else if(c.models === null){ delete spotModels[n]; saveSpotModels(); } if(c.wave !== undefined){ if(c.wave === "bm") spotWave[n] = "bm"; else delete spotWave[n]; try{ localStorage.setItem(SPOT_WAVE_KEY, JSON.stringify(spotWave)); }catch(e){} } }
+      if(accept){ const sp = SPOTS.find(x => x.name === n); if(sp) applySpotEdit(sp, c.dirs, c.mainDir, c.waveStar && validWave(c.waveStar) ? cleanWave(c.waveStar) : null, Array.isArray(c.weakDirs) ? c.weakDirs : [], {fromSync: true}); if(Array.isArray(c.models) && c.models.length) applySpotModels(n, c.models); else if(c.models === null){ delete spotModels[n]; saveSpotModels(); } if(c.wave !== undefined){ if(c.wave === "bm") spotWave[n] = "bm"; else delete spotWave[n]; try{ localStorage.setItem(SPOT_WAVE_KEY, JSON.stringify(spotWave)); }catch(e){} } if(Number.isFinite(c.lat) && Number.isFinite(c.lon)){ const s2 = SPOTS.find(x => x.name === n); if(s2 && (s2.lat !== c.lat || s2.lon !== c.lon)) applySpotPos(s2, c.lat, c.lon, {fromSync: true}); } }
       seenUpdates[n] = c.at;
     });
     try{ localStorage.setItem(SEEN_KEY, JSON.stringify(seenUpdates)); }catch(e){}
@@ -1860,7 +1880,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.13.3";
+const APP_VERSION = "5.14.0";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}

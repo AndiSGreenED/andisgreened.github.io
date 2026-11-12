@@ -2,9 +2,15 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.13.3** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.14.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.14.0
+- **Koordinaten geprüft (Lübecker Bucht, Ostholstein, Fehmarn, Dänemark, 80 Spots)** gegen Windfinder-Spotpunkte und OpenStreetMap (Nominatim). 33 korrigiert, u. a.: Altenteil (lag im Wasser westlich), Gold (lag in Westerbergen), Flügger Leuchtturm (5,5 km), Klausdorfer Strand (lag im Inland, 7 km), Orth, Fehmarnsund Miramar, Katharinenhof, Staberhuk, Marienleuchte, Mommark (5 km), Gammelmark (5 km), Vemmingbund, Kegnæs, Vangså/Vangsa (bis 8 km), Stenbjerg, Amtoft Havn (10 km), Krik Vig, Blåvand, Hamborg, Ristinge Havn, Vandet Sø (12 km), Vigsø (16 km), Skaven Strand. Abweichungen unter ca. 1,5 km blieben unverändert.
+- Nicht sicher prüfbar (unverändert): Sennels, Sennels Strand, Havstokken, Thorup Sande/Thorupstrand, Meeschendorf, Burger Binnensee.
+- Windfinder-Links ohne gültige Seite (404): Gold, Großenbrode, Grüner Brink, Fehmarnsund, Burgtiefe, Burger Binnensee, Agger, Amtoft Havn, Klitmøller Bucht (noch offen).
+- **Position auf der Karte ändern (Dev-Modus → Bearbeiten):** Google-Maps-Link oder Koordinaten einfügen oder „📍 Ich stehe am Spot“; Link „auf Karte prüfen“. Wird wie Richtungen mit „Speichern“ an alle verteilt.
 
 ## 5.13.3
 - Teichhof (Fehmarn): Koordinaten korrigiert von 54.54/11.06 (lag in der Ostsee westlich) auf 54.528/11.116 (Strand Teichhof bei Wenkendorf, Nordküste; abgeglichen mit Windfinder und unplug-kitesurf). Betrifft Entfernung, Karte und Wetterzelle.
