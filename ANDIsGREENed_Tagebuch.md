@@ -2,9 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.10.3** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.10.4** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.10.4
+- Fehler behoben: Die aufgeklappte Punkte-Tabelle ragte seit 5.9.0 links aus der Karte und ließ sich nicht zurückscrollen. Sie nutzt jetzt die volle Kartenbreite und scrollt bei Bedarf innerhalb der Karte.
 
 ## 5.10.3
 - Der gewählte Tag wird gemerkt (auch nach Schließen der App), bis er vorbei ist; danach startet die App wieder mit heute.
