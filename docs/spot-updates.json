@@ -85,7 +85,23 @@
    "models": null,
    "wave": null,
    "at": "2026-11-12T10:46:00.720Z"
+  },
+  "Dazendorf": {
+   "dirs": [
+    "NO",
+    "SW",
+    "WSW",
+    "W"
+   ],
+   "weakDirs": [
+    "W"
+   ],
+   "mainDir": "SW",
+   "waveStar": null,
+   "models": null,
+   "wave": null,
+   "at": "2026-11-12T10:46:45.870Z"
   }
  },
- "updated": "2026-11-12T10:46:00.720Z"
+ "updated": "2026-11-12T10:46:45.870Z"
 }
