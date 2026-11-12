@@ -48,7 +48,26 @@
    "mainDir": "SW",
    "waveStar": null,
    "at": "2026-11-12T08:52:37.354Z"
+  },
+  "Altenteil": {
+   "dirs": [
+    "WNW",
+    "NW"
+   ],
+   "weakDirs": [],
+   "mainDir": "WNW",
+   "waveStar": null,
+   "models": [
+    "DMI",
+    "DWD",
+    "GFS",
+    "Google",
+    "ICON",
+    "ICON See",
+    "ICON-D2"
+   ],
+   "at": "2026-11-12T09:58:23.502Z"
   }
  },
- "updated": "2026-11-12T08:52:37.354Z"
+ "updated": "2026-11-12T09:58:23.502Z"
 }
