@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.11.0</title>
+<title>ANDIsGREENed 5.11.1</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -102,6 +102,7 @@ a.spot-map-link:hover,a.spot-map-link:focus-visible{text-decoration:underline;co
 .hr.wind-level-6{background:#7b3039;border-color:#d75b68;color:#ffe0e4}
 .hr.cell.best-hour{outline:3px solid #a4f0ce;outline-offset:-3px;box-shadow:0 0 0 2px #10232d inset}
 .hour-legend{font-size:.76rem;color:#a4f0ce;margin-top:5px}
+.wave-star.inactive{opacity:.55;border-style:dashed}
 .wave-star{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:5px 8px;border:1px solid #c9a84c;border-radius:9px;background:#3b3218;color:#ffe7a0;font-size:.78rem;font-weight:800}.source-warning{font-size:.76rem;color:#f3c18c;margin-top:8px}
 .more{margin-top:10px;border-top:1px solid #29414c;padding-top:8px}
 .more>summary,.fold>summary{cursor:pointer;color:#8ce5de;font-size:.82rem;font-weight:700;padding:6px 0;list-style:none}
@@ -1833,7 +1834,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.11.0";
+const APP_VERSION = "5.11.1";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -1940,11 +1941,8 @@ function angleInRange(deg,min,max){
 }
 function hasBestWaveDirection(spot,r,f){
   if(!spot.waveStar) return false;
-  return r.good.some(row => Object.values(row.models||{}).some(m =>
-    Number.isFinite(m.wind) && m.wind >= f.minwind && m.wind <= f.maxwind &&
-    (!f.usedir || spot.dirs.includes(compass(m.dir))) &&
-    angleInRange(m.dir,spot.waveStar.min,spot.waveStar.max)
-  ));
+  // 5.11.1: aktiv, wenn in einer passenden Stunde das mittlere Modell aus der Stern-Richtung kommt
+  return r.good.some(row => Number.isFinite(row.dir) && angleInRange(row.dir,spot.waveStar.min,spot.waveStar.max));
 }
 // 5.5.0: Läuft die Seite in der Android-App (Capacitor-Hülle)? Dann stehen native Funktionen bereit.
 const IS_NATIVE_APP = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === "function" && window.Capacitor.isNativePlatform());
@@ -2044,7 +2042,7 @@ function card(spot,r,f){
   }).join("");
   const rng = (v,d=0) => v.length ? (Math.round(Math.min(...v)*10**d)/10**d===Math.round(Math.max(...v)*10**d)/10**d ? fmt(v[0],d) : fmt(Math.min(...v),d)+"–"+fmt(Math.max(...v),d)) : "n. v.";
   return `<article class="spot">
-    <div class="spotTop"><div><div class="spot-title-row"><h3><a class="spot-map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${spot.lat},${spot.lon}`)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(spot.name)} in Google Maps öffnen">${esc(spot.name)}</a></h3><a class="webcam-link${spot.cam ? " set" : ""}" href="${esc(webcamUrl(spot))}" target="_blank" rel="noopener noreferrer" aria-label="${spot.cam ? "Webcam von" : "Webcams suchen für"} ${esc(spot.name)} öffnen" title="${spot.cam ? "Eigene Webcam öffnen" : "Webcams suchen (Google)"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10l6-3v10l-6-3"/><rect x="3" y="6" width="11" height="12" rx="2"/><circle cx="8.5" cy="12" r="2.2"/></svg></a></div><div class="region area" title="${esc(spot.area)}">${km} km · ${esc(shortArea(spot.area))}</div>${hasBestWaveDirection(spot,r,f) ? `<div class="wave-star">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)}</div>` : ""}</div><div class="spotRight">${badge}${roseSvg}</div></div>
+    <div class="spotTop"><div><div class="spot-title-row"><h3><a class="spot-map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${spot.lat},${spot.lon}`)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(spot.name)} in Google Maps öffnen">${esc(spot.name)}</a></h3><a class="webcam-link${spot.cam ? " set" : ""}" href="${esc(webcamUrl(spot))}" target="_blank" rel="noopener noreferrer" aria-label="${spot.cam ? "Webcam von" : "Webcams suchen für"} ${esc(spot.name)} öffnen" title="${spot.cam ? "Eigene Webcam öffnen" : "Webcams suchen (Google)"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10l6-3v10l-6-3"/><rect x="3" y="6" width="11" height="12" rx="2"/><circle cx="8.5" cy="12" r="2.2"/></svg></a></div><div class="region area" title="${esc(spot.area)}">${km} km · ${esc(shortArea(spot.area))}</div>${hasBestWaveDirection(spot,r,f) ? `<div class="wave-star">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)}</div>` : (spot.waveStar && $("devmode").checked ? `<div class="wave-star inactive">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)} · heute nicht aktiv</div>` : "")}</div><div class="spotRight">${badge}${roseSvg}</div></div>
     <div class="metrics">
       <details class="metric metric-wind-details" style="${windBoxStyle(dayWinds)}"><summary><b>${windRange(dayWinds)}<small class="u">kn</small></b><span>Wind · Einzelwerte ↗</span></summary><div class="wind-range-panel"><div class="region">Die Spanne basiert auf denselben stündlichen Modell-Medianwerten wie die Stundenleiste. „Stundenanzeige“ markiert das Modell, dessen Wert dort verwendet wird.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wind</th><th>Böen</th><th>Richtung</th></tr></thead><tbody>${windRows}</tbody></table></div></div></details>
       <div class="metric win-box"><b>${winMain}<small class="u">Uhr</small></b><span>Bestes Fenster</span>${winMore ? `<small>auch ${winMore}</small>` : ""}</div>

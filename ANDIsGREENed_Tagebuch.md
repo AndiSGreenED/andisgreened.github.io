@@ -2,9 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.11.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.11.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.11.1
+- Wellenstern-Kasten nur noch, wenn er zutrifft: In einer passenden Stunde kommt das mittlere Modell aus der Stern-Richtung. Im Dev-Modus erscheint er immer, bei „nicht aktiv“ blass und gestrichelt mit Hinweis.
 
 ## 5.11.0
 - **Ein Maßstab für alles: das mittlere Modell.** Je Stunde zählt das Modell mit dem mittleren Windwert aller aktiven Modelle (Median). Danach richten sich: ob die Stunde passt (Wind, Welle, Richtung), die Punkte, die Stundenleiste und die Windrose. Vorher reichte für „passt“ ein beliebiges Modell, und die Punkte nahmen je Stunde das punktbeste Modell; dadurch zeigte z. B. Kühlungsborn in der Stundenleiste W, bewertet wurde aber WNW mit ×4.
