@@ -2,9 +2,13 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.12.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.12.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.12.1
+- Beim Umschalten von Modellen (und anderen Änderungen auf der Karte) bleiben aufgeklappte Bereiche offen und die Karte bleibt an ihrer Stelle; vorher klappte alles zu und die Seite sprang.
+- **Modellwahl je Spot wird mitverteilt:** Nach dem Umschalten heißt der Knopf auf der Karte „Speichern“; die Modellwahl geht mit an alle und erscheint in der Nachfrage („Modelle: …“ bzw. „Standardmodelle“). Übernehmen setzt sie beim anderen Nutzer. Ältere Änderungen ohne Modellangabe lassen dessen Modellwahl unverändert.
 
 ## 5.12.0
 - **Speichern direkt auf der Karte:** Nach einer Änderung heißt der Knopf „Speichern“. Antippen schließt den Editor und verteilt die Änderung sofort an alle (Meldung unten eingeblendet). Fehlt der GitHub-Schlüssel, erscheint auf der Karte ein Feld, um ihn einmalig einzufügen. Der Bereich unter „Hinweise & Datenquellen“ bleibt als Alternative.

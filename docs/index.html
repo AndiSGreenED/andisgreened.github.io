@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.12.0</title>
+<title>ANDIsGREENed 5.12.1</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -1082,7 +1082,7 @@ function toast(msg){
   t.textContent = msg; t.classList.add("show"); clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.remove("show"), 6000);
 }
 async function saveFromCard(name){
-  if(!ghToken()){ needToken.add(name); repaintSoft(); return; }
+  if(!ghToken()){ needToken.add(name); editingMainDirs.add(name); repaintSoft(); return; }
   needToken.delete(name); editingMainDirs.delete(name); starMode.delete(name); repaintSoft();
   toast("Speichere …"); await publishSpotEdits(); toast($("gh-note").textContent);
 }
@@ -1093,7 +1093,7 @@ function saveTokenAndPublish(name, inputId){
   saveFromCard(name);
 }
 function toggleMainDirEdit(name){
-  if(editingMainDirs.has(name) && dirtySpots.has(name)){ saveFromCard(name); return; }
+  if(dirtySpots.has(name)){ saveFromCard(name); return; }
   if(editingMainDirs.has(name)){ editingMainDirs.delete(name); needToken.delete(name); starMode.delete(name); } else editingMainDirs.add(name);
   if(lastResults && lastFilters) paintResults(lastResults,lastErrors,lastSelectedCount,lastFilters);
 }
@@ -1182,7 +1182,7 @@ function applySpotEdit(sp, dirs, mainDir, waveStar, weakDirs, opts={}){
   try{ localStorage.setItem(MAIN_DIR_KEY, JSON.stringify(mainDirs)); }catch(e){}
   if(sp.custom){ const c = customSpots.find(x => x.name === sp.name); if(c){ c.dirs = sp.dirs; c.weakDirs = sp.weakDirs; c.mainDir = sp.mainDir; if(waveStar) c.waveStar = waveStar; else delete c.waveStar; } saveCustom(); }
   else { spotOverrides[sp.name] = {...(spotOverrides[sp.name]||{}), dirs: sp.dirs, weakDirs: sp.weakDirs, waveStar: sp.waveStar}; try{ localStorage.setItem(OVR_KEY, JSON.stringify(spotOverrides)); }catch(e){} }
-  if(!opts.fromSync){ dirtySpots.add(sp.name); try{ localStorage.setItem(DIRTY_KEY, JSON.stringify([...dirtySpots])); }catch(e){} updatePublishButton(); }
+  if(!opts.fromSync) markSpotDirty(sp.name);
 }
 function cycleDir(name, d){
   const sp = SPOTS.find(x => x.name === name); if(!sp) return;
@@ -1206,13 +1206,14 @@ function cycleDir(name, d){
   else { main = d; weak.delete(d); }
   applySpotEdit(sp, dirs, main, starFromDirs(star), [...weak]); repaintSoft();
 }
+function markSpotDirty(name){ dirtySpots.add(name); try{ localStorage.setItem(DIRTY_KEY, JSON.stringify([...dirtySpots])); }catch(e){} updatePublishButton(); }
 function updatePublishButton(){
   const b = document.getElementById("gh-publish"); if(!b) return;
   b.textContent = dirtySpots.size ? `Änderungen ins Repository speichern (${dirtySpots.size} Spot${dirtySpots.size>1?"s":""})` : "Änderungen ins Repository speichern";
 }
 const b64enc = s => btoa(unescape(encodeURIComponent(s)));
 const b64dec = s => decodeURIComponent(escape(atob(String(s).replace(/\s/g,""))));
-const spotState = sp => ({dirs: sp.dirs, weakDirs: sp.weakDirs || [], mainDir: sp.mainDir || "-", waveStar: sp.waveStar || null});
+const spotState = sp => ({dirs: sp.dirs, weakDirs: sp.weakDirs || [], mainDir: sp.mainDir || "-", waveStar: sp.waveStar || null, models: Array.isArray(spotModels[sp.name]) && spotModels[sp.name].length ? [...spotModels[sp.name]].sort() : null});
 async function publishSpotEdits(){
   const note = $("gh-note"), token = ($("gh-token").value || "").trim();
   if(!token){ note.textContent = "Bitte zuerst den GitHub-Schlüssel eintragen."; return; }
@@ -1252,7 +1253,7 @@ async function checkSpotUpdates(){
     const r = await fetch("spot-updates.json?t=" + Date.now(), {cache: "no-store"});
     if(!r.ok) return;
     const data = await r.json(), changes = data.changes || {};
-    const same = (sp, c) => JSON.stringify(spotState(sp)) === JSON.stringify({dirs: DIR16.filter(d => (c.dirs||[]).includes(d)), weakDirs: DIR16.filter(d => (c.weakDirs||[]).includes(d)), mainDir: c.mainDir || "-", waveStar: c.waveStar || null});
+    const same = (sp, c) => JSON.stringify(spotState(sp)) === JSON.stringify({dirs: DIR16.filter(d => (c.dirs||[]).includes(d)), weakDirs: DIR16.filter(d => (c.weakDirs||[]).includes(d)), mainDir: c.mainDir || "-", waveStar: c.waveStar || null, models: c.models === undefined ? spotState(sp).models : (Array.isArray(c.models) && c.models.length ? [...c.models].sort() : null)});
     const pending = Object.entries(changes).filter(([n, c]) => {
       const sp = SPOTS.find(x => x.name === n);
       return sp && Array.isArray(c.dirs) && c.dirs.length && c.at && c.at > (seenUpdates[n] || "") && !dirtySpots.has(n) && !same(sp, c);
@@ -1263,16 +1264,16 @@ async function checkSpotUpdates(){
 function showSpotUpdateBanner(pending){
   if(document.getElementById("spotupdbanner")) return;
   const b = document.createElement("div"); b.id = "spotupdbanner";
-  const desc = c => { const tmp = {dirs: DIR16.filter(d => c.dirs.includes(d)), weakDirs: c.weakDirs || [], mainDir: c.mainDir, waveStar: c.waveStar || null}; return `${dirsLabel(tmp)}${c.mainDir && c.mainDir !== "-" ? " · beste " + c.mainDir : ""}`; };
+  const desc = c => { const tmp = {dirs: DIR16.filter(d => c.dirs.includes(d)), weakDirs: c.weakDirs || [], mainDir: c.mainDir, waveStar: c.waveStar || null}; return `${dirsLabel(tmp)}${c.mainDir && c.mainDir !== "-" ? " · beste " + c.mainDir : ""}${Array.isArray(c.models) && c.models.length ? " · Modelle: " + c.models.join(", ") : c.models === null ? " · Standardmodelle" : ""}`; };
   b.innerHTML = `<b>Neue Spot-Änderungen (${pending.length})</b><ul>${pending.map(([n,c]) => `<li><b>${esc(n)}</b>: ${esc(desc(c))}</li>`).join("")}</ul><div class="row"><button type="button" id="spotupd-yes" style="background:#73d8d0;color:#06232a">Übernehmen</button><button type="button" id="spotupd-no" style="background:#29414c;color:#edf4f7">Ablehnen</button></div>`;
   document.body.appendChild(b);
   const done = accept => {
     pending.forEach(([n, c]) => {
-      if(accept){ const sp = SPOTS.find(x => x.name === n); if(sp) applySpotEdit(sp, c.dirs, c.mainDir, c.waveStar && validWave(c.waveStar) ? cleanWave(c.waveStar) : null, Array.isArray(c.weakDirs) ? c.weakDirs : [], {fromSync: true}); }
+      if(accept){ const sp = SPOTS.find(x => x.name === n); if(sp) applySpotEdit(sp, c.dirs, c.mainDir, c.waveStar && validWave(c.waveStar) ? cleanWave(c.waveStar) : null, Array.isArray(c.weakDirs) ? c.weakDirs : [], {fromSync: true}); if(Array.isArray(c.models) && c.models.length) applySpotModels(n, c.models); else if(c.models === null){ delete spotModels[n]; saveSpotModels(); } }
       seenUpdates[n] = c.at;
     });
     try{ localStorage.setItem(SEEN_KEY, JSON.stringify(seenUpdates)); }catch(e){}
-    b.remove(); if(accept) repaintSoft();
+    b.remove(); if(accept) rerunAfterModelChange();
   };
   $("spotupd-yes").onclick = () => done(true);
   $("spotupd-no").onclick = () => done(false);
@@ -1858,7 +1859,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.12.0";
+const APP_VERSION = "5.12.1";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -1879,7 +1880,7 @@ function renderModelControls(){
     if(lastResults && lastFilters) run().catch(e=>{$("status").textContent="Fehler: "+(e.message||e);});
   }));
 }
-function rerunAfterModelChange(){ if(lastResults && lastFilters) run().catch(e=>{$("status").textContent="Fehler: "+(e.message||e);}); }
+function rerunAfterModelChange(){ uiState = captureCards(); if(lastResults && lastFilters) run().catch(e=>{$("status").textContent="Fehler: "+(e.message||e);}); }
 // Mit Spot-Name: gilt nur für diesen Spot (Dev-Modus, Schalter auf der Karte). Ohne Spot-Name: gesamte Standardauswahl.
 function toggleModelActive(label,spotName){
   const active=getActiveModels(spotName);
@@ -1887,11 +1888,11 @@ function toggleModelActive(label,spotName){
   if(spotName){
     const def=getActiveModels();
     if(active.size===def.size && [...active].every(x=>def.has(x))) delete spotModels[spotName]; else spotModels[spotName]=[...active];
-    saveSpotModels();
+    saveSpotModels(); markSpotDirty(spotName);
   } else { try{localStorage.setItem(MODEL_PREF_KEY,JSON.stringify([...active]));}catch(e){} }
   rerunAfterModelChange();
 }
-function resetSpotModels(spotName){ delete spotModels[spotName]; saveSpotModels(); rerunAfterModelChange(); }
+function resetSpotModels(spotName){ delete spotModels[spotName]; saveSpotModels(); markSpotDirty(spotName); rerunAfterModelChange(); }
 function syncModelControls(){ $("model-controls").hidden=!$("devmode").checked; const g=$("google-key-box"); if(g) g.hidden=!getActiveModels().has("Google"); }
 
 function getFilters(){
@@ -2073,7 +2074,7 @@ function card(spot,r,f){
       <details class="metric metric-wave-details"><summary><b>${r.waveKnown ? rng(dayWaves,1)+'<small class="u">m</small>' : "n. v."}</b><span>Welle · Einzelwerte ↗</span></summary><div class="wave-range-panel"><div class="region">Stündliche Wellenhöhe je Modell. Best Match wird für Anzeige, Filter und Bewertung bevorzugt. DWD EWAM (~5 km) dient nur als Ersatz, wenn Best Match keinen Wert liefert.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wellenhöhe</th><th>Verwendet</th></tr></thead><tbody>${waveRows}</tbody></table></div></div></details>
       <div class="metric"><b>${fmt(dayWinds.length ? dayWinds.reduce((a,b)=>a+b,0)/dayWinds.length : NaN)}<small class="u">kn</small>${r.waveKnown ? " · "+fmt(r.meanWave)+'<small class="u">m</small>' : ""}</b><span>Ø Wind${r.waveKnown ? " · Welle" : ""}</span></div>
     </div>
-    <div class="edit-dir"><span>Hauptwindrichtung: <b>${esc(spot.mainDir && spot.mainDir!=="-" ? spot.mainDir : "–")}</b></span>${$("devmode").checked ? `<button type="button" class="dir-edit-toggle" onclick="toggleMainDirEdit('${jsq(spot.name)}')">${editingMainDirs.has(spot.name) ? (dirtySpots.has(spot.name) ? "Speichern" : "Fertig") : "Bearbeiten"}</button>` : ""}</div>
+    <div class="edit-dir"><span>Hauptwindrichtung: <b>${esc(spot.mainDir && spot.mainDir!=="-" ? spot.mainDir : "–")}</b></span>${$("devmode").checked ? `<button type="button" class="dir-edit-toggle" onclick="toggleMainDirEdit('${jsq(spot.name)}')">${dirtySpots.has(spot.name) ? "Speichern" : editingMainDirs.has(spot.name) ? "Fertig" : "Bearbeiten"}</button>` : ""}</div>
     ${$("devmode").checked && editingMainDirs.has(spot.name) ? dirEditorHtml(spot) : ""}
 
     ${!f.usedir ? `<div class="warn dirwarn">⚠ Windrichtung wird NICHT berücksichtigt. ${spot.verified ? "Geprüfte Richtungen" : "Nicht unabhängig geprüfte Richtungen"}: ${esc(dirsLabel(spot))}</div>` : ""}
@@ -2095,7 +2096,24 @@ function card(spot,r,f){
     <div class="links" style="margin-top:10px"><a href="${wfApp}"${IS_ANDROID && wfSlug ? ` onclick="return openWindfinder('${esc(wfSlug)}')"` : ' target="_blank"'} rel="noopener">Windfinder-App öffnen ↗</a></div></article>`;
 }
 
+// 5.12.1: Aufgeklappte Bereiche und Scrollposition bleiben beim Neuzeichnen erhalten
+let uiState = null, lastTouchedSpot = "";
+document.addEventListener("click", e => { const c = e.target.closest && e.target.closest("#cards .spot"); if(c){ const t = c.querySelector("h3"); lastTouchedSpot = t ? t.textContent.trim() : ""; } }, true);
+function captureCards(){
+  const cards = [...document.querySelectorAll("#cards .spot")]; if(!cards.length) return null;
+  const nameOf = c => (c.querySelector("h3")?.textContent || "").trim();
+  const open = cards.flatMap(c => [...c.querySelectorAll("details")].map((d,i) => d.open ? nameOf(c)+"|"+i : null).filter(Boolean));
+  let anchor = cards.find(c => nameOf(c) === lastTouchedSpot && c.getBoundingClientRect().bottom > 0 && c.getBoundingClientRect().top < innerHeight) || cards.find(c => c.getBoundingClientRect().bottom > 0);
+  return {open, anchor: anchor ? {name: nameOf(anchor), top: anchor.getBoundingClientRect().top} : null};
+}
+function restoreCards(st){
+  if(!st) return;
+  const cards = [...document.querySelectorAll("#cards .spot")], nameOf = c => (c.querySelector("h3")?.textContent || "").trim();
+  cards.forEach(c => [...c.querySelectorAll("details")].forEach((d,i) => { if(st.open.includes(nameOf(c)+"|"+i)){ d.open = true; if(d.classList.contains("score-details")) d.parentElement.classList.add("open"); } }));
+  if(st.anchor){ const c = cards.find(x => nameOf(x) === st.anchor.name); if(c) window.scrollBy(0, c.getBoundingClientRect().top - st.anchor.top); }
+}
 function paintResults(results,errors,selectedCount,f){
+  const keepUi = uiState || captureCards(); uiState = null;
   const relevant = results.filter(x => x.res.good.length > 0);
   const longest = r => r.windows.reduce((m,w)=>Math.max(m,w.end-w.start),0);
   const modelSupport = (r,spot) => { const am = getActiveModels(spot.name); return Math.max(0,...Object.entries(r.modelStats||{}).filter(([label])=>am.has(label)).map(([,m])=>m.good)); };
@@ -2104,6 +2122,7 @@ function paintResults(results,errors,selectedCount,f){
   if(errors.length) $("cards").insertAdjacentHTML("beforeend", `<div class="empty">${errors.length} Spots ohne Daten. Beispiel:<br>${esc(errors[0])}</div>`);
   else if(!results.length) $("cards").innerHTML = "<div class='empty'>Keine Spots im gewählten Umkreis.</div>";
   $("count").textContent = `${results.filter(x => x.res.good.length > 0).length} von ${selectedCount} Spots passen`;
+  if(keepUi && !paintResults.fresh) restoreCards(keepUi); paintResults.fresh = false;
   return relevant;
 }
 
@@ -2491,7 +2510,7 @@ renderModelControls();
 syncModelControls();
 $("devmode").addEventListener("change", () => { syncModelControls(); if(lastResults && lastFilters) run().catch(e=>{$("status").textContent="Fehler: "+(e.message||e);}); });
 $("reload").addEventListener("click", () => { run(true).catch(e => { $("status").textContent = "Fehler: " + (e && e.message || e); }); });
-$("apply").addEventListener("click", () => { const fd = document.querySelector("details.fold"); if(fd) fd.open = false; run().then(() => { const c = document.querySelector("#cards .spot"); if(c) c.scrollIntoView({behavior:"smooth", block:"start"}); }).catch(e => { $("status").textContent = "Fehler: " + (e && e.message || e); }); });
+$("apply").addEventListener("click", () => { const fd = document.querySelector("details.fold"); if(fd) fd.open = false; paintResults.fresh = true; run().then(() => { const c = document.querySelector("#cards .spot"); if(c) c.scrollIntoView({behavior:"smooth", block:"start"}); }).catch(e => { $("status").textContent = "Fehler: " + (e && e.message || e); }); });
 window.addEventListener("error", e => { try{ $("status").textContent = "Skriptfehler: " + e.message + (e.lineno ? " (Zeile "+e.lineno+")" : ""); }catch(x){} });
 window.addEventListener("unhandledrejection", e => { try{ $("status").textContent = "Fehler: " + (e.reason && e.reason.message || e.reason); }catch(x){} });
 
