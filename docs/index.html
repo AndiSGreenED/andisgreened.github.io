@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.12.1</title>
+<title>ANDIsGREENed 5.13.0</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -1213,7 +1213,7 @@ function updatePublishButton(){
 }
 const b64enc = s => btoa(unescape(encodeURIComponent(s)));
 const b64dec = s => decodeURIComponent(escape(atob(String(s).replace(/\s/g,""))));
-const spotState = sp => ({dirs: sp.dirs, weakDirs: sp.weakDirs || [], mainDir: sp.mainDir || "-", waveStar: sp.waveStar || null, models: Array.isArray(spotModels[sp.name]) && spotModels[sp.name].length ? [...spotModels[sp.name]].sort() : null});
+const spotState = sp => ({dirs: sp.dirs, weakDirs: sp.weakDirs || [], mainDir: sp.mainDir || "-", waveStar: sp.waveStar || null, models: Array.isArray(spotModels[sp.name]) && spotModels[sp.name].length ? [...spotModels[sp.name]].sort() : null, wave: spotWave[sp.name] || null});
 async function publishSpotEdits(){
   const note = $("gh-note"), token = ($("gh-token").value || "").trim();
   if(!token){ note.textContent = "Bitte zuerst den GitHub-Schlüssel eintragen."; return; }
@@ -1253,7 +1253,7 @@ async function checkSpotUpdates(){
     const r = await fetch("spot-updates.json?t=" + Date.now(), {cache: "no-store"});
     if(!r.ok) return;
     const data = await r.json(), changes = data.changes || {};
-    const same = (sp, c) => JSON.stringify(spotState(sp)) === JSON.stringify({dirs: DIR16.filter(d => (c.dirs||[]).includes(d)), weakDirs: DIR16.filter(d => (c.weakDirs||[]).includes(d)), mainDir: c.mainDir || "-", waveStar: c.waveStar || null, models: c.models === undefined ? spotState(sp).models : (Array.isArray(c.models) && c.models.length ? [...c.models].sort() : null)});
+    const same = (sp, c) => JSON.stringify(spotState(sp)) === JSON.stringify({dirs: DIR16.filter(d => (c.dirs||[]).includes(d)), weakDirs: DIR16.filter(d => (c.weakDirs||[]).includes(d)), mainDir: c.mainDir || "-", waveStar: c.waveStar || null, models: c.models === undefined ? spotState(sp).models : (Array.isArray(c.models) && c.models.length ? [...c.models].sort() : null), wave: c.wave === undefined ? spotState(sp).wave : (c.wave === "bm" ? "bm" : null)});
     const pending = Object.entries(changes).filter(([n, c]) => {
       const sp = SPOTS.find(x => x.name === n);
       return sp && Array.isArray(c.dirs) && c.dirs.length && c.at && c.at > (seenUpdates[n] || "") && !dirtySpots.has(n) && !same(sp, c);
@@ -1264,12 +1264,12 @@ async function checkSpotUpdates(){
 function showSpotUpdateBanner(pending){
   if(document.getElementById("spotupdbanner")) return;
   const b = document.createElement("div"); b.id = "spotupdbanner";
-  const desc = c => { const tmp = {dirs: DIR16.filter(d => c.dirs.includes(d)), weakDirs: c.weakDirs || [], mainDir: c.mainDir, waveStar: c.waveStar || null}; return `${dirsLabel(tmp)}${c.mainDir && c.mainDir !== "-" ? " · beste " + c.mainDir : ""}${Array.isArray(c.models) && c.models.length ? " · Modelle: " + c.models.join(", ") : c.models === null ? " · Standardmodelle" : ""}`; };
+  const desc = c => { const tmp = {dirs: DIR16.filter(d => c.dirs.includes(d)), weakDirs: c.weakDirs || [], mainDir: c.mainDir, waveStar: c.waveStar || null}; return `${dirsLabel(tmp)}${c.mainDir && c.mainDir !== "-" ? " · beste " + c.mainDir : ""}${Array.isArray(c.models) && c.models.length ? " · Modelle: " + c.models.join(", ") : c.models === null ? " · Standardmodelle" : ""}${c.wave === "bm" ? " · Welle: Best Match" : c.wave === null ? " · Welle: EWAM" : ""}`; };
   b.innerHTML = `<b>Neue Spot-Änderungen (${pending.length})</b><ul>${pending.map(([n,c]) => `<li><b>${esc(n)}</b>: ${esc(desc(c))}</li>`).join("")}</ul><div class="row"><button type="button" id="spotupd-yes" style="background:#73d8d0;color:#06232a">Übernehmen</button><button type="button" id="spotupd-no" style="background:#29414c;color:#edf4f7">Ablehnen</button></div>`;
   document.body.appendChild(b);
   const done = accept => {
     pending.forEach(([n, c]) => {
-      if(accept){ const sp = SPOTS.find(x => x.name === n); if(sp) applySpotEdit(sp, c.dirs, c.mainDir, c.waveStar && validWave(c.waveStar) ? cleanWave(c.waveStar) : null, Array.isArray(c.weakDirs) ? c.weakDirs : [], {fromSync: true}); if(Array.isArray(c.models) && c.models.length) applySpotModels(n, c.models); else if(c.models === null){ delete spotModels[n]; saveSpotModels(); } }
+      if(accept){ const sp = SPOTS.find(x => x.name === n); if(sp) applySpotEdit(sp, c.dirs, c.mainDir, c.waveStar && validWave(c.waveStar) ? cleanWave(c.waveStar) : null, Array.isArray(c.weakDirs) ? c.weakDirs : [], {fromSync: true}); if(Array.isArray(c.models) && c.models.length) applySpotModels(n, c.models); else if(c.models === null){ delete spotModels[n]; saveSpotModels(); } if(c.wave !== undefined){ if(c.wave === "bm") spotWave[n] = "bm"; else delete spotWave[n]; try{ localStorage.setItem(SPOT_WAVE_KEY, JSON.stringify(spotWave)); }catch(e){} } }
       seenUpdates[n] = c.at;
     });
     try{ localStorage.setItem(SEEN_KEY, JSON.stringify(seenUpdates)); }catch(e){}
@@ -1824,7 +1824,7 @@ async function getAllData(spots,date){
         return {time, hour:Number(time.slice(11,13)), sr:d.sr, ss:d.ss, dl,
           wind:strongest ? strongest.wind : NaN, dir:strongest ? strongest.dir : NaN, models,
           wave:waveFallbackValid ? waveFallbackValue : (waveNearValid ? waveNearValue : NaN), waveModels,
-          waveSource:waveFallbackValid ? "Best Match" : (waveNearValid ? "DWD EWAM (~5 km, Ersatzwert)" : "unbekannt")};
+          waveSource:waveFallbackValid ? "Best Match" : (waveNearValid ? "DWD EWAM (~5 km)" : "unbekannt")};
       });
       byKey.set(k,{rows, timezone:tz, modelNames:[...windByModel.keys()], modelErrors});
     });
@@ -1859,7 +1859,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.12.1";
+const APP_VERSION = "5.13.0";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -1914,6 +1914,15 @@ function getFilters(){
   return f;
 }
 
+const WAVE_EWAM = "DWD EWAM (~5 km)", WAVE_BM = "Best Match", SPOT_WAVE_KEY = "andisgreened-spot-wave-v1";
+let spotWave = {};
+try { spotWave = JSON.parse(localStorage.getItem(SPOT_WAVE_KEY)||"{}") || {}; } catch(e) {}
+const waveSrcOf = name => (name && (spotWave[name]==="bm" || spotWave[name]==="ewam")) ? spotWave[name] : "ewam";
+function setSpotWave(name, v){
+  if(v === "ewam") delete spotWave[name]; else spotWave[name] = v;
+  try{ localStorage.setItem(SPOT_WAVE_KEY, JSON.stringify(spotWave)); }catch(e){}
+  markSpotDirty(name); rerunAfterModelChange();
+}
 function scoreRows(rows,f,spot){
   const active=getActiveModels(spot && spot.name);
   rows=rows.map(row=>{
@@ -1922,7 +1931,12 @@ function scoreRows(rows,f,spot){
     // 5.11.0: maßgeblich ist je Stunde das mittlere Modell (Median nach Windstärke), wie in Stundenleiste und Windrose
     const vals=Object.entries(models).filter(([,v])=>Number.isFinite(v.wind)).sort((a,b)=>a[1].wind-b[1].wind);
     const mid=vals.length?vals[Math.floor(vals.length/2)]:null;
-    return {...row,allModels,models,medLabel:mid?mid[0]:"",wind:mid?mid[1].wind:row.wind,dir:mid?mid[1].dir:row.dir};
+    // 5.13.0: Wellenquelle je Spot (Standard DWD EWAM, sonst Best Match), jeweils mit der anderen als Ersatz
+    const wm=row.waveModels||{}, ew=wm[WAVE_EWAM], bm=wm[WAVE_BM], pref=waveSrcOf(spot&&spot.name);
+    const first=pref==="bm"?[WAVE_BM,bm]:[WAVE_EWAM,ew], second=pref==="bm"?[WAVE_EWAM,ew]:[WAVE_BM,bm];
+    const wsel=Number.isFinite(first[1])?first:(Number.isFinite(second[1])?second:null);
+    return {...row,allModels,models,medLabel:mid?mid[0]:"",wind:mid?mid[1].wind:row.wind,dir:mid?mid[1].dir:row.dir,
+      wave:wsel?wsel[1]:row.wave,waveSource:wsel?wsel[0]:row.waveSource};
   });
   // alle Stunden mit Tageslicht (inkl. Stunde von Sonnenaufgang/-untergang)
   const day = rows.filter(r => r.time.slice(0,10)===f.date && r.dl && (f.startHour===null || r.hour>=f.startHour));
@@ -2071,7 +2085,7 @@ function card(spot,r,f){
     <div class="metrics">
       <details class="metric metric-wind-details" style="${windBoxStyle(dayWinds)}"><summary><b>${windRange(dayWinds)}<small class="u">kn</small></b><span>Wind · Einzelwerte ↗</span></summary><div class="wind-range-panel"><div class="region">Die Spanne basiert auf denselben stündlichen Modell-Medianwerten wie die Stundenleiste. „Stundenanzeige“ markiert das Modell, dessen Wert dort verwendet wird.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wind</th><th>Böen</th><th>Richtung</th></tr></thead><tbody>${windRows}</tbody></table></div></div></details>
       <div class="metric win-box"><b>${winMain}<small class="u">Uhr</small></b><span>Bestes Fenster</span>${winMore ? `<small>auch ${winMore}</small>` : ""}</div>
-      <details class="metric metric-wave-details"><summary><b>${r.waveKnown ? rng(dayWaves,1)+'<small class="u">m</small>' : "n. v."}</b><span>Welle · Einzelwerte ↗</span></summary><div class="wave-range-panel"><div class="region">Stündliche Wellenhöhe je Modell. Best Match wird für Anzeige, Filter und Bewertung bevorzugt. DWD EWAM (~5 km) dient nur als Ersatz, wenn Best Match keinen Wert liefert.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wellenhöhe</th><th>Verwendet</th></tr></thead><tbody>${waveRows}</tbody></table></div></div></details>
+      <details class="metric metric-wave-details"><summary><b>${r.waveKnown ? rng(dayWaves,1)+'<small class="u">m</small>' : "n. v."}</b><span>Welle · Einzelwerte ↗</span></summary><div class="wave-range-panel"><div class="region">Stündliche Wellenhöhe je Modell. Verwendet wird ${waveSrcOf(spot.name)==="bm" ? "für diesen Spot Best Match" : "DWD EWAM (~5 km, bis ca. 3 Tage)"}; fehlt der Wert, springt das andere Modell ein.</div>${$("devmode").checked ? `<div class="dir-editor-tools">Wellenquelle für diesen Spot: <button type="button" class="${waveSrcOf(spot.name)==="ewam"?"active":""}" onclick="setSpotWave('${jsq(spot.name)}','ewam')">DWD EWAM</button><button type="button" class="${waveSrcOf(spot.name)==="bm"?"active":""}" onclick="setSpotWave('${jsq(spot.name)}','bm')">Best Match</button></div>` : ""}<div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wellenhöhe</th><th>Verwendet</th></tr></thead><tbody>${waveRows}</tbody></table></div></div></details>
       <div class="metric"><b>${fmt(dayWinds.length ? dayWinds.reduce((a,b)=>a+b,0)/dayWinds.length : NaN)}<small class="u">kn</small>${r.waveKnown ? " · "+fmt(r.meanWave)+'<small class="u">m</small>' : ""}</b><span>Ø Wind${r.waveKnown ? " · Welle" : ""}</span></div>
     </div>
     <div class="edit-dir"><span>Hauptwindrichtung: <b>${esc(spot.mainDir && spot.mainDir!=="-" ? spot.mainDir : "–")}</b></span>${$("devmode").checked ? `<button type="button" class="dir-edit-toggle" onclick="toggleMainDirEdit('${jsq(spot.name)}')">${dirtySpots.has(spot.name) ? "Speichern" : editingMainDirs.has(spot.name) ? "Fertig" : "Bearbeiten"}</button>` : ""}</div>

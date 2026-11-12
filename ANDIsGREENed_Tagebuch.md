@@ -2,9 +2,14 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.12.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.13.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.13.0
+- **Welle: DWD EWAM ist jetzt Standard,** Best Match nur noch Ersatz (z. B. nach ca. 3 Tagen, wenn EWAM endet). Anlass: Freitag 13.11. Altenteil EWAM 1,9–2,2 m (wie Windfinder ~2 m), Best Match 1,1 m; ähnlich Gold/Heiligenhafen (1,3–1,7 vs. 0,9–1,0 m) und Kühlungsborn (1,8–2,3 vs. 1,4–1,5 m). Best Match lieferte zudem fast konstante Werte.
+- **Wellenquelle je Spot wählbar (Dev-Modus):** unter „Welle · Einzelwerte“ Schalter DWD EWAM / Best Match; wird mitverteilt („Welle: …“ in der Nachfrage).
+- Fehler behoben: In der Wellentabelle war bei EWAM als Ersatz „verwendet“ nicht markiert.
 
 ## 5.12.1
 - Beim Umschalten von Modellen (und anderen Änderungen auf der Karte) bleiben aufgeklappte Bereiche offen und die Karte bleibt an ihrer Stelle; vorher klappte alles zu und die Seite sprang.
