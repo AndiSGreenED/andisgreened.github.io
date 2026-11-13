@@ -2,9 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.15.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.16.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.16.0
+- **ICON, GFS, ECMWF nehmen den Wind jetzt vom nächsten Wasser-Gitterpunkt** statt vom Landpunkt (z. B. Kühlungsborn: ECMWF lag 17 km im Inland und zeigte 16 statt ~24 kn). Binnenspots (Wasserzelle > 12 km entfernt) behalten den Landpunkt.
 
 ## 5.15.2
 - **Windfinder-Links korrigiert:** Kühlungsborn öffnete Bastorf-Kägsdorf (Windfinder-Kennung „kuehlungsborn“ gehört zu Kägsdorf) → jetzt Kühlungsborn Uptalsboom. Außerdem Gold, Orth, Grüner Brink, Großenbrode, Fehmarnsund, Burgtiefe, Burger Binnensee, Meeschendorf (2), Dahmeshöved, Insel Poel Timmendorf, Agger, Klitmøller Bucht (vorher ungültige Seiten).

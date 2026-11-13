@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.15.2</title>
+<title>ANDIsGREENed 5.16.0</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -1803,8 +1803,14 @@ async function getAllData(spots,date){
     const modelErrors = [];
     for(const model of MODEL_IDS){
       try{
-        const result = await multiCached("w:"+model.id, "https://api.open-meteo.com/v1/forecast",
-          {...common, models:model.id, hourly:"wind_speed_10m,wind_direction_10m", daily:"sunrise,sunset", wind_speed_unit:"kn"}, chunk);
+        // 5.16.0: Wind vom nächsten Wasser-Gitterpunkt (Küste weht stärker als Land). Binnenspots, deren
+        // Wasserzelle weiter als 12 km entfernt ist, bekommen weiterhin den Landpunkt.
+        const prm = {...common, models:model.id, hourly:"wind_speed_10m,wind_direction_10m", daily:"sunrise,sunset", wind_speed_unit:"kn"};
+        const result = await multiCached("ws:"+model.id, "https://api.open-meteo.com/v1/forecast", {...prm, cell_selection:"sea"}, chunk);
+        if(result.length === chunk.length){
+          const far = chunk.map((s,i) => { const w = result[i]; return !w || !Number.isFinite(w.latitude) || distanceKm(s.lat,s.lon,w.latitude,w.longitude) > 12 ? i : -1; }).filter(i => i >= 0);
+          if(far.length){ try{ const land = await multiCached("w:"+model.id, "https://api.open-meteo.com/v1/forecast", prm, far.map(i => chunk[i])); if(land.length === far.length) far.forEach((i,j) => { result[i] = land[j]; }); }catch(e){} }
+        }
         if(result.length === chunk.length) windByModel.set(model.label,result);
         else modelErrors.push(model.label+": Antwort unvollständig");
       }catch(e){ if(/429|Limit/.test(e.message)) limitHit = true; modelErrors.push(model.label+": "+e.message); }
@@ -1896,7 +1902,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.15.2";
+const APP_VERSION = "5.16.0";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
