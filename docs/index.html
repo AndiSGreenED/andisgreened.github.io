@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.14.2</title>
+<title>ANDIsGREENed 5.15.0</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -1187,7 +1187,7 @@ function dirEditorHtml(sp){
     const cls = [sp.mainDir===d ? "best" : !sp.dirs.includes(d) ? "off" : weak ? "weak" : "on", st.has(d) ? "star" : ""].join(" ").trim();
     return `<button type="button" class="${cls}" onclick="cycleDir('${n}','${d}')" aria-label="Richtung ${d}">${d}</button>`;
   }).join("");
-  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div><div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}" placeholder="Google-Maps-Link oder 54,4245, 11,0981"><button type="button" onclick="setSpotPos('${n}','pos-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}')">Übernehmen</button><button type="button" onclick="setSpotPosGps('${n}')">📍 Ich steh am Strand 😀</button></div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>Zum Verteilen einmalig den GitHub-Schlüssel einfügen (bleibt nur auf diesem Gerät):</span><input type="password" id="tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}" placeholder="github_pat_…" autocomplete="off"><button type="button" onclick="saveTokenAndPublish('${n}','tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}')">Schlüssel merken &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
+  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div><div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" onclick="return openMaps(${sp.lat},${sp.lon})" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}" placeholder="Google-Maps-Link oder 54,4245, 11,0981"><button type="button" onclick="setSpotPos('${n}','pos-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}')">Übernehmen</button><button type="button" onclick="setSpotPosGps('${n}')">📍 Ich steh am Strand 😀</button></div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>Zum Verteilen einmalig den GitHub-Schlüssel einfügen (bleibt nur auf diesem Gerät):</span><input type="password" id="tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}" placeholder="github_pat_…" autocomplete="off"><button type="button" onclick="saveTokenAndPublish('${n}','tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}')">Schlüssel merken &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
 }
 function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); else starMode.add(name); repaintSoft(); }
 function repaintSoft(){
@@ -1686,7 +1686,7 @@ async function fetchExtras(spots,date,out){
           w.hourly.time.forEach((t,n) => {
             const rawWind = w.hourly.wind_speed_10m && w.hourly.wind_speed_10m[n];
             const parsedWind = num(rawWind);
-            const wind = Number.isFinite(parsedWind) ? parsedWind : 0;
+            const wind = parsedWind; // fehlender Wert bleibt leer (früher 0 kn)
             map.set(t,{wind, dir:num(w.hourly.wind_direction_10m && w.hourly.wind_direction_10m[n]), gust:num(w.hourly.wind_gusts_10m && w.hourly.wind_gusts_10m[n])});
           });
           if(map.size){ put(keyOf(s),m.label,map); got++; }
@@ -1834,7 +1834,7 @@ async function getAllData(spots,date){
         for(const [label,w] of Object.entries(modelData)){
           const idx = w.hourly.time.indexOf(time);
           const parsedWind = idx<0 ? NaN : num(w.hourly.wind_speed_10m && w.hourly.wind_speed_10m[idx]);
-          models[label] = {wind:Number.isFinite(parsedWind) ? parsedWind : 0, dir:idx<0 ? NaN : num(w.hourly.wind_direction_10m && w.hourly.wind_direction_10m[idx])};
+          models[label] = {wind:parsedWind, dir:idx<0 ? NaN : num(w.hourly.wind_direction_10m && w.hourly.wind_direction_10m[idx])};
         }
         const vals = Object.values(models).filter(v=>Number.isFinite(v.wind));
         const strongest = vals.reduce((a,b)=>!a || b.wind>a.wind ? b : a,null);
@@ -1881,7 +1881,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.14.2";
+const APP_VERSION = "5.15.0";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2018,6 +2018,14 @@ function openWindfinder(slug){
   window.location.href = url;
   return false;
 }
+// 5.15.0: Ort direkt in der Google-Maps-App öffnen (Android), sonst Google Maps im Browser
+function openMaps(lat, lon){
+  const q = `${lat},${lon}`, web = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+  if(!IS_ANDROID) return true;
+  const url = `intent://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}#Intent;scheme=https;package=com.google.android.apps.maps;S.browser_fallback_url=${encodeURIComponent(web)};end`;
+  if(NATIVE){ NATIVE.openIntent({url}).then(r => { if(!r || !r.opened) window.open(web, "_blank"); }).catch(() => window.open(web, "_blank")); return false; }
+  window.location.href = url; return false;
+}
 function card(spot,r,f){
   const rank=calculateRank(spot,r,f);
   // Bestes Surf-Fenster: mindestens 2 zusammenhängende Stunden, hohe Welle und hoher,
@@ -2103,7 +2111,7 @@ function card(spot,r,f){
   }).join("");
   const rng = (v,d=0) => v.length ? (Math.round(Math.min(...v)*10**d)/10**d===Math.round(Math.max(...v)*10**d)/10**d ? fmt(v[0],d) : fmt(Math.min(...v),d)+"–"+fmt(Math.max(...v),d)) : "n. v.";
   return `<article class="spot">
-    <div class="spotTop"><div><div class="spot-title-row"><h3><a class="spot-map-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${spot.lat},${spot.lon}`)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(spot.name)} in Google Maps öffnen">${esc(spot.name)}</a></h3><a class="webcam-link${spot.cam ? " set" : ""}" href="${esc(webcamUrl(spot))}" target="_blank" rel="noopener noreferrer" aria-label="${spot.cam ? "Webcam von" : "Webcams suchen für"} ${esc(spot.name)} öffnen" title="${spot.cam ? "Eigene Webcam öffnen" : "Webcams suchen (Google)"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10l6-3v10l-6-3"/><rect x="3" y="6" width="11" height="12" rx="2"/><circle cx="8.5" cy="12" r="2.2"/></svg></a></div><div class="region area" title="${esc(spot.area)}">${km} km · ${esc(shortArea(spot.area))}</div>${hasBestWaveDirection(spot,r,f) ? `<div class="wave-star">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)}</div>` : (spot.waveStar && $("devmode").checked ? `<div class="wave-star inactive">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)} · heute nicht aktiv</div>` : "")}</div><div class="spotRight">${badge}${roseSvg}</div></div>
+    <div class="spotTop"><div><div class="spot-title-row"><h3><a class="spot-map-link" onclick="return openMaps(${spot.lat},${spot.lon})" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${spot.lat},${spot.lon}`)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(spot.name)} in Google Maps öffnen">${esc(spot.name)}</a></h3><a class="webcam-link${spot.cam ? " set" : ""}" href="${esc(webcamUrl(spot))}" target="_blank" rel="noopener noreferrer" aria-label="${spot.cam ? "Webcam von" : "Webcams suchen für"} ${esc(spot.name)} öffnen" title="${spot.cam ? "Eigene Webcam öffnen" : "Webcams suchen (Google)"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10l6-3v10l-6-3"/><rect x="3" y="6" width="11" height="12" rx="2"/><circle cx="8.5" cy="12" r="2.2"/></svg></a></div><div class="region area" title="${esc(spot.area)}">${km} km · ${esc(shortArea(spot.area))}</div>${hasBestWaveDirection(spot,r,f) ? `<div class="wave-star">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)}</div>` : (spot.waveStar && $("devmode").checked ? `<div class="wave-star inactive">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)} · heute nicht aktiv</div>` : "")}</div><div class="spotRight">${badge}${roseSvg}</div></div>
     <div class="metrics">
       <details class="metric metric-wind-details" style="${windBoxStyle(dayWinds)}"><summary><b>${windRange(dayWinds)}<small class="u">kn</small></b><span>Wind · Einzelwerte ↗</span></summary><div class="wind-range-panel"><div class="region">Die Spanne basiert auf denselben stündlichen Modell-Medianwerten wie die Stundenleiste. „Stundenanzeige“ markiert das Modell, dessen Wert dort verwendet wird.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wind</th><th>Böen</th><th>Richtung</th></tr></thead><tbody>${windRows}</tbody></table></div></div></details>
       <div class="metric win-box"><b>${winMain}<small class="u">Uhr</small></b><span>Bestes Fenster</span>${winMore ? `<small>auch ${winMore}</small>` : ""}</div>

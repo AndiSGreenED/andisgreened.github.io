@@ -2,9 +2,14 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.14.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.15.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.15.0
+- Tippen auf den Spotnamen (und „auf Karte prüfen“) öffnet auf Android direkt die Google-Maps-App; ohne App die Webseite.
+- Fehlt bei einem Modell ein Stundenwert, wird er nicht mehr als 0 kn gewertet, sondern ausgelassen.
+- Kühlungsborn am 13.11. geprüft: alle Modelle und Wellenwerte vollständig.
 
 ## 5.14.2
 - Position: Koordinaten mit deutschem Komma („54,5307, 11,0831“) und in Grad/Minuten/Sekunden werden jetzt erkannt.
