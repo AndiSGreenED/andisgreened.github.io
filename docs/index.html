@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.15.0</title>
+<title>ANDIsGREENed 5.15.1</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -370,7 +370,9 @@ details.statusbox #status{margin:6px 0 0}
 .spotTop{flex-wrap:wrap}
 .spotRight.open{flex:1 1 100%;min-width:0}
 .spotRight.open .score-details{align-self:stretch;display:block;width:100%;min-width:0;text-align:right}
-.spotRight.open .score-popover{display:block;width:100%;max-width:100%;min-width:0;overflow-x:auto;-webkit-overflow-scrolling:touch;text-align:left}
+.spotRight.open .score-popover{display:block;width:100%;max-width:100%;min-width:0;overflow-x:hidden;text-align:left}
+.score-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+.score-popover .region{white-space:normal}
 .rose{width:74px;height:74px;display:block}
 .metric.win-box{border:1px solid #c9a84c}
 .metric.win-box small{display:block;color:#9fb5bf;font-size:.72rem;margin-top:2px}
@@ -1353,7 +1355,16 @@ function calculateRank(spot,r,f){
       if(!labels.length) reason="Keine Modelldaten";
       else {
         const reasons=[];
-        for(const label of labels){
+        // 5.15.1: Grund konkret am mittleren Modell benennen (mit Wert und Filtergrenze)
+        const mm=row.medLabel&&row.models?.[row.medLabel];
+        if(mm&&Number.isFinite(mm.wind)){
+          const w=Math.round(mm.wind), dirTxt=Number.isFinite(mm.dir)?compass(mm.dir):"?";
+          if(mm.wind<f.minwind) reasons.push(`Wind ${w} kn unter Minimum ${f.minwind} kn (${row.medLabel})`);
+          else if(mm.wind>f.maxwind) reasons.push(`Wind ${w} kn über Maximum ${f.maxwind} kn (${row.medLabel})`);
+          else if(!waveOK(row)) reasons.push(Number.isFinite(row.wave)?`Welle ${fmt(row.wave,1)} m außerhalb Filter`:"Welle unbekannt");
+          else if(f.usedir&&!spot.dirs.includes(dirTxt)) reasons.push(`Richtung ${dirTxt} nicht spotgeeignet`);
+        }
+        if(!reasons.length) for(const label of labels){
           const m=row.models?.[label];
           if(!m||!Number.isFinite(m.wind)||!Number.isFinite(m.dir)){reasons.push(label+": Wind/Richtung fehlt");continue;}
           if(m.wind<f.minwind||m.wind>f.maxwind){reasons.push(label+": Wind außerhalb Filter");continue;}
@@ -1852,10 +1863,12 @@ async function getAllData(spots,date){
     });
     if(c+100 < uniq.length) await sleep(400);
   }
-  // Zusatzquellen erst nach den Hauptdaten, höchstens 8 s, niemals blockierend
+  // Zusatzquellen erst nach den Hauptdaten, höchstens 20 s (mobil oft langsamer), niemals blockierend
   if(!limitHit && byKey.size){
     let timer;
-    try{ await Promise.race([fetchExtras(spots,date,extras).catch(() => {}), new Promise(r => { timer = setTimeout(r,8000); })]); }catch(e){}
+    let extrasDone = false;
+    try{ await Promise.race([fetchExtras(spots,date,extras).catch(() => {}).then(() => { extrasDone = true; }), new Promise(r => { timer = setTimeout(r,20000); })]); }catch(e){}
+    if(!extrasDone) extraNotes.push("Zusatzmodelle (ICON-D2, DMI, ICON See, DWD) nicht rechtzeitig geladen – bitte erneut suchen.");
     clearTimeout(timer);
     try{
       for(const [k,ex] of extras){
@@ -1881,7 +1894,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.15.0";
+const APP_VERSION = "5.15.1";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2057,7 +2070,7 @@ function card(spot,r,f){
   }
   const bestPointWindow=bestHours.size ? `${pad(Math.min(...bestHours))}:00–${pad((Math.max(...bestHours)+1)%24)}:00` : "kein Fenster ≥ 2 h mit Wind- und Wellendaten";
   const km = Math.round(distanceKm(HOME.lat,HOME.lon,spot.lat,spot.lon));
-  const badge = `<details class="score-details" ontoggle="this.parentElement.classList.toggle('open',this.open)"><summary class="score ${r.good.length ? (r.score>=30?"good":"") : "bad"}">${r.good.length ? `${fmt(rank.score,1)} Pkt` : "Kein Treffer"}</summary><div class="score-popover"><div class="region">Stundensumme · Windfaktor × Wellenfaktor × Richtungsfaktor. Hauptwindrichtung ${esc(spot.mainDir||"–")} zählt ×2 erst ab 3 zusammenhängenden Stunden aus dieser Richtung.</div><table><thead><tr><th>Std.</th><th>Modell</th><th>Wind</th><th>Richtung</th><th>Welle</th><th>Wind ×</th><th>Welle ×</th><th>Richtung ×</th><th>Punkte</th><th>Warum?</th></tr></thead><tbody>${rank.hourly.map(h=>{const c=h.chosen;return `<tr><td>${pad(h.hour)}:00</td><td>${c?esc(c.label):"–"}</td><td>${c?fmt(c.wind):"–"}</td><td>${c?esc(c.dir):"–"}</td><td>${c&&Number.isFinite(c.wave)?fmt(c.wave,1):"–"}</td><td>${c?fmt(c.windFactor,2):"–"}</td><td>${c?fmt(c.waveFactor,2):"–"}</td><td>${c?"×"+c.directionFactor:"–"}</td><td class="${h.points?"positive":"muted"}">${fmt(h.points,2)}</td><td class="muted">${c? (c.mainQualified?"Hauptrichtung ≥3 h":"Basisbeitrag"):esc(h.reason)}</td></tr>`}).join("")}</tbody><tfoot><tr><th colspan="8">Summe</th><th>${fmt(rank.score,2)}</th><th></th></tr></tfoot></table><div class="region">Nur Stunden, die Wind-, Wellen- und ggf. Spotrichtungsfilter erfüllen, tragen Punkte bei. Pro Stunde zählt das mittlere Modell (mittlerer Windwert aller aktiven Modelle), wie in der Stundenleiste. Wellenfaktor = 1 + Wellenhöhe in m; unbekannte Welle = 1, sofern der Filter sie zulässt.</div></div></details>`;
+  const badge = `<details class="score-details" ontoggle="this.parentElement.classList.toggle('open',this.open)"><summary class="score ${r.good.length ? (r.score>=30?"good":"") : "bad"}">${r.good.length ? `${fmt(rank.score,1)} Pkt` : "Kein Treffer"}</summary><div class="score-popover"><div class="region">Stundensumme · Windfaktor × Wellenfaktor × Richtungsfaktor. Hauptwindrichtung ${esc(spot.mainDir||"–")} zählt ×2 erst ab 3 zusammenhängenden Stunden aus dieser Richtung.</div><div class="score-scroll"><table><thead><tr><th>Std.</th><th>Modell</th><th>Wind</th><th>Richtung</th><th>Welle</th><th>Wind ×</th><th>Welle ×</th><th>Richtung ×</th><th>Punkte</th><th>Warum?</th></tr></thead><tbody>${rank.hourly.map(h=>{const c=h.chosen;return `<tr><td>${pad(h.hour)}:00</td><td>${c?esc(c.label):"–"}</td><td>${c?fmt(c.wind):"–"}</td><td>${c?esc(c.dir):"–"}</td><td>${c&&Number.isFinite(c.wave)?fmt(c.wave,1):"–"}</td><td>${c?fmt(c.windFactor,2):"–"}</td><td>${c?fmt(c.waveFactor,2):"–"}</td><td>${c?"×"+c.directionFactor:"–"}</td><td class="${h.points?"positive":"muted"}">${fmt(h.points,2)}</td><td class="muted">${c? (c.mainQualified?"Hauptrichtung ≥3 h":"Basisbeitrag"):esc(h.reason)}</td></tr>`}).join("")}</tbody><tfoot><tr><th colspan="8">Summe</th><th>${fmt(rank.score,2)}</th><th></th></tr></tfoot></table></div><div class="region">Nur Stunden, die Wind-, Wellen- und ggf. Spotrichtungsfilter erfüllen, tragen Punkte bei. Pro Stunde zählt das mittlere Modell (mittlerer Windwert aller aktiven Modelle), wie in der Stundenleiste. Wellenfaktor = 1 + Wellenhöhe in m; unbekannte Welle = 1, sofern der Filter sie zulässt.</div></div></details>`;
   const best = r.windows[0];
   const peakHour = r.peak ? r.day.find(h=>h.hour===r.peak.hour) : null;
   const peakModels = peakHour ? Object.entries(peakHour.allModels||peakHour.models||{}).filter(([label,m])=>Number.isFinite(m.wind) || Number.isFinite(m.gust)).map(([label,m])=>`<tr><td>${esc(label)}</td><td>${Number.isFinite(m.wind)?fmt(m.wind)+" kn":"–"}</td><td>${Number.isFinite(m.gust)?fmt(m.gust)+" kn":"–"}</td><td>${Number.isFinite(m.dir)?compass(m.dir):"–"}</td></tr>`).join("") : "";

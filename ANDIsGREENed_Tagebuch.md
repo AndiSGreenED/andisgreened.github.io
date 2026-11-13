@@ -2,9 +2,14 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.15.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.15.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.15.1
+- Punkte-Fenster: Grund pro Stunde konkret, z. B. „Wind 19 kn unter Minimum 20 kn (ICON)“ statt „ICON: Wind außerhalb Filter“.
+- Punkte-Fenster: nur die Tabelle scrollt seitlich, der Erklärtext bleibt stehen (vorher leerer Kasten in der App).
+- Zusatzmodelle (ICON-D2, DMI, ICON See, DWD) dürfen 20 s statt 8 s laden; kommen sie nicht rechtzeitig, erscheint ein Hinweis unter Datenstand.
 
 ## 5.15.0
 - Tippen auf den Spotnamen (und „auf Karte prüfen“) öffnet auf Android direkt die Google-Maps-App; ohne App die Webseite.
