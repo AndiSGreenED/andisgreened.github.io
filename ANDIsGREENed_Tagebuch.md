@@ -2,9 +2,13 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.15.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.15.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.15.2
+- **Windfinder-Links korrigiert:** Kühlungsborn öffnete Bastorf-Kägsdorf (Windfinder-Kennung „kuehlungsborn“ gehört zu Kägsdorf) → jetzt Kühlungsborn Uptalsboom. Außerdem Gold, Orth, Grüner Brink, Großenbrode, Fehmarnsund, Burgtiefe, Burger Binnensee, Meeschendorf (2), Dahmeshöved, Insel Poel Timmendorf, Agger, Klitmøller Bucht (vorher ungültige Seiten).
+- Punkte-Fenster: Stunden ohne Punkte zeigen trotzdem Modell, Wind, Richtung und Welle (grau), zählen aber nicht.
 
 ## 5.15.1
 - Punkte-Fenster: Grund pro Stunde konkret, z. B. „Wind 19 kn unter Minimum 20 kn (ICON)“ statt „ICON: Wind außerhalb Filter“.
