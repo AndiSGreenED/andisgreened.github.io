@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.17.4</title>
+<title>ANDIsGREENed 5.17.5</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -451,14 +451,14 @@ details.sub[open]>summary{margin-bottom:6px}
   <p class="note" id="locnote" style="margin-top:6px">Standort: Lübeck (Standard)</p>
   <button class="primary" id="apply">Suchen</button>
   <button type="button" id="reload" style="width:100%;margin-top:8px;background:#29414c;color:#edf4f7;min-height:40px;font-size:.85rem">Neu laden (Speicher leeren)</button>
-  <details class="fold"><summary>⛵ Meine Segel</summary>
-  <p class="note">Segelgröße und Windbereich (kn, „bis“ leer = unbegrenzt). Die Empfehlung erscheint im Feld „Bestes Fenster“ und je Stunde in „Wind · Einzelwerte“. Gilt nur auf diesem Gerät.</p>
-  <div class="sailtab" style="font-size:.75rem;color:#9fb6bf;margin-bottom:0"><span>Segel</span><span>ab kn</span><span>bis kn</span><span></span></div>
-  <div id="sail-rows"></div>
-  <button type="button" id="sail-add" style="width:100%;min-height:38px;background:#29414c;color:#edf4f7;font-size:.85rem">+ Segel hinzufügen</button>
+  <details class=”fold”><summary>Hinweise &amp; Datenquellen</summary>
+  <details class=”sub”><summary>⛵ Meine Segel</summary>
+  <p class=”note”>Segelgröße und Windbereich (kn, „bis” leer = unbegrenzt). Die Empfehlung erscheint im Feld „Beste Zeit” und je Stunde in „Wind · Einzelwerte”. Gilt nur auf diesem Gerät.</p>
+  <div class=”sailtab” style=”font-size:.75rem;color:#9fb6bf;margin-bottom:0”><span>Segel</span><span>ab kn</span><span>bis kn</span><span></span></div>
+  <div id=”sail-rows”></div>
+  <button type=”button” id=”sail-add” style=”width:100%;min-height:38px;background:#29414c;color:#edf4f7;font-size:.85rem”>+ Segel hinzufügen</button>
   </details>
-  <details class="fold"><summary>Hinweise &amp; Datenquellen</summary>
-  <label style="display:flex;gap:8px;align-items:center"><input id="devmode" type="checkbox" style="width:auto"> Dev-Modus: Score-Berechnung anzeigen</label>
+  <label style=”display:flex;gap:8px;align-items:center”><input id=”devmode” type=”checkbox” style=”width:auto”> Dev-Modus: Score-Berechnung anzeigen</label>
   <label style="display:flex;gap:8px;align-items:center"><input id="usedir" type="checkbox" checked style="width:auto"> Spot-Windrichtungen berücksichtigen</label>
   <label for="placesearch">Oder Ort suchen</label>
   <input id="placesearch" type="search" placeholder="z. B. Travemünde oder Google-Maps-Link" autocomplete="off" enterkeyhint="search">
@@ -1959,7 +1959,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.17.4";
+const APP_VERSION = "5.17.5";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
