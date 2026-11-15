@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.17.2</title>
+<title>ANDIsGREENed 5.17.3</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -375,6 +375,8 @@ details.statusbox #status{margin:6px 0 0}
 .score-popover .region{white-space:normal}
 .rose{width:74px;height:74px;display:block}
 .metric.win-box{border:1px solid #c9a84c}
+.metric.win-box b{line-height:1.1}
+.metric.win-box>span{margin-top:0}
 .metric.win-box small{display:block;color:#9fb5bf;font-size:.72rem;margin-top:2px}
 details.sub{margin:10px 0;border:1px solid #2c4752;border-radius:10px;padding:6px 10px}
 details.sub>summary{cursor:pointer;font-weight:700;color:#cfe3ea;padding:4px 0}
@@ -1957,7 +1959,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.17.2";
+const APP_VERSION = "5.17.3";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}

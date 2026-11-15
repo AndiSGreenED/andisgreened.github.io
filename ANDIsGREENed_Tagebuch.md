@@ -2,9 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.17.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.17.3** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.17.3
+- „Bestes Fenster": Uhrzeit und Label enger zusammengerückt, Kasten kompakter.
 
 ## 5.17.2
 - Segeltabelle: Wing 5 m² (10–14 kn) und Wing 4 m² (15–17 kn) vorbelegt; unveränderte alte Tabellen werden ergänzt.
