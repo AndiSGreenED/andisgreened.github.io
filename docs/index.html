@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.16.0</title>
+<title>ANDIsGREENed 5.17.0</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -387,6 +387,13 @@ details.sub[open]>summary{margin-bottom:6px}
 #cards .spot{scroll-margin-top:8px}
 #cards .metric b{white-space:nowrap}
 #cards .metric{border:1px solid #4a7482}
+.wind-range-panel tr.wx td{color:#9fb6bf;font-size:.78rem;border-top:1px solid #2c4752;padding-top:6px}
+.wind-range-panel tr.off td{opacity:.45}
+.wind-range-panel tr.arch td{color:#ffcf40}
+.sailtab{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:6px;align-items:center;margin:6px 0}
+.sailtab input{min-height:36px;padding:4px 8px}
+.sailtab button{min-height:36px;padding:0 10px;background:#29414c;color:#edf4f7}
+.win-box .sail{display:block;color:#ffcf40;font-size:.8rem;margin-top:2px}
 @media(max-width:560px){#cards .spot{padding-left:9px;padding-right:9px}#cards .metric{padding-left:2px;padding-right:2px}#cards .metrics{gap:6px}}
 #cards .metric.win-box{border-color:#c9a84c}
 .dir-editor-tools input.star-text{flex:1 1 100%;margin-top:4px}
@@ -442,6 +449,12 @@ details.sub[open]>summary{margin-bottom:6px}
   <p class="note" id="locnote" style="margin-top:6px">Standort: Lübeck (Standard)</p>
   <button class="primary" id="apply">Suchen</button>
   <button type="button" id="reload" style="width:100%;margin-top:8px;background:#29414c;color:#edf4f7;min-height:40px;font-size:.85rem">Neu laden (Speicher leeren)</button>
+  <details class="fold"><summary>⛵ Meine Segel</summary>
+  <p class="note">Segelgröße und Windbereich (kn, „bis“ leer = unbegrenzt). Die Empfehlung erscheint im Feld „Bestes Fenster“ und je Stunde in „Wind · Einzelwerte“. Gilt nur auf diesem Gerät.</p>
+  <div class="sailtab" style="font-size:.75rem;color:#9fb6bf;margin-bottom:0"><span>Segel</span><span>ab kn</span><span>bis kn</span><span></span></div>
+  <div id="sail-rows"></div>
+  <button type="button" id="sail-add" style="width:100%;min-height:38px;background:#29414c;color:#edf4f7;font-size:.85rem">+ Segel hinzufügen</button>
+  </details>
   <details class="fold"><summary>Hinweise &amp; Datenquellen</summary>
   <label style="display:flex;gap:8px;align-items:center"><input id="devmode" type="checkbox" style="width:auto"> Dev-Modus: Score-Berechnung anzeigen</label>
   <label style="display:flex;gap:8px;align-items:center"><input id="usedir" type="checkbox" checked style="width:auto"> Spot-Windrichtungen berücksichtigen</label>
@@ -522,8 +535,6 @@ details.sub[open]>summary{margin-bottom:6px}
   </div>
   <details class="sub"><summary>Datenquellen und Infos</summary>
   <p class="note">Es werden nur Spots mit mindestens einer passenden Stunde angezeigt. Maßgeblich ist je Stunde das mittlere Modell (mittlerer Windwert aller aktiven Modelle) – dasselbe wie in Stundenleiste und Windrose. Ranking-Score = Summe stündlicher Beiträge aus Windfaktor × Wellenfaktor × Richtungsfaktor. Die Hauptwindrichtung erhält ×2 ab 3 zusammenhängenden Stunden aus dieser Richtung. Richtungen mit Wellenstern ★ erhalten zusätzlich ×2, als „möglich“ markierte Richtungen ×0,5.</p>
-  <p class="note">Datenquellen (kostenlos, ohne Key): Open-Meteo (ICON, GFS, ECMWF an den Spotkoordinaten; zusätzlich ICON-D2, DMI-Harmonie und ICON See auf der nächsten Meereszelle, soweit verfügbar) sowie DWD-Stationsprognose über Bright Sky (nur Deutschland). Zusatzquellen gelten teils nur für heute bis ca. +2 Tage (DWD: gewählter Tag). Google Weather API (optional, mit eigenem Schlüssel) liefert stündliche Windwerte; der Schlüssel wird lokal im Browser gespeichert. Modelle können im Dev-Modus einzeln aktiviert werden.</p>
-  <p class="footer">Wind in Knoten, Wellenhöhe in Metern, Wellenperiode in Sekunden. Windmodelle: ICON, GFS, ECMWF, ICON-D2, DMI, ICON See (Open-Meteo), DWD (Bright Sky) und Google Weather API (mit eigenem Schlüssel). Wellendaten: Open-Meteo Marine.</p>
   <p class="note legal"><a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a> · Wetterdaten: <a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0), DWD/Bright Sky</p>
   </details>
   <div class="diagrow"><button type="button" id="diag">Verbindung prüfen</button><span class="note" id="appver"></span></div>
@@ -1089,7 +1100,7 @@ function toast(msg){
 async function saveFromCard(name){
   if(!ghToken()){ needToken.add(name); editingMainDirs.add(name); repaintSoft(); return; }
   needToken.delete(name); editingMainDirs.delete(name); starMode.delete(name); repaintSoft();
-  toast("Speichere …"); await publishSpotEdits(); toast($("gh-note").textContent);
+  toast("Speichere …"); await publishSpotEdits(); toast($("gh-note").textContent); repaintSoft();
 }
 function saveTokenAndPublish(name, inputId){
   const v = (document.getElementById(inputId)?.value || "").trim();
@@ -1352,7 +1363,7 @@ function calculateRank(spot,r,f){
     if(chosen){total+=chosen.points;eligibleHours++;if(chosen.mainQualified)directionBonusHours++;}
     let reason="";
     if(!chosen){
-      if(!labels.length) reason="Keine Modelldaten";
+      if(!labels.length || !labels.some(l=>Number.isFinite(row.models?.[l]?.wind))) reason="Keine Winddaten der aktiven Modelle";
       else {
         const reasons=[];
         // 5.15.1: Grund konkret am mittleren Modell benennen (mit Wert und Filtergrenze)
@@ -1429,7 +1440,7 @@ function dateLabel(value){
   const d = new Date(value+"T12:00:00"), t = todayNoon();
   const wd = ["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()];
   const ds = `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")}.`;
-  const pre = value===dateISO(t) ? "Heute · " : value===dateISO(addDays(t,1)) ? "Morgen · " : "";
+  const pre = value===dateISO(t) ? "Heute · " : value===dateISO(addDays(t,1)) ? "Morgen · " : value===dateISO(addDays(t,-1)) ? "Gestern · " : "";
   return `${pre}${wd} ${ds}`;
 }
 function refreshDate(){
@@ -1437,7 +1448,7 @@ function refreshDate(){
   const v = $("date").value, t = todayNoon();
   const hour = $("startHour").value;
   $("dateDisplay").textContent = dateLabel(v) + (hour!=="" ? ` · ab ${String(Number(hour)).padStart(2,"0")}:00` : "");
-  $("prev").disabled = v <= dateISO(t);
+  $("prev").disabled = v <= dateISO(addDays(t,-1));
   $("next").disabled = v >= dateISO(addDays(t,MAX_DAYS));
 }
 function saveSettings(){
@@ -1582,17 +1593,48 @@ function modelRunText(s){
 }
 
 const asArr = x => Array.isArray(x) ? x : [x];
+// 5.17.0: Daten gelten, bis das Modell einen neuen Lauf veröffentlicht (Open-Meteo meta.json), höchstens 3 h.
+// Ist die Quelle beim Erneuern nicht erreichbar (z. B. Update), bleiben die alten Daten bis 3 h 10 min gültig.
+// Der Speicher liegt in IndexedDB und überlebt das Schließen der App. „Neu laden“ leert ihn.
+const CK = "v517", CACHE_MAX = 3*3600e3, CACHE_GRACE = CACHE_MAX + 10*60e3;
+const META_IDS = {icon_seamless:["dwd_icon_d2","dwd_icon_eu","dwd_icon"], gfs_seamless:["ncep_gfs013"], ecmwf_ifs025:["ecmwf_ifs025"],
+  icon_d2:["dwd_icon_d2"], dmi_harmonie_arome_europe:["dmi_harmonie_arome_europe"], dwd_ewam:["@dwd_ewam"], best_match:["@ecmwf_wam025","@meteofrance_wave","@ncep_gfswave025"]};
+const META_CACHE = new Map();
+async function modelRun(kind){
+  const id = kind.split(":").pop(), ids = META_IDS[id]; if(!ids) return null;
+  const c = META_CACHE.get(id); if(c && Date.now()-c.t < 10*60e3) return c.run;
+  try{
+    const runs = await Promise.all(ids.map(x => fetch(`https://${x[0]==="@"?"marine-api":"api"}.open-meteo.com/data/${x.replace("@","")}/static/meta.json`, {cache:"no-store"}).then(r => r.ok ? r.json() : null).then(j => j ? j.last_run_initialisation_time : "?").catch(() => "?")));
+    const run = runs.includes("?") ? null : runs.join("|"); META_CACHE.set(id, {t:Date.now(), run}); return run;
+  }catch(e){ return null; }
+}
+let IDB = null;
+const idbOpen = () => new Promise(res => { try{ const q = indexedDB.open("andisgreened-cache", 1); q.onupgradeneeded = () => q.result.createObjectStore("loc"); q.onsuccess = () => res(q.result); q.onerror = () => res(null); }catch(e){ res(null); } });
+const idbPut = (k,v) => { try{ if(IDB) IDB.transaction("loc","readwrite").objectStore("loc").put(v,k); }catch(e){} };
+const idbClear = () => { try{ if(IDB) IDB.transaction("loc","readwrite").objectStore("loc").clear(); }catch(e){} };
+const CACHE_READY = (async () => { IDB = await idbOpen(); if(!IDB) return;
+  await new Promise(res => { try{ const st = IDB.transaction("loc","readwrite").objectStore("loc"), now = Date.now(), cur = st.openCursor();
+    cur.onsuccess = () => { const c = cur.result; if(!c) return res(); const v = c.value;
+      if(v && v.time && now-v.time < CACHE_GRACE && String(c.key).startsWith(CK)) LOC_CACHE.set(c.key, v); else c.delete(); c.continue(); };
+    cur.onerror = () => res(); }catch(e){ res(); } }); })();
 async function multiCached(kind, base, params, chunk, ms=15000){
   const key = x => `${kind}|${x.lat},${x.lon}`;
-  const now = Date.now();
-  const fresh = x => { const c = LOC_CACHE.get(key(x)); return c && now-c.time <= API_CACHE_TTL; };
+  const now = Date.now(), run = await modelRun(kind);
+  const fresh = x => { const c = LOC_CACHE.get(key(x)); if(!c) return false; const age = now-c.time;
+    return age < CACHE_MAX && (run && c.run ? c.run === run : age < API_CACHE_TTL*3); };
   const missing = chunk.filter(x => !fresh(x));
   if(missing.length){
-    const url = api(base, {...params, latitude:missing.map(x=>x.lat).join(","), longitude:missing.map(x=>x.lon).join(",")});
-    const res = asArr(await fetchRetry(url, ms));
-    API_CACHE.delete(url); // URL-Cache würde dieselben Daten doppelt halten
-    if(res.length !== missing.length) throw new Error("Antwort unvollständig");
-    missing.forEach((x,i) => LOC_CACHE.set(key(x), {time:now, data:res[i]}));
+    try{
+      const url = api(base, {...params, latitude:missing.map(x=>x.lat).join(","), longitude:missing.map(x=>x.lon).join(",")});
+      const res = asArr(await fetchRetry(url, ms));
+      API_CACHE.delete(url); // URL-Cache würde dieselben Daten doppelt halten
+      if(res.length !== missing.length) throw new Error("Antwort unvollständig");
+      missing.forEach((x,i) => { const v = {time:now, run, data:res[i]}; LOC_CACHE.set(key(x), v); idbPut(key(x), v); });
+    }catch(e){
+      // Quelle nicht erreichbar: ältere Daten bis 3 h 10 min weiter verwenden
+      if(missing.every(x => { const c = LOC_CACHE.get(key(x)); return c && now-c.time < CACHE_GRACE; })) CACHE_STATS.stale = true;
+      else throw e;
+    }
   }
   CACHE_STATS.miss += missing.length; CACHE_STATS.hit += chunk.length-missing.length;
   return chunk.map(x => { const c = LOC_CACHE.get(key(x)); CACHE_STATS.oldest = Math.min(CACHE_STATS.oldest, c.time); return c.data; });
@@ -1656,7 +1698,7 @@ document.querySelectorAll(".step[data-step]").forEach(b => b.addEventListener("c
   saveCurrentDayHour();
   const n = addDays(new Date($("date").value+"T12:00:00"), Number(b.dataset.step));
   const t = todayNoon();
-  if(n < t || n > addDays(t,MAX_DAYS)) return;
+  if(n < addDays(t,-1) || n > addDays(t,MAX_DAYS)) return;
   $("date").value = dateISO(n);
   try{ localStorage.setItem(DAY_KEY, $("date").value); }catch(e){}
   refreshDate();
@@ -1669,8 +1711,7 @@ document.querySelectorAll(".step[data-step]").forEach(b => b.addEventListener("c
 // Hochaufgelöste Küstenmodelle (Open-Meteo, Meereszelle) + DWD-Stationsprognose (Bright Sky).
 const EXTRA_MODELS = [
   {id:"icon_d2", label:"ICON-D2", days:3, maxDay:2, maxCell:8,  box:[46,58,2,18]},
-  {id:"dmi_harmonie_arome_europe", label:"DMI", days:3, maxDay:2, maxCell:8, box:[50,66,3,18]},
-  {id:"icon_seamless", label:"ICON See", days:8, maxDay:7, maxCell:15, box:null}
+  {id:"dmi_harmonie_arome_europe", label:"DMI", days:3, maxDay:2, maxCell:8, box:[50,66,3,18]}
 ];
 let extraNotes = [];
 let googleApiStatus = "";
@@ -1687,8 +1728,8 @@ async function fetchExtras(spots,date,out){
     for(let c=0; c<list.length; c+=100){
       const chunk = list.slice(c,c+100);
       try{
-        const res = await multiCached("x:"+m.id, "https://api.open-meteo.com/v1/forecast",
-          {timezone:"auto", forecast_days:m.days, models:m.id, hourly:"wind_speed_10m,wind_direction_10m,wind_gusts_10m", wind_speed_unit:"kn", cell_selection:"sea"}, chunk, 8000);
+        const res = await multiCached(CK+"x:"+m.id, "https://api.open-meteo.com/v1/forecast",
+          {timezone:"auto", forecast_days:m.days, past_days:1, models:m.id, hourly:"wind_speed_10m,wind_direction_10m,wind_gusts_10m", wind_speed_unit:"kn", cell_selection:"sea"}, chunk, 8000);
         if(res.length !== chunk.length) continue;
         chunk.forEach((s,i) => {
           const w = res[i];
@@ -1721,10 +1762,10 @@ async function fetchExtras(spots,date,out){
         const map = new Map();
         (d.weather||[]).forEach(r => {
           const parsedWind = num(r.wind_speed)/1.852;
-          const wind = Number.isFinite(parsedWind) ? parsedWind : 0;
+          const wind = parsedWind;
           map.set(r.timestamp.slice(0,16), {wind, dir:num(r.wind_direction), gust:num(r.wind_gust_speed)/1.852});
         });
-        if(map.size){ put(keyOf(s),"DWD",map); ok++; }
+        if(map.size){ put(keyOf(s), off < 0 ? "DWD Messung" : "DWD", map); ok++; }
       }catch(e){}
     }
   };
@@ -1790,7 +1831,7 @@ async function fetchGoogleWeatherForSpots(spots,date,byKey){
 async function getAllData(spots,date){
   const extras = new Map();
   let limitHit = false;
-  const common = {timezone:"auto", forecast_days:"8"};
+  const common = {timezone:"auto", forecast_days:"8", past_days:"1"};
   const MODEL_IDS = [{id:"icon_seamless",label:"ICON"},{id:"gfs_seamless",label:"GFS"},{id:"ecmwf_ifs025",label:"ECMWF"}];
   // Spots mit identischen Koordinaten nur einmal abfragen
   const keyOf = x => `${x.lat},${x.lon}`;
@@ -1801,27 +1842,34 @@ async function getAllData(spots,date){
     const multi = {latitude:chunk.map(x=>x.lat).join(","), longitude:chunk.map(x=>x.lon).join(",")};
     const windByModel = new Map();
     const modelErrors = [];
+    // 5.17.0: Küstenspot = ICON-Wasserzelle höchstens 8 km entfernt. Für Küstenspots nehmen ALLE Grundmodelle
+    // den nächsten Wasser-Gitterpunkt (egal wie grob das Modell ist), für Binnenspots alle den Landpunkt.
+    const OM = "https://api.open-meteo.com/v1/forecast";
+    let coastal = null;
     for(const model of MODEL_IDS){
       try{
-        // 5.16.0: Wind vom nächsten Wasser-Gitterpunkt (Küste weht stärker als Land). Binnenspots, deren
-        // Wasserzelle weiter als 12 km entfernt ist, bekommen weiterhin den Landpunkt.
-        const prm = {...common, models:model.id, hourly:"wind_speed_10m,wind_direction_10m", daily:"sunrise,sunset", wind_speed_unit:"kn"};
-        const result = await multiCached("ws:"+model.id, "https://api.open-meteo.com/v1/forecast", {...prm, cell_selection:"sea"}, chunk);
-        if(result.length === chunk.length){
-          const far = chunk.map((s,i) => { const w = result[i]; return !w || !Number.isFinite(w.latitude) || distanceKm(s.lat,s.lon,w.latitude,w.longitude) > 12 ? i : -1; }).filter(i => i >= 0);
-          if(far.length){ try{ const land = await multiCached("w:"+model.id, "https://api.open-meteo.com/v1/forecast", prm, far.map(i => chunk[i])); if(land.length === far.length) far.forEach((i,j) => { result[i] = land[j]; }); }catch(e){} }
+        const prm = {...common, models:model.id, hourly:"wind_speed_10m,wind_direction_10m"+(model.id==="icon_seamless"?",temperature_2m,precipitation":""), daily:"sunrise,sunset", wind_speed_unit:"kn"};
+        const result = new Array(chunk.length).fill(null);
+        if(!coastal){
+          const sea = await multiCached(CK+"s:"+model.id, OM, {...prm, cell_selection:"sea"}, chunk);
+          coastal = chunk.map((s,i) => !!sea[i] && Number.isFinite(sea[i].latitude) && distanceKm(s.lat,s.lon,sea[i].latitude,sea[i].longitude) <= 8);
+          chunk.forEach((s,i) => { if(coastal[i]) result[i] = sea[i]; });
+        } else {
+          const ic = chunk.map((s,i) => coastal[i] ? i : -1).filter(i => i >= 0);
+          if(ic.length){ const r = await multiCached(CK+"s:"+model.id, OM, {...prm, cell_selection:"sea"}, ic.map(i => chunk[i])); ic.forEach((i,j) => { result[i] = r[j]; }); }
         }
-        if(result.length === chunk.length) windByModel.set(model.label,result);
-        else modelErrors.push(model.label+": Antwort unvollständig");
+        const il = chunk.map((s,i) => coastal[i] ? -1 : i).filter(i => i >= 0);
+        if(il.length){ const r = await multiCached(CK+"l:"+model.id, OM, prm, il.map(i => chunk[i])); il.forEach((i,j) => { result[i] = r[j]; }); }
+        windByModel.set(model.label,result);
       }catch(e){ if(/429|Limit/.test(e.message)) limitHit = true; modelErrors.push(model.label+": "+e.message); }
     }
     let waveNear = null, waveFallback = null;
     if(windByModel.size){
       // Best Match ist die primäre Wellenquelle, da EWAM an manchen Spots deutlich zu hohe Werte liefert.
       // EWAM dient nur als Ersatz, falls Best Match keine gültigen Werte liefert.
-      try{ waveNear = await multiCached("m:dwd_ewam", "https://marine-api.open-meteo.com/v1/marine",
+      try{ waveNear = await multiCached(CK+"m:dwd_ewam", "https://marine-api.open-meteo.com/v1/marine",
         {...common, models:"dwd_ewam", hourly:"wave_height", cell_selection:"sea"}, chunk); }catch(e){}
-      try{ waveFallback = await multiCached("m:best_match", "https://marine-api.open-meteo.com/v1/marine",
+      try{ waveFallback = await multiCached(CK+"m:best_match", "https://marine-api.open-meteo.com/v1/marine",
         {...common, models:"best_match", hourly:"wave_height", cell_selection:"sea"}, chunk); }catch(e){}
       if(!waveNear || waveNear.length !== chunk.length) waveNear = chunk.map(() => null);
       if(!waveFallback || waveFallback.length !== chunk.length) waveFallback = chunk.map(() => null);
@@ -1855,6 +1903,9 @@ async function getAllData(spots,date){
           const parsedWind = idx<0 ? NaN : num(w.hourly.wind_speed_10m && w.hourly.wind_speed_10m[idx]);
           models[label] = {wind:parsedWind, dir:idx<0 ? NaN : num(w.hourly.wind_direction_10m && w.hourly.wind_direction_10m[idx])};
         }
+        const ic = modelData.ICON, ii = ic ? ic.hourly.time.indexOf(time) : -1;
+        const temp = ii<0 ? NaN : num(ic.hourly.temperature_2m && ic.hourly.temperature_2m[ii]);
+        const precip = ii<0 ? NaN : num(ic.hourly.precipitation && ic.hourly.precipitation[ii]);
         const vals = Object.values(models).filter(v=>Number.isFinite(v.wind));
         const strongest = vals.reduce((a,b)=>!a || b.wind>a.wind ? b : a,null);
         const waveNearValue = j!==undefined && waveNearHourly ? num(waveNearHourly.wave_height[j]) : NaN;
@@ -1862,7 +1913,7 @@ async function getAllData(spots,date){
         const waveModels = {"DWD EWAM (~5 km)":waveNearValue, "Best Match":waveFallbackValue};
         const waveNearValid = Number.isFinite(waveNearValue);
         const waveFallbackValid = Number.isFinite(waveFallbackValue);
-        return {time, hour:Number(time.slice(11,13)), sr:d.sr, ss:d.ss, dl,
+        return {time, hour:Number(time.slice(11,13)), sr:d.sr, ss:d.ss, dl, temp, precip,
           wind:strongest ? strongest.wind : NaN, dir:strongest ? strongest.dir : NaN, models,
           wave:waveFallbackValid ? waveFallbackValue : (waveNearValid ? waveNearValue : NaN), waveModels,
           waveSource:waveFallbackValid ? "Best Match" : (waveNearValid ? "DWD EWAM (~5 km)" : "unbekannt")};
@@ -1898,11 +1949,11 @@ async function getAllData(spots,date){
 const MODEL_CHOICES = [
   {id:"ICON", label:"ICON"}, {id:"GFS", label:"GFS"}, {id:"ECMWF", label:"ECMWF"},
   {id:"ICON-D2", label:"ICON-D2"}, {id:"DMI", label:"DMI-Harmonie"},
-  {id:"ICON See", label:"ICON See"}, {id:"DWD", label:"DWD"}, {id:"Google", label:"Google Weather API"}
+  {id:"DWD", label:"DWD"}, {id:"Google", label:"Google Weather API"}
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
-const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","ICON See","DWD","Google"];
-const APP_VERSION = "5.16.0";
+const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
+const APP_VERSION = "5.17.0";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -1953,7 +2004,7 @@ function getFilters(){
     throw new Error("Bitte gültige, nicht negative Zahlen eingeben.");
   if(f.minwind>f.maxwind || f.minwave>f.maxwave) throw new Error("Ein Mindestwert liegt über dem Höchstwert.");
   const t = todayNoon();
-  if(f.date < dateISO(t) || f.date > dateISO(addDays(t,MAX_DAYS))) throw new Error("Die Vorhersage reicht von heute bis acht Tage voraus.");
+  if(f.date < dateISO(addDays(t,-1)) || f.date > dateISO(addDays(t,MAX_DAYS))) throw new Error("Auswählbar sind gestern bis acht Tage voraus.");
   return f;
 }
 
@@ -1978,7 +2029,7 @@ function scoreRows(rows,f,spot){
     const wm=row.waveModels||{}, ew=wm[WAVE_EWAM], bm=wm[WAVE_BM], pref=waveSrcOf(spot&&spot.name);
     const first=pref==="bm"?[WAVE_BM,bm]:[WAVE_EWAM,ew], second=pref==="bm"?[WAVE_EWAM,ew]:[WAVE_BM,bm];
     const wsel=Number.isFinite(first[1])?first:(Number.isFinite(second[1])?second:null);
-    return {...row,allModels,models,medLabel:mid?mid[0]:"",wind:mid?mid[1].wind:row.wind,dir:mid?mid[1].dir:row.dir,
+    return {...row,allModels,models,medLabel:mid?mid[0]:"",wind:mid?mid[1].wind:NaN,dir:mid?mid[1].dir:NaN,
       wave:wsel?wsel[1]:row.wave,waveSource:wsel?wsel[0]:row.waveSource};
   });
   // alle Stunden mit Tageslicht (inkl. Stunde von Sonnenaufgang/-untergang)
@@ -2047,6 +2098,39 @@ function openMaps(lat, lon){
   if(NATIVE){ NATIVE.openIntent({url}).then(r => { if(!r || !r.opened) window.open(web, "_blank"); }).catch(() => window.open(web, "_blank")); return false; }
   window.location.href = url; return false;
 }
+// 5.17.0: Segelempfehlung aus eigener Tabelle (je Gerät gespeichert)
+const SAIL_KEY = "andisgreened-sails-v1";
+const SAIL_DEFAULT = [{s:"4.8",min:18,max:20},{s:"4.4",min:20,max:22},{s:"4.0",min:22,max:24},{s:"3.6",min:24,max:26},{s:"3.3",min:26,max:28},{s:"3.0",min:28,max:null}];
+let sails = SAIL_DEFAULT;
+try{ const s = JSON.parse(localStorage.getItem(SAIL_KEY)||"null"); if(Array.isArray(s)) sails = s; }catch(e){}
+function sailFor(w){
+  if(!Number.isFinite(w)) return "";
+  const hit = sails.find(x => Number.isFinite(Number(x.min)) && w >= Number(x.min) && (x.max === null || x.max === "" || !Number.isFinite(Number(x.max)) || w < Number(x.max)));
+  return hit ? String(hit.s).replace(".",",") : "";
+}
+function renderSailEditor(){
+  const box = document.getElementById("sail-rows"); if(!box) return;
+  box.innerHTML = sails.map((x,i) => `<div class="sailtab"><input inputmode="decimal" value="${esc(x.s)}" data-i="${i}" data-k="s" aria-label="Segel"><input inputmode="decimal" value="${x.min ?? ""}" data-i="${i}" data-k="min" aria-label="ab kn"><input inputmode="decimal" value="${x.max ?? ""}" placeholder="∞" data-i="${i}" data-k="max" aria-label="bis kn"><button type="button" data-del="${i}" aria-label="Zeile löschen">✕</button></div>`).join("");
+  box.querySelectorAll("input").forEach(inp => inp.addEventListener("change", () => {
+    const i = Number(inp.dataset.i), k = inp.dataset.k, v = inp.value.trim().replace(",",".");
+    sails[i][k] = k === "s" ? v : (v === "" ? null : Number(v)); saveSails();
+  }));
+  box.querySelectorAll("button[data-del]").forEach(b => b.addEventListener("click", () => { sails.splice(Number(b.dataset.del),1); saveSails(); renderSailEditor(); }));
+}
+function saveSails(){ sails.sort((a,b) => (Number(a.min)||0)-(Number(b.min)||0)); try{ localStorage.setItem(SAIL_KEY, JSON.stringify(sails)); }catch(e){} repaintSoft(); }
+// Vorhersage für morgen merken, um sie am Tag selbst und am Tag danach mit Modellen und Messung zu vergleichen
+const FC_KEY = "andisgreened-fc-archive-v1";
+let fcArchive = {};
+try{ fcArchive = JSON.parse(localStorage.getItem(FC_KEY)||"{}") || {}; }catch(e){}
+{ const keep = dateISO(addDays(todayNoon(),-1)); Object.keys(fcArchive).forEach(d => { if(d < keep) delete fcArchive[d]; }); }
+let fcTimer = null;
+function archiveForecast(name, date, day){
+  const hrs = {}; day.forEach(h => { const w = h.wind; if(Number.isFinite(w)) hrs[h.hour] = [Math.round(w*10)/10, Number.isFinite(h.dir) ? compass(h.dir) : ""]; });
+  if(!Object.keys(hrs).length) return;
+  const n = new Date(), at = `${String(n.getDate()).padStart(2,"0")}.${String(n.getMonth()+1).padStart(2,"0")}. ${String(n.getHours()).padStart(2,"0")}:${String(n.getMinutes()).padStart(2,"0")}`;
+  (fcArchive[date] = fcArchive[date] || {})[name] = {at, h:hrs};
+  clearTimeout(fcTimer); fcTimer = setTimeout(() => { try{ localStorage.setItem(FC_KEY, JSON.stringify(fcArchive)); }catch(e){} }, 500);
+}
 function card(spot,r,f){
   const rank=calculateRank(spot,r,f);
   // Bestes Surf-Fenster: mindestens 2 zusammenhängende Stunden, hohe Welle und hoher,
@@ -2088,6 +2172,8 @@ function card(spot,r,f){
   // 5.9.0: bestes Zeitfenster als eigener Kasten, Windrose mit Wind des besten Fensters
   const bestArr = [...bestHours].sort((a,b) => a-b);
   const winMain = bestArr.length ? `${pad(bestArr[0])}–${pad((bestArr[bestArr.length-1]+1)%24)}` : (best ? `${pad(best.start)}–${pad(best.end)}` : "–");
+  const winWinds = r.day.filter(h => bestArr.includes(h.hour)).map(h => hourWind(h)).filter(Number.isFinite);
+  const winSail = winWinds.length ? sailFor(winWinds.reduce((a,b)=>a+b,0)/winWinds.length) : "";
   const winMore = r.windows.filter(w => !bestArr.length || w.end <= bestArr[0] || w.start > bestArr[bestArr.length-1]).slice(0,2).map(w => `${pad(w.start)}–${pad(w.end)}`).join(", ");
   const roseHours = bestArr.length ? r.day.filter(x => bestHours.has(x.hour)) : r.good;
   const roseSvg = windRoseSvg(spot, roseHours.map(x => hourWindModel(x)).filter(m => m && Number.isFinite(m.dir)).map(m => m.dir));
@@ -2116,12 +2202,19 @@ function card(spot,r,f){
   // Die Wind-Spanne verwendet exakt dieselben stündlichen Werte wie die Stundenleiste.
   // Beim Aufklappen sind die Einzelmodelle samt Wind, Böen und Richtung nachvollziehbar.
   const dayWinds = r.day.map(h => hourWind(h)).filter(Number.isFinite);
+  const arch = fcArchive[f.date] && fcArchive[f.date][spot.name];
   const windRows = r.day.map(h => {
-    const selected = hourWindModel(h);
-    const entries = Object.entries(h.models||{}).filter(([label,m]) => Number.isFinite(m.wind) || Number.isFinite(m.gust));
-    if(!entries.length) return `<tr><td>${pad(h.hour)}:00</td><td colspan="4">Keine Einzelmodellwerte verfügbar</td></tr>`;
-    return entries.map(([label,m],i) => `<tr><td>${i===0?pad(h.hour)+":00":""}</td><td>${esc(label)}${m===selected?" · Stundenanzeige":""}</td><td>${Number.isFinite(m.wind)?fmt(m.wind)+" kn":"–"}</td><td>${Number.isFinite(m.gust)?fmt(m.gust)+" kn":"–"}</td><td>${Number.isFinite(m.dir)?compass(m.dir):"–"}</td></tr>`).join("");
+    const selected = hourWindModel(h), act = h.models || {};
+    const entries = Object.entries(h.allModels||h.models||{}).filter(([label,m]) => Number.isFinite(m.wind) || Number.isFinite(m.gust))
+      .sort((a,b) => (act[b[0]]?1:0)-(act[a[0]]?1:0));
+    const hw = hourWind(h), sail = sailFor(hw);
+    const wx = `<tr class="wx"><td>${pad(h.hour)}:00</td><td colspan="4">${Number.isFinite(h.temp)?fmt(h.temp,0)+" °C":"– °C"} · ${Number.isFinite(h.precip)?fmt(h.precip,1)+" mm":"– mm"}${sail?" · ⛵ "+esc(sail):""}</td></tr>`;
+    const ar = arch && arch.h && arch.h[h.hour] ? `<tr class="arch"><td></td><td>Prognose ${esc(arch.at)}</td><td>${fmt(arch.h[h.hour][0])} kn</td><td>–</td><td>${esc(arch.h[h.hour][1]||"–")}</td></tr>` : "";
+    if(!entries.length) return wx+`<tr><td></td><td colspan="4">Keine Einzelmodellwerte verfügbar</td></tr>`+ar;
+    return wx+entries.map(([label,m]) => { const on = !!act[label];
+      return `<tr${on?"":' class="off"'}><td></td><td>${esc(label)}${m===selected?" · Stundenanzeige":on?"":" · nicht gewertet"}</td><td>${Number.isFinite(m.wind)?fmt(m.wind)+" kn":"–"}</td><td>${Number.isFinite(m.gust)?fmt(m.gust)+" kn":"–"}</td><td>${Number.isFinite(m.dir)?compass(m.dir):"–"}</td></tr>`; }).join("")+ar;
   }).join("");
+  if(f.date === dateISO(addDays(todayNoon(),1))) archiveForecast(spot.name, f.date, r.day);
   const windRange = v => v.length ? (Math.round(Math.min(...v))===Math.round(Math.max(...v)) ? fmt(v[0],0) : fmt(Math.min(...v),0)+"–"+fmt(Math.max(...v),0)) : "n. v.";
   const dayWaves = r.day.map(h => h.wave).filter(Number.isFinite);
   const waveRows = r.day.map(h => {
@@ -2134,8 +2227,8 @@ function card(spot,r,f){
   return `<article class="spot">
     <div class="spotTop"><div><div class="spot-title-row"><h3><a class="spot-map-link" onclick="return openMaps(${spot.lat},${spot.lon})" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${spot.lat},${spot.lon}`)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(spot.name)} in Google Maps öffnen">${esc(spot.name)}</a></h3><a class="webcam-link${spot.cam ? " set" : ""}" href="${esc(webcamUrl(spot))}" target="_blank" rel="noopener noreferrer" aria-label="${spot.cam ? "Webcam von" : "Webcams suchen für"} ${esc(spot.name)} öffnen" title="${spot.cam ? "Eigene Webcam öffnen" : "Webcams suchen (Google)"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10l6-3v10l-6-3"/><rect x="3" y="6" width="11" height="12" rx="2"/><circle cx="8.5" cy="12" r="2.2"/></svg></a></div><div class="region area" title="${esc(spot.area)}">${km} km · ${esc(shortArea(spot.area))}</div>${hasBestWaveDirection(spot,r,f) ? `<div class="wave-star">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)}</div>` : (spot.waveStar && $("devmode").checked ? `<div class="wave-star inactive">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)} · heute nicht aktiv</div>` : "")}</div><div class="spotRight">${badge}${roseSvg}</div></div>
     <div class="metrics">
-      <details class="metric metric-wind-details" style="${windBoxStyle(dayWinds)}"><summary><b>${windRange(dayWinds)}<small class="u">kn</small></b><span>Wind · Einzelwerte ↗</span></summary><div class="wind-range-panel"><div class="region">Die Spanne basiert auf denselben stündlichen Modell-Medianwerten wie die Stundenleiste. „Stundenanzeige“ markiert das Modell, dessen Wert dort verwendet wird.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wind</th><th>Böen</th><th>Richtung</th></tr></thead><tbody>${windRows}</tbody></table></div></div></details>
-      <div class="metric win-box"><b>${winMain}<small class="u">Uhr</small></b><span>Bestes Fenster</span>${winMore ? `<small>auch ${winMore}</small>` : ""}</div>
+      <details class="metric metric-wind-details" style="${windBoxStyle(dayWinds)}"><summary><b>${windRange(dayWinds)}<small class="u">kn</small></b><span>Wind · Einzelwerte ↗</span></summary><div class="wind-range-panel"><div class="region">Je Stunde: Temperatur, Niederschlag und Segel, darunter alle Modelle. „Stundenanzeige“ ist das mittlere Modell, grau = nicht gewertet (im Dev-Modus abgewählt oder Messwert)${arch ? ", „Prognose“ = gespeicherte Vorhersage vom Vortag" : ""}.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wind</th><th>Böen</th><th>Richtung</th></tr></thead><tbody>${windRows}</tbody></table></div></div></details>
+      <div class="metric win-box"><b>${winMain}<small class="u">Uhr</small></b><span>Bestes Fenster</span>${winSail ? `<small class="sail">⛵ ${esc(winSail)}</small>` : ""}${winMore ? `<small>auch ${winMore}</small>` : ""}</div>
       <details class="metric metric-wave-details"><summary><b>${r.waveKnown ? rng(dayWaves,1)+'<small class="u">m</small>' : "n. v."}</b><span>Welle · Einzelwerte ↗</span></summary><div class="wave-range-panel"><div class="region">Stündliche Wellenhöhe je Modell. Verwendet wird ${waveSrcOf(spot.name)==="bm" ? "für diesen Spot Best Match" : "DWD EWAM (~5 km, bis ca. 3 Tage)"}; fehlt der Wert, springt das andere Modell ein.</div>${$("devmode").checked ? `<div class="dir-editor-tools">Wellenquelle für diesen Spot: <button type="button" class="${waveSrcOf(spot.name)==="ewam"?"active":""}" onclick="setSpotWave('${jsq(spot.name)}','ewam')">DWD EWAM</button><button type="button" class="${waveSrcOf(spot.name)==="bm"?"active":""}" onclick="setSpotWave('${jsq(spot.name)}','bm')">Best Match</button></div>` : ""}<div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wellenhöhe</th><th>Verwendet</th></tr></thead><tbody>${waveRows}</tbody></table></div></div></details>
       <div class="metric"><b>${fmt(dayWinds.length ? dayWinds.reduce((a,b)=>a+b,0)/dayWinds.length : NaN)}${r.waveKnown ? "\u202f·\u202f"+fmt(r.meanWave) : ""}</b><span>Ø Wind kn${r.waveKnown ? " · Welle m" : ""}</span></div>
     </div>
@@ -2146,8 +2239,6 @@ function card(spot,r,f){
     ${hourStrip}
     <details class="more">
       <summary>Details${hasWarn ? ' <span class="warnmark">⚠</span>' : ""}</summary>
-      <div class="region">Längstes Fenster: ${best ? best.end-best.start+" h" : "–"} · gewichtete Stunden (Ranking): ${rank.eligibleHours}</div>
-      <div class="region">Wind (und Welle) im Bereich: ${r.goodNoDir.length} h · ${f.usedir ? "davon passende Richtung: "+r.good.length+" h" : "Richtungsfilter aus"} · Tageslicht: ${r.day.length} h</div>
       <div class="region">${spot.verified ? "Richtungen geprüft" : "Richtungen vorläufig"}: ${esc(dirsLabel(spot))} · ${esc(spot.type)}</div>
       <div class="region" style="margin-top:10px">Modellvergleich: passende Stunden · niedrigster bis höchster Tageswert</div>
       <div>${modelSummary || "Keine getrennten Modellwerte verfügbar."}${$("devmode").checked && spotModels[spot.name] ? `<button type="button" class="win mod" style="cursor:pointer;border:1px solid #73d8d0;background:#143b36;color:#a4f0ce;padding:4px 7px;border-radius:7px" data-spot="${esc(spot.name)}" onclick="resetSpotModels(this.dataset.spot)" title="Eigene Modellwahl dieses Spots verwerfen">↺ Standardmodelle</button>` : ""}</div>
@@ -2194,7 +2285,8 @@ function paintResults(results,errors,selectedCount,f){
 async function run(force=false){
   const btn = $("apply");
   btn.disabled = true; btn.textContent = "Lade Vorhersagen …";
-  if(force){ API_CACHE.clear(); LOC_CACHE.clear(); }
+  await CACHE_READY;
+  if(force){ API_CACHE.clear(); LOC_CACHE.clear(); META_CACHE.clear(); idbClear(); }
   CACHE_STATS = {hit:0, miss:0, oldest:Infinity};
   const previousStamp = lastSuccessfulLoadAt;
   $("status").textContent = "Lade Vorhersagen …";
@@ -2579,6 +2671,8 @@ $("diag").addEventListener("click", checkConnections);
 renderModelControls();
 syncModelControls();
 $("devmode").addEventListener("change", () => { syncModelControls(); if(lastResults && lastFilters) run().catch(e=>{$("status").textContent="Fehler: "+(e.message||e);}); });
+renderSailEditor();
+$("sail-add").addEventListener("click", () => { const last = sails[sails.length-1]; sails.push({s:"", min:last && Number.isFinite(Number(last.max)) ? Number(last.max) : null, max:null}); try{ localStorage.setItem(SAIL_KEY, JSON.stringify(sails)); }catch(e){} renderSailEditor(); });
 $("reload").addEventListener("click", () => { run(true).catch(e => { $("status").textContent = "Fehler: " + (e && e.message || e); }); });
 $("apply").addEventListener("click", () => { const fd = document.querySelector("details.fold"); if(fd) fd.open = false; paintResults.fresh = true; run().then(() => { const c = document.querySelector("#cards .spot"); if(c) c.scrollIntoView({behavior:"smooth", block:"start"}); }).catch(e => { $("status").textContent = "Fehler: " + (e && e.message || e); }); });
 window.addEventListener("error", e => { try{ $("status").textContent = "Skriptfehler: " + e.message + (e.lineno ? " (Zeile "+e.lineno+")" : ""); }catch(x){} });

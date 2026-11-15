@@ -2,9 +2,19 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.16.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.17.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.17.0
+- **Wind für alle Spots einheitlich:** Küstenspot = ICON-Wasserzelle höchstens 8 km entfernt. Dann nehmen ICON, GFS und ECMWF immer den nächsten Wasser-Gitterpunkt (vorher fiel z. B. Heiligenhafen bei ECMWF auf den Landpunkt zurück, weil die Wasserzelle 13 km entfernt war). Binnenspots nehmen bei allen Modellen den Landpunkt. „ICON See“ entfällt (wäre jetzt doppelt).
+- **Wind · Einzelwerte:** je Stunde eine Zeile mit Temperatur, Niederschlag und Segelempfehlung; darunter alle Modelle, nicht gewertete grau.
+- **Segelempfehlung:** eigene Tabelle unter „⛵ Meine Segel“ (je Gerät), Empfehlung im Feld „Bestes Fenster“.
+- **Gestern auswählbar:** Modellwerte von gestern, DWD-Messwerte (Bright Sky, grau, nicht gewertet) und die gespeicherte Vorhersage vom Vortag zum Vergleich.
+- **Speicher:** Daten gelten, bis das Modell einen neuen Lauf veröffentlicht (höchstens 3 h, bei Ausfall 3 h 10 min), und bleiben nach dem Schließen erhalten. „Neu laden“ leert alles.
+- Bewertung: ohne Winddaten der aktiven Modelle kein Ersatzwert mehr aus abgewählten Modellen.
+- „Speichern“ verschwindet nach erfolgreichem Verteilen.
+- Hinweistexte (Einheiten, Datenquellen, Längstes Fenster) entfernt.
 
 ## 5.16.0
 - **ICON, GFS, ECMWF nehmen den Wind jetzt vom nächsten Wasser-Gitterpunkt** statt vom Landpunkt (z. B. Kühlungsborn: ECMWF lag 17 km im Inland und zeigte 16 statt ~24 kn). Binnenspots (Wasserzelle > 12 km entfernt) behalten den Landpunkt.
