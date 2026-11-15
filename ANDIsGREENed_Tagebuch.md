@@ -2,9 +2,13 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.17.6** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.17.7** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.17.7
+- „Ich steh am Strand“ fragt vor dem Übernehmen nach (alt/neu, Abstand in m); vorher wurde die Position sofort gesetzt.
+- Neuer Knopf „Position zurücksetzen“: setzt auf die gespeicherte Position (spot-updates.json), sonst auf den Grundwert.
 
 ## 5.17.6
 - Fehlerbehebung: In 5.17.5 waren HTML-Anführungszeichen vertauscht (Dev-Modus, Segel-Editor u. a. ohne Funktion, App startete nicht). Behoben.
