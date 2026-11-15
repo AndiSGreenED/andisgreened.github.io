@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.17.0</title>
+<title>ANDIsGREENed 5.17.1</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -1846,6 +1846,8 @@ async function getAllData(spots,date){
     // den nächsten Wasser-Gitterpunkt (egal wie grob das Modell ist), für Binnenspots alle den Landpunkt.
     const OM = "https://api.open-meteo.com/v1/forecast";
     let coastal = null;
+    // Binnenseen: ICON kennt den See als Wasserzelle; die groben GFS/ECMWF-Gitter nicht – deren „Wasserzelle“ wäre die Ostsee.
+    const lake = chunk.map(s => /(see|sø)(\s|$)|plas\b|großes meer/i.test(s.name));
     for(const model of MODEL_IDS){
       try{
         const prm = {...common, models:model.id, hourly:"wind_speed_10m,wind_direction_10m"+(model.id==="icon_seamless"?",temperature_2m,precipitation":""), daily:"sunrise,sunset", wind_speed_unit:"kn"};
@@ -1855,10 +1857,10 @@ async function getAllData(spots,date){
           coastal = chunk.map((s,i) => !!sea[i] && Number.isFinite(sea[i].latitude) && distanceKm(s.lat,s.lon,sea[i].latitude,sea[i].longitude) <= 8);
           chunk.forEach((s,i) => { if(coastal[i]) result[i] = sea[i]; });
         } else {
-          const ic = chunk.map((s,i) => coastal[i] ? i : -1).filter(i => i >= 0);
+          const ic = chunk.map((s,i) => coastal[i] && !lake[i] ? i : -1).filter(i => i >= 0);
           if(ic.length){ const r = await multiCached(CK+"s:"+model.id, OM, {...prm, cell_selection:"sea"}, ic.map(i => chunk[i])); ic.forEach((i,j) => { result[i] = r[j]; }); }
         }
-        const il = chunk.map((s,i) => coastal[i] ? -1 : i).filter(i => i >= 0);
+        const il = chunk.map((s,i) => result[i] ? -1 : i).filter(i => i >= 0);
         if(il.length){ const r = await multiCached(CK+"l:"+model.id, OM, prm, il.map(i => chunk[i])); il.forEach((i,j) => { result[i] = r[j]; }); }
         windByModel.set(model.label,result);
       }catch(e){ if(/429|Limit/.test(e.message)) limitHit = true; modelErrors.push(model.label+": "+e.message); }
@@ -1927,7 +1929,9 @@ async function getAllData(spots,date){
     let timer;
     let extrasDone = false;
     try{ await Promise.race([fetchExtras(spots,date,extras).catch(() => {}).then(() => { extrasDone = true; }), new Promise(r => { timer = setTimeout(r,20000); })]); }catch(e){}
-    if(!extrasDone) extraNotes.push("Zusatzmodelle (ICON-D2, DMI, ICON See, DWD) nicht rechtzeitig geladen – bitte erneut suchen.");
+    if(!extrasDone){ const got = new Set([...extras.values()].flatMap(o => Object.keys(o))), offD = Math.round((new Date(date+"T12:00:00") - todayNoon())/864e5);
+      const miss = [...(offD <= 2 ? ["ICON-D2","DMI"] : []), offD < 0 ? "DWD Messung" : "DWD"].filter(l => !got.has(l));
+      if(miss.length) extraNotes.push(miss.join(", ")+" nicht rechtzeitig geladen – bitte erneut suchen."); }
     clearTimeout(timer);
     try{
       for(const [k,ex] of extras){
@@ -1953,7 +1957,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.17.0";
+const APP_VERSION = "5.17.1";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}

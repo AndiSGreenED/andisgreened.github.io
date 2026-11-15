@@ -2,9 +2,13 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.17.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.17.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.17.1
+- Binnenseen: ICON nimmt die Seezelle, GFS/ECMWF (zu grob für Seen) den Landpunkt statt der Ostsee.
+- Hinweis „nicht rechtzeitig geladen“ nennt nur die tatsächlich fehlenden Zusatzquellen.
 
 ## 5.17.0
 - **Wind für alle Spots einheitlich:** Küstenspot = ICON-Wasserzelle höchstens 8 km entfernt. Dann nehmen ICON, GFS und ECMWF immer den nächsten Wasser-Gitterpunkt (vorher fiel z. B. Heiligenhafen bei ECMWF auf den Landpunkt zurück, weil die Wasserzelle 13 km entfernt war). Binnenspots nehmen bei allen Modellen den Landpunkt. „ICON See“ entfällt (wäre jetzt doppelt).
