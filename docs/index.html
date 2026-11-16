@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.17.7</title>
+<title>ANDIsGREENed 5.18.0</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -374,6 +374,29 @@ details.statusbox #status{margin:6px 0 0}
 .score-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 .score-popover .region{white-space:normal}
 .rose{width:74px;height:74px;display:block}
+.distslide{display:flex;gap:10px;align-items:center;margin-top:8px}
+.distslide input{flex:1;width:auto;padding:0;border:0;background:transparent;accent-color:#73d8d0;min-height:34px}
+.distslide output{min-width:84px;text-align:right;font-weight:700;color:#9cebe3}
+#week{margin:0 0 12px;background:#142733;border:1px solid #29414c;border-radius:14px;padding:10px 6px 8px}
+#week[hidden]{display:none}
+#week .wkhead{font-size:.78rem;color:#9fb5bf;margin:0 4px 8px;line-height:1.35}
+#week .wkrow{display:flex;gap:3px}
+#week .wk{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;height:132px;background:#0e202a;border:1px solid #263f4b;border-radius:9px;padding:6px 1px 5px;color:#edf4f7;font-weight:600}
+#week .wk.sel{border-color:#c9a84c;background:#1a2f38}
+#week .wk b{font-size:.95rem;line-height:1}
+#week .wk i{display:block;width:68%;border-radius:4px 4px 0 0;border:1px solid rgba(0,0,0,.4)}
+#week .wk span{font-size:.7rem;color:#cfe3ea;line-height:1}
+#week .wk small{font-size:.58rem;color:#7f97a1;line-height:1;white-space:nowrap}
+#week .wkleg{display:flex;margin:9px 4px 0}
+#week .wkleg div{flex:1 1 0;text-align:left}
+#week .wkleg i{display:block;height:9px;border:1px solid rgba(0,0,0,.45);border-left-width:0}
+#week .wkleg div:first-child i{border-left-width:1px}
+#week .wkleg em{display:block;font-style:normal;font-size:.6rem;color:#9fb5bf;margin-top:2px}
+#whereov{position:fixed;inset:0;z-index:9990;background:#0b1720;display:none;flex-direction:column}
+#whereov .whhead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;padding-top:calc(10px + env(safe-area-inset-top,0px));color:#edf4f7;font-size:.9rem}
+#whereov .whhead button{background:#29414c;color:#edf4f7;min-height:38px;padding:0 14px}
+#whmap{flex:1;min-height:0}
+.leaflet-container a{border:0;padding:0;font-size:inherit}
 .metric.win-box{border:1px solid #c9a84c}
 .metric.win-box b{line-height:1.1}
 .metric.win-box>span{margin-top:0}
@@ -447,7 +470,9 @@ details.sub[open]>summary{margin-bottom:6px}
     <option value="100" selected>100 km</option><option value="150">150 km</option><option value="250">250 km</option>
     <option value="500">500 km</option><option value="99999">Alle Spots</option>
   </select>
+  <div class="distslide"><input type="range" id="distslider" min="5" max="500" step="5" value="100" aria-label="Maximale Entfernung stufenlos einstellen"><output id="distlabel" for="distslider">100 km</output></div>
   <button type="button" id="loc" style="width:100%;margin-top:12px;font-size:.85rem;background:#29414c;color:#edf4f7;min-height:44px">📍 Meinen Standort verwenden</button>
+  <button type="button" id="whereami" style="display:none;width:100%;margin-top:8px;font-size:.85rem;background:#29414c;color:#edf4f7;min-height:44px">🗺️ Wo bin ich</button>
   <p class="note" id="locnote" style="margin-top:6px">Standort: Lübeck (Standard)</p>
   <button class="primary" id="apply">Suchen</button>
   <button type="button" id="reload" style="width:100%;margin-top:8px;background:#29414c;color:#edf4f7;min-height:40px;font-size:.85rem">Neu laden (Speicher leeren)</button>
@@ -547,6 +572,7 @@ details.sub[open]>summary{margin-bottom:6px}
   <div class="resultsHead"><span class="count" id="count">Noch nicht geladen</span></div>
   <details class="statusbox plain" id="statusbox" hidden><summary class="statusline" id="statussum"></summary>
   <p class="statusline" id="status" role="status"></p></details>
+  <div id="week" hidden></div>
   <div class="cards" id="cards"><div class="empty">Noch keine Live-Daten geladen.</div></div>
 
 </section>
@@ -1058,7 +1084,7 @@ const SPOTS = SPOTS_RAW.filter(Boolean).map(sp => ({...sp, dirs:[...new Set((sp.
 const MAIN_DIR_KEY = "andisgreened-main-directions-v1";
 let mainDirs = {};
 let editingMainDirs = new Set();
-let lastResults = null, lastErrors = [], lastSelectedCount = 0, lastFilters = null;
+let lastResults = null, lastErrors = [], lastSelectedCount = 0, lastFilters = null, lastRaw = null;
 try { mainDirs = JSON.parse(localStorage.getItem(MAIN_DIR_KEY)||"{}") || {}; } catch(e) {}
 const CUSTOM_KEY = "andisgreened-custom-spots-v1";
 let customSpots = [];
@@ -1479,8 +1505,17 @@ function loadSettings(){
     const raw = localStorage.getItem(SETTINGS_KEY) || localStorage.getItem("andisgreened-settings-v5");
     if(!raw) return;
     const o = JSON.parse(raw);
-    FIELDS.forEach(id => { if(o[id]!==undefined && $(id)) $(id).value = o[id]; });
+    FIELDS.forEach(id => { if(o[id]!==undefined && $(id)){ if(id==="distance") ensureDistOption(o[id]); $(id).value = o[id]; } });
   }catch(e){}
+}
+// 5.18.0: eigener Entfernungswert (Schieber) als zusätzliche Auswahl im Dropdown
+function ensureDistOption(v){
+  const sel = $("distance"), km = Number(v);
+  if(!Number.isFinite(km) || km <= 0 || km >= 99999) return;
+  if([...sel.options].some(o => Number(o.value) === km)) return;
+  [...sel.options].filter(o => o.dataset.custom).forEach(o => o.remove());
+  const o = document.createElement("option"); o.value = String(km); o.dataset.custom = "1"; o.textContent = km + " km (eigen)";
+  sel.insertBefore(o, sel.options[sel.options.length-1]);
 }
 const compass = deg => Number.isFinite(deg) ? ["N","NNO","NO","ONO","O","OSO","SO","SSO","S","SSW","SW","WSW","W","WNW","NW","NNW"][Math.round(deg/22.5)%16] : "n. v.";
 function distanceKm(a,b,c,d){
@@ -1974,7 +2009,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.17.7";
+const APP_VERSION = "5.18.0";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2301,8 +2336,146 @@ function paintResults(results,errors,selectedCount,f){
   else if(!results.length) $("cards").innerHTML = "<div class='empty'>Keine Spots im gewählten Umkreis.</div>";
   $("count").textContent = `${results.filter(x => x.res.good.length > 0).length} von ${selectedCount} Spots passen`;
   if(keepUi && !paintResults.fresh) restoreCards(keepUi); paintResults.fresh = false;
+  try{ paintWeek(); }catch(e){}
   return relevant;
 }
+
+// ---- 5.18.0: Wochenverlauf, Entfernungs-Schieber, „Wo bin ich“ ----
+// Farbskala in m/s (Vorgabe), hier in Knoten umgerechnet
+const MS_TO_KN = 1.943844;
+const WEEK_SCALE = [[2,"#ffffff"],[4,"#9ecae1"],[6,"#3182bd"],[8,"#74c476"],[10,"#31a354"],[12,"#ffe933"],[14,"#fdae4b"],[17,"#f4631e"],[21,"#e31a1c"],[29,"#ad1769"],[Infinity,"#66007a"]];
+const weekColor = kn => (WEEK_SCALE.find(([lim]) => kn/MS_TO_KN < lim) || WEEK_SCALE[WEEK_SCALE.length-1])[1];
+// beste 3 zusammenhängende Stunden = höchster Median aus drei aufeinanderfolgenden Stundenwerten
+function best3Median(rows){
+  const byH = new Map(rows.filter(r => Number.isFinite(r.wind)).map(r => [r.hour, r.wind]));
+  let best = null;
+  byH.forEach((w,h) => {
+    if(!byH.has(h+1) || !byH.has(h+2)) return;
+    const v = [w, byH.get(h+1), byH.get(h+2)].sort((a,b) => a-b)[1];
+    if(!best || v > best.kn) best = {kn:v, start:h};
+  });
+  return best;
+}
+function weekData(){
+  if(!lastRaw || !lastFilters) return null;
+  const t = todayNoon(), nowH = new Date().getHours(), out = [];
+  for(let i=0; i<=MAX_DAYS; i++){
+    const date = dateISO(addDays(t,i));
+    const f = {...lastFilters, date, startHour:null, usedir:false, minwind:0, maxwind:Infinity, minwave:0, maxwave:Infinity};
+    const vals = [];
+    lastRaw.forEach(d => {
+      if(!d.rows) return;
+      let day = scoreRows(d.rows,f,d.spot).day;
+      if(i === 0) day = day.filter(r => r.hour >= nowH); // heute nur noch die kommenden Stunden
+      const b = best3Median(day);
+      if(b) vals.push({kn:b.kn, start:b.start, name:d.spot.name});
+    });
+    vals.sort((a,b) => a.kn-b.kn);
+    out.push({date, n:vals.length, vals});
+  }
+  return out;
+}
+function distLabel(km){ return km >= 99999 ? "Alle Spots" : km + " km"; }
+function paintWeek(){
+  const box = $("week"); if(!box) return;
+  const w = weekData();
+  if(!w || !w.some(d => d.n)){ box.hidden = true; return; }
+  const sel = lastFilters.date, wd = ["So","Mo","Di","Mi","Do","Fr","Sa"], MAXKN = 40;
+  const cols = w.map((d,i) => {
+    const lab = i === 0 ? "Heute" : wd[new Date(d.date+"T12:00:00").getDay()];
+    const cls = "wk" + (d.date === sel ? " sel" : "");
+    if(!d.n) return `<button type="button" class="${cls}" data-date="${d.date}"><b>–</b><span>${lab}</span><small>&nbsp;</small></button>`;
+    const med = d.n % 2 ? d.vals[(d.n-1)/2].kn : (d.vals[d.n/2-1].kn + d.vals[d.n/2].kn) / 2;
+    const lo = d.vals[0], hi = d.vals[d.n-1];
+    const h = Math.round(6 + Math.min(1, med/MAXKN) * 62);
+    const tip = `${lab}: Median ${Math.round(med)} kn über ${d.n} Spots · stärkster: ${hi.name} ${Math.round(hi.kn)} kn (ab ${pad(hi.start)} Uhr)`;
+    return `<button type="button" class="${cls}" data-date="${d.date}" title="${esc(tip)}"><b>${Math.round(med)}</b><i style="height:${h}px;background:${weekColor(med)}"></i><span>${lab}</span><small>${Math.round(lo.kn)}–${Math.round(hi.kn)}</small></button>`;
+  }).join("");
+  const lows = [0, ...WEEK_SCALE.slice(0,-1).map(([lim]) => lim*MS_TO_KN)];
+  const leg = WEEK_SCALE.map(([,c],i) => `<div><i style="background:${c}"></i><em>${Math.round(lows[i])}${i===WEEK_SCALE.length-1?"+":""}</em></div>`).join("");
+  const km = Number($("distance").value);
+  box.innerHTML = `<div class="wkhead"><b>Wochenverlauf</b> · Median der besten 3 Stunden je Tag, Spots im Umkreis (${esc(distLabel(km))}, ${lastRaw.filter(d => d.rows).length} Spots) · klein: schwächster–stärkster Spot</div><div class="wkrow">${cols}</div><div class="wkleg">${leg}</div><div class="wkhead" style="margin:2px 4px 0;font-size:.62rem">Knoten · antippen springt zum Tag</div>`;
+  box.hidden = false;
+}
+function goToDate(iso){
+  if($("date").value === iso) return;
+  saveCurrentDayHour();
+  $("date").value = iso;
+  try{ localStorage.setItem(DAY_KEY, iso); }catch(e){}
+  refreshDate(); restoreDayHour(iso); refreshDate();
+  run().catch(e => { $("status").textContent = "Fehler: " + (e && e.message || e); });
+}
+$("week").addEventListener("click", e => { const b = e.target.closest(".wk"); if(b && b.dataset.date) goToDate(b.dataset.date); });
+
+// Entfernung: Dropdown und Schieber bleiben gekoppelt
+function syncDistUi(){
+  const km = Number($("distance").value), sl = $("distslider");
+  sl.value = km >= 99999 ? sl.max : Math.min(Math.max(km, Number(sl.min)), Number(sl.max));
+  $("distlabel").textContent = distLabel(km);
+}
+$("distslider").addEventListener("input", () => {
+  const km = Number($("distslider").value), sel = $("distance");
+  const preset = [...sel.options].find(o => !o.dataset.custom && Number(o.value) === km);
+  if(preset){ [...sel.options].filter(o => o.dataset.custom).forEach(o => o.remove()); sel.value = preset.value; }
+  else { ensureDistOption(km); sel.value = String(km); }
+  $("distlabel").textContent = distLabel(km);
+});
+$("distslider").addEventListener("change", () => $("distance").dispatchEvent(new Event("change")));
+$("distance").addEventListener("change", () => {
+  const sel = $("distance");
+  if(!sel.selectedOptions[0] || !sel.selectedOptions[0].dataset.custom) [...sel.options].filter(o => o.dataset.custom).forEach(o => o.remove());
+  syncDistUi();
+});
+syncDistUi();
+
+// Dev-Modus: „Wo bin ich“ – Karte mit Standort, Umkreis und allen Spots darin
+let leafletP = null, whereMap = null;
+function loadLeaflet(){
+  if(window.L && window.L.map) return Promise.resolve();
+  if(leafletP) return leafletP;
+  leafletP = new Promise((res,rej) => {
+    const css = document.createElement("link"); css.rel = "stylesheet"; css.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"; document.head.appendChild(css);
+    const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+    sc.onload = () => res(); sc.onerror = () => { leafletP = null; rej(new Error("Kartenbibliothek nicht ladbar")); };
+    document.head.appendChild(sc);
+  });
+  return leafletP;
+}
+async function showWhereAmI(){
+  let ov = $("whereov");
+  if(!ov){
+    ov = document.createElement("div"); ov.id = "whereov";
+    ov.innerHTML = '<div class="whhead"><b id="whtitle">Wo bin ich</b><button type="button" id="whclose">Schließen</button></div><div id="whmap"></div>';
+    document.body.appendChild(ov);
+    $("whclose").addEventListener("click", () => { ov.style.display = "none"; });
+  }
+  ov.style.display = "flex";
+  $("whtitle").textContent = "Karte wird geladen …";
+  try{ await loadLeaflet(); }catch(e){ $("whtitle").textContent = "Karte nicht ladbar (Internet prüfen)"; return; }
+  if(whereMap){ whereMap.remove(); whereMap = null; }
+  const km = Number($("distance").value);
+  const inR = SPOTS.filter(s => distanceKm(HOME.lat,HOME.lon,s.lat,s.lon) <= km);
+  $("whtitle").textContent = `Wo bin ich · ${inR.length} Spots im Umkreis (${distLabel(km)})`;
+  whereMap = L.map("whmap");
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {maxZoom:18, attribution:"© OpenStreetMap"}).addTo(whereMap);
+  const pts = [[HOME.lat,HOME.lon]];
+  let circle = null;
+  if(km < 99999) circle = L.circle([HOME.lat,HOME.lon], {radius:km*1000, color:"#73d8d0", weight:2, fillOpacity:.06}).addTo(whereMap);
+  inR.forEach(s => {
+    pts.push([s.lat,s.lon]);
+    const d = Math.round(distanceKm(HOME.lat,HOME.lon,s.lat,s.lon));
+    L.circleMarker([s.lat,s.lon], {radius:7, color:"#06232a", weight:1.5, fillColor:"#ffcf40", fillOpacity:1}).addTo(whereMap)
+      .bindTooltip(s.name).bindPopup(`<b>${esc(s.name)}</b><br>${d} km<br><a href="#" onclick="return openMaps(${s.lat},${s.lon})">In Google Maps öffnen</a>`);
+  });
+  L.circleMarker([HOME.lat,HOME.lon], {radius:10, color:"#ffffff", weight:3, fillColor:"#2f7bff", fillOpacity:1}).addTo(whereMap)
+    .bindTooltip("Standort", {permanent:true, direction:"top"});
+  if(circle) whereMap.fitBounds(circle.getBounds()); else whereMap.fitBounds(pts, {padding:[20,20]});
+  setTimeout(() => whereMap && whereMap.invalidateSize(), 60);
+}
+function syncWhere(){ const b = $("whereami"); if(b) b.style.display = $("devmode").checked ? "" : "none"; }
+$("whereami").addEventListener("click", () => { showWhereAmI().catch(e => { toast("Karte: " + (e && e.message || e)); }); });
+$("devmode").addEventListener("change", syncWhere);
+syncWhere();
 
 async function run(force=false){
   const btn = $("apply");
@@ -2322,7 +2495,7 @@ async function run(force=false){
     const results = [], errors = [];
     data.forEach(d => d.error ? errors.push(`${d.spot.name}: ${d.error}`)
       : results.push({spot:d.spot, res:{...scoreRows(d.rows,f,d.spot), modelErrors:d.modelErrors||[]}}));
-    lastResults = results; lastErrors = errors; lastSelectedCount = selected.length; lastFilters = f;
+    lastRaw = data; lastResults = results; lastErrors = errors; lastSelectedCount = selected.length; lastFilters = f;
     lastSuccessfulLoadAt = Number.isFinite(CACHE_STATS.oldest) ? CACHE_STATS.oldest : Date.now(); // Datenstand, nicht Anzeigezeit
     try { localStorage.setItem("andisgreened-last-success", String(lastSuccessfulLoadAt)); } catch(e) {}
     const relevant = paintResults(results,errors,selected.length,f);

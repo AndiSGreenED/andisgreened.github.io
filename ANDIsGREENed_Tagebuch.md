@@ -2,9 +2,14 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.17.7** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.18.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.18.0
+- Wochenverlauf über den Ergebnissen: je Tag (heute bis +7) der Median der besten 3 zusammenhängenden Stunden, gemittelt über alle Spots im eingestellten Umkreis (Median der Spots), als farbiger Balken in Knoten. Farbskala wie Vorgabe (m/s) in Knoten umgerechnet. Antippen springt zum Tag. Rechnet aus den ohnehin geladenen Daten, keine zusätzlichen Abfragen.
+- Entfernung: zusätzlich zum Dropdown ein Schieber (5–500 km, 5er-Schritte); der Wert erscheint im Dropdown als „… km (eigen)“ und bleibt gespeichert.
+- Dev-Modus: „🗺️ Wo bin ich“ öffnet eine Karte (Leaflet/OpenStreetMap) mit Standort, Umkreis und allen Spots im Umkreis.
 
 ## 5.17.7
 - „Ich steh am Strand“ fragt vor dem Übernehmen nach (alt/neu, Abstand in m); vorher wurde die Position sofort gesetzt.
