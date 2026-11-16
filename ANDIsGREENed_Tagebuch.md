@@ -2,9 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.18.0** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.18.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.18.1
+- Fehlerbehebung „Wo bin ich“: Karte blieb leer (Kartenausschnitt wurde falsch berechnet).
 
 ## 5.18.0
 - Wochenverlauf über den Ergebnissen: je Tag (heute bis +7) der Median der besten 3 zusammenhängenden Stunden, gemittelt über alle Spots im eingestellten Umkreis (Median der Spots), als farbiger Balken in Knoten. Farbskala wie Vorgabe (m/s) in Knoten umgerechnet. Antippen springt zum Tag. Rechnet aus den ohnehin geladenen Daten, keine zusätzlichen Abfragen.

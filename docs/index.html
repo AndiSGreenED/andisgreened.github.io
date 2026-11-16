@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.18.0</title>
+<title>ANDIsGREENed 5.18.1</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -2009,7 +2009,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.18.0";
+const APP_VERSION = "5.18.1";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2469,7 +2469,7 @@ async function showWhereAmI(){
   });
   L.circleMarker([HOME.lat,HOME.lon], {radius:10, color:"#ffffff", weight:3, fillColor:"#2f7bff", fillOpacity:1}).addTo(whereMap)
     .bindTooltip("Standort", {permanent:true, direction:"top"});
-  if(circle) whereMap.fitBounds(circle.getBounds()); else whereMap.fitBounds(pts, {padding:[20,20]});
+  if(circle) whereMap.fitBounds(L.latLng(HOME.lat,HOME.lon).toBounds(km*2000)); else whereMap.fitBounds(pts, {padding:[20,20]});
   setTimeout(() => whereMap && whereMap.invalidateSize(), 60);
 }
 function syncWhere(){ const b = $("whereami"); if(b) b.style.display = $("devmode").checked ? "" : "none"; }
