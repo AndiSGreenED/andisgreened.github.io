@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.18.1</title>
+<title>ANDIsGREENed 5.18.2</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -443,9 +443,8 @@ details.sub[open]>summary{margin-bottom:6px}
   <h1 class="apptitle"><img src="icons/logo.png" alt="" width="44" height="40">ANDIsGREENed</h1>
 </header>
 <main>
-
+<div id="week" hidden></div>
 <section class="panel">
-  <label>Tag</label>
   <div class="datecontrol">
     <button type="button" class="step" id="prev" data-step="-1" aria-label="Einen Tag zurück">−</button>
     <div id="dateDisplay" class="date-display">Heute</div>
@@ -453,7 +452,6 @@ details.sub[open]>summary{margin-bottom:6px}
   </div>
   <input id="date" type="hidden">
   <div class="date-time-control">
-    <label for="startHour">Uhrzeit</label>
     <select id="startHour"><option value="">Ganzer Tag</option></select>
   </div>
   <div class="grid2">
@@ -464,15 +462,12 @@ details.sub[open]>summary{margin-bottom:6px}
     <div><label for="minwave">Welle min. (m)</label><input id="minwave" type="number" inputmode="decimal" min="0" step="0.1" value="0"></div>
     <div><label for="maxwave">Welle max. (m)</label><input id="maxwave" type="number" inputmode="decimal" min="0" step="0.1" placeholder="∞" value="1.5"></div>
   </div>
-  <label for="distance">Maximale Entfernung</label>
-  <select id="distance">
-    <option value="25">25 km</option><option value="50">50 km</option><option value="75">75 km</option>
-    <option value="100" selected>100 km</option><option value="150">150 km</option><option value="250">250 km</option>
-    <option value="500">500 km</option><option value="99999">Alle Spots</option>
-  </select>
-  <div class="distslide"><input type="range" id="distslider" min="5" max="500" step="5" value="100" aria-label="Maximale Entfernung stufenlos einstellen"><output id="distlabel" for="distslider">100 km</output></div>
-  <button type="button" id="loc" style="width:100%;margin-top:12px;font-size:.85rem;background:#29414c;color:#edf4f7;min-height:44px">📍 Meinen Standort verwenden</button>
-  <button type="button" id="whereami" style="display:none;width:100%;margin-top:8px;font-size:.85rem;background:#29414c;color:#edf4f7;min-height:44px">🗺️ Wo bin ich</button>
+  <input type="hidden" id="distance" value="100">
+  <div class="distslide"><input type="range" id="distslider" min="5" max="505" step="5" value="100" aria-label="Maximale Entfernung"><output id="distlabel" for="distslider">100 km</output></div>
+  <div class="grid2" style="margin-top:12px">
+    <button type="button" id="loc" style="font-size:.85rem;background:#29414c;color:#edf4f7;min-height:44px">📍 Standort</button>
+    <button type="button" id="whereami" style="font-size:.85rem;background:#29414c;color:#edf4f7;min-height:44px">🗺️ Hier</button>
+  </div>
   <p class="note" id="locnote" style="margin-top:6px">Standort: Lübeck (Standard)</p>
   <button class="primary" id="apply">Suchen</button>
   <button type="button" id="reload" style="width:100%;margin-top:8px;background:#29414c;color:#edf4f7;min-height:40px;font-size:.85rem">Neu laden (Speicher leeren)</button>
@@ -572,7 +567,6 @@ details.sub[open]>summary{margin-bottom:6px}
   <div class="resultsHead"><span class="count" id="count">Noch nicht geladen</span></div>
   <details class="statusbox plain" id="statusbox" hidden><summary class="statusline" id="statussum"></summary>
   <p class="statusline" id="status" role="status"></p></details>
-  <div id="week" hidden></div>
   <div class="cards" id="cards"><div class="empty">Noch keine Live-Daten geladen.</div></div>
 
 </section>
@@ -1493,6 +1487,7 @@ function refreshDate(){
   $("dateDisplay").textContent = dateLabel(v) + (hour!=="" ? ` · ab ${String(Number(hour)).padStart(2,"0")}:00` : "");
   $("prev").disabled = v <= dateISO(addDays(t,-1));
   $("next").disabled = v >= dateISO(addDays(t,MAX_DAYS));
+  markWeekSel();
 }
 function saveSettings(){
   try{
@@ -1505,17 +1500,8 @@ function loadSettings(){
     const raw = localStorage.getItem(SETTINGS_KEY) || localStorage.getItem("andisgreened-settings-v5");
     if(!raw) return;
     const o = JSON.parse(raw);
-    FIELDS.forEach(id => { if(o[id]!==undefined && $(id)){ if(id==="distance") ensureDistOption(o[id]); $(id).value = o[id]; } });
+    FIELDS.forEach(id => { if(o[id]!==undefined && $(id))$(id).value = o[id]; });
   }catch(e){}
-}
-// 5.18.0: eigener Entfernungswert (Schieber) als zusätzliche Auswahl im Dropdown
-function ensureDistOption(v){
-  const sel = $("distance"), km = Number(v);
-  if(!Number.isFinite(km) || km <= 0 || km >= 99999) return;
-  if([...sel.options].some(o => Number(o.value) === km)) return;
-  [...sel.options].filter(o => o.dataset.custom).forEach(o => o.remove());
-  const o = document.createElement("option"); o.value = String(km); o.dataset.custom = "1"; o.textContent = km + " km (eigen)";
-  sel.insertBefore(o, sel.options[sel.options.length-1]);
 }
 const compass = deg => Number.isFinite(deg) ? ["N","NNO","NO","ONO","O","OSO","SO","SSO","S","SSW","SW","WSW","W","WNW","NW","NNW"][Math.round(deg/22.5)%16] : "n. v.";
 function distanceKm(a,b,c,d){
@@ -2009,7 +1995,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.18.1";
+const APP_VERSION = "5.18.2";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2356,9 +2342,10 @@ function best3Median(rows){
   });
   return best;
 }
-function weekData(){
+const WEEK_KEY = "andisgreened-week-v1";
+function weekModel(){
   if(!lastRaw || !lastFilters) return null;
-  const t = todayNoon(), nowH = new Date().getHours(), out = [];
+  const t = todayNoon(), nowH = new Date().getHours(), days = [];
   for(let i=0; i<=MAX_DAYS; i++){
     const date = dateISO(addDays(t,i));
     const f = {...lastFilters, date, startHour:null, usedir:false, minwind:0, maxwind:Infinity, minwave:0, maxwave:Infinity};
@@ -2371,32 +2358,40 @@ function weekData(){
       if(b) vals.push({kn:b.kn, start:b.start, name:d.spot.name});
     });
     vals.sort((a,b) => a.kn-b.kn);
-    out.push({date, n:vals.length, vals});
+    const n = vals.length;
+    if(!n){ days.push({date, n:0}); continue; }
+    const med = n % 2 ? vals[(n-1)/2].kn : (vals[n/2-1].kn + vals[n/2].kn) / 2, hi = vals[n-1];
+    days.push({date, n, med, lo:vals[0].kn, hi:hi.kn, hiName:hi.name, hiStart:hi.start});
   }
-  return out;
+  return {at:Date.now(), days};
 }
 function distLabel(km){ return km >= 99999 ? "Alle Spots" : km + " km"; }
-function paintWeek(){
+function weekRender(m){
   const box = $("week"); if(!box) return;
-  const w = weekData();
-  if(!w || !w.some(d => d.n)){ box.hidden = true; return; }
-  const sel = lastFilters.date, wd = ["So","Mo","Di","Mi","Do","Fr","Sa"], MAXKN = 40;
-  const cols = w.map((d,i) => {
-    const lab = i === 0 ? "Heute" : wd[new Date(d.date+"T12:00:00").getDay()];
+  const today = dateISO(todayNoon()), days = ((m && m.days) || []).filter(d => d.date >= today);
+  if(!days.some(d => d.n)){ box.hidden = true; return; }
+  const sel = $("date").value, wd = ["So","Mo","Di","Mi","Do","Fr","Sa"], MAXKN = 40;
+  const cols = days.map(d => {
+    const lab = d.date === today ? "Heute" : wd[new Date(d.date+"T12:00:00").getDay()];
     const cls = "wk" + (d.date === sel ? " sel" : "");
     if(!d.n) return `<button type="button" class="${cls}" data-date="${d.date}"><b>–</b><span>${lab}</span><small>&nbsp;</small></button>`;
-    const med = d.n % 2 ? d.vals[(d.n-1)/2].kn : (d.vals[d.n/2-1].kn + d.vals[d.n/2].kn) / 2;
-    const lo = d.vals[0], hi = d.vals[d.n-1];
-    const h = Math.round(6 + Math.min(1, med/MAXKN) * 62);
-    const tip = `${lab}: Median ${Math.round(med)} kn über ${d.n} Spots · stärkster: ${hi.name} ${Math.round(hi.kn)} kn (ab ${pad(hi.start)} Uhr)`;
-    return `<button type="button" class="${cls}" data-date="${d.date}" title="${esc(tip)}"><b>${Math.round(med)}</b><i style="height:${h}px;background:${weekColor(med)}"></i><span>${lab}</span><small>${Math.round(lo.kn)}–${Math.round(hi.kn)}</small></button>`;
+    const h = Math.round(6 + Math.min(1, d.med/MAXKN) * 62);
+    const tip = `${lab}: Median ${Math.round(d.med)} kn über ${d.n} Spots · stärkster: ${d.hiName} ${Math.round(d.hi)} kn (ab ${pad(d.hiStart)} Uhr)`;
+    return `<button type="button" class="${cls}" data-date="${d.date}" title="${esc(tip)}"><b>${Math.round(d.med)}</b><i style="height:${h}px;background:${weekColor(d.med)}"></i><span>${lab}</span><small>${Math.round(d.lo)}–${Math.round(d.hi)}</small></button>`;
   }).join("");
   const lows = [0, ...WEEK_SCALE.slice(0,-1).map(([lim]) => lim*MS_TO_KN)];
   const leg = WEEK_SCALE.map(([,c],i) => `<div><i style="background:${c}"></i><em>${Math.round(lows[i])}${i===WEEK_SCALE.length-1?"+":""}</em></div>`).join("");
-  const km = Number($("distance").value);
-  box.innerHTML = `<div class="wkhead"><b>Wochenverlauf</b> · Median der besten 3 Stunden je Tag, Spots im Umkreis (${esc(distLabel(km))}, ${lastRaw.filter(d => d.rows).length} Spots) · klein: schwächster–stärkster Spot</div><div class="wkrow">${cols}</div><div class="wkleg">${leg}</div><div class="wkhead" style="margin:2px 4px 0;font-size:.62rem">Knoten · antippen springt zum Tag</div>`;
+  box.innerHTML = `<div class="wkrow">${cols}</div><div class="wkleg">${leg}</div>`;
   box.hidden = false;
 }
+// Nach jeder Suche neu berechnen und merken; beim Start der letzte Stand, bis wieder gesucht wird
+function paintWeek(){
+  const m = weekModel(); if(!m) return;
+  try{ localStorage.setItem(WEEK_KEY, JSON.stringify(m)); }catch(e){}
+  weekRender(m);
+}
+function restoreWeek(){ try{ const m = JSON.parse(localStorage.getItem(WEEK_KEY) || "null"); if(m && Array.isArray(m.days)) weekRender(m); }catch(e){} }
+function markWeekSel(){ const sel = $("date").value; document.querySelectorAll("#week .wk").forEach(b => b.classList.toggle("sel", b.dataset.date === sel)); }
 function goToDate(iso){
   if($("date").value === iso) return;
   saveCurrentDayHour();
@@ -2407,26 +2402,19 @@ function goToDate(iso){
 }
 $("week").addEventListener("click", e => { const b = e.target.closest(".wk"); if(b && b.dataset.date) goToDate(b.dataset.date); });
 
-// Entfernung: Dropdown und Schieber bleiben gekoppelt
+// Entfernung: nur noch der Schieber (ganz rechts = alle Spots); der Wert liegt im versteckten Feld "distance"
 function syncDistUi(){
   const km = Number($("distance").value), sl = $("distslider");
-  sl.value = km >= 99999 ? sl.max : Math.min(Math.max(km, Number(sl.min)), Number(sl.max));
+  sl.value = km >= 99999 ? sl.max : Math.min(Math.max(km, Number(sl.min)), 500);
   $("distlabel").textContent = distLabel(km);
 }
 $("distslider").addEventListener("input", () => {
-  const km = Number($("distslider").value), sel = $("distance");
-  const preset = [...sel.options].find(o => !o.dataset.custom && Number(o.value) === km);
-  if(preset){ [...sel.options].filter(o => o.dataset.custom).forEach(o => o.remove()); sel.value = preset.value; }
-  else { ensureDistOption(km); sel.value = String(km); }
-  $("distlabel").textContent = distLabel(km);
+  const v = Number($("distslider").value), km = v > 500 ? 99999 : v;
+  $("distance").value = String(km); $("distlabel").textContent = distLabel(km);
 });
-$("distslider").addEventListener("change", () => $("distance").dispatchEvent(new Event("change")));
-$("distance").addEventListener("change", () => {
-  const sel = $("distance");
-  if(!sel.selectedOptions[0] || !sel.selectedOptions[0].dataset.custom) [...sel.options].filter(o => o.dataset.custom).forEach(o => o.remove());
-  syncDistUi();
-});
+$("distslider").addEventListener("change", saveSettings);
 syncDistUi();
+restoreWeek();
 
 // Dev-Modus: „Wo bin ich“ – Karte mit Standort, Umkreis und allen Spots darin
 let leafletP = null, whereMap = null;
@@ -2472,10 +2460,7 @@ async function showWhereAmI(){
   if(circle) whereMap.fitBounds(L.latLng(HOME.lat,HOME.lon).toBounds(km*2000)); else whereMap.fitBounds(pts, {padding:[20,20]});
   setTimeout(() => whereMap && whereMap.invalidateSize(), 60);
 }
-function syncWhere(){ const b = $("whereami"); if(b) b.style.display = $("devmode").checked ? "" : "none"; }
 $("whereami").addEventListener("click", () => { showWhereAmI().catch(e => { toast("Karte: " + (e && e.message || e)); }); });
-$("devmode").addEventListener("change", syncWhere);
-syncWhere();
 
 async function run(force=false){
   const btn = $("apply");
@@ -2513,7 +2498,7 @@ async function run(force=false){
       $("count").textContent = "Nicht geladen";
     }
   }finally{
-    btn.disabled = false; btn.textContent = "Live-Daten laden und vergleichen";
+    btn.disabled = false; btn.textContent = "Suchen";
   }
 }
 // 5.6.0: Datenstand eingeklappt; Warnungen (⚠) stehen in der Kurzzeile

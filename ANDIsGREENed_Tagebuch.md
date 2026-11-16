@@ -2,9 +2,15 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.18.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.18.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
 ---
+
+## 5.18.2
+- Wochenverlauf ganz oben, ohne Erklärtexte; zeigt beim Start den Stand der letzten Suche, bis wieder gesucht wird.
+- Entfernung nur noch per Schieber (ganz rechts = alle Spots), Dropdown und Beschriftungen „Tag“, „Uhrzeit“, „Maximale Entfernung“ entfernt.
+- Knöpfe „📍 Standort“ und „🗺️ Hier“ nebeneinander; die Karte ist immer verfügbar (nicht nur im Dev-Modus).
+- Der Suchen-Knopf zeigte nach dem Laden wieder „Live-Daten laden und vergleichen“. Jetzt bleibt es „Suchen“.
 
 ## 5.18.1
 - Fehlerbehebung „Wo bin ich“: Karte blieb leer (Kartenausschnitt wurde falsch berechnet).
