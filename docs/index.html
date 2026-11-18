@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.18.7</title>
+<title>ANDIsGREENed 5.18.8</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -564,7 +564,7 @@ details.sub[open]>summary{margin-bottom:6px}
   </details>
   </div>
   <details class="sub"><summary>Datenquellen und Infos</summary>
-  <p class="note">Es werden nur Spots mit mindestens einer passenden Stunde angezeigt. Maßgeblich ist je Stunde das mittlere Modell (mittlerer Windwert aller aktiven Modelle) – dasselbe wie in Stundenleiste und Windrose. Ranking-Score = Summe stündlicher Beiträge aus Windfaktor × Wellenfaktor × Richtungsfaktor. Die Hauptwindrichtung erhält ×2 ab 3 zusammenhängenden Stunden aus dieser Richtung. Richtungen mit Wellenstern ★ erhalten zusätzlich ×2, als „möglich“ markierte Richtungen ×0,5.</p>
+  <p class="note">Es werden nur Spots mit mindestens einer passenden Stunde angezeigt. Für die Trefferwertung zählt je Stunde das mittlere aller aktiven Modelle. Wochenbalken, Stundenleiste, Windbereich und Windrose zeigen zur Vergleichbarkeit nur das mittlere der aktiven Hauptmodelle ICON, GFS und ECMWF. Ranking-Score = Summe stündlicher Beiträge aus Windfaktor × Wellenfaktor × Richtungsfaktor. Die Hauptwindrichtung erhält ×2 ab 3 zusammenhängenden Stunden aus dieser Richtung. Richtungen mit Wellenstern ★ erhalten zusätzlich ×2, als „möglich“ markierte Richtungen ×0,5.</p>
   <p class="note legal"><a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a> · Wetterdaten: <a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0), DWD/Bright Sky</p>
   </details>
   <div class="diagrow"><button type="button" id="diag">Verbindung prüfen</button><span class="note" id="appver"></span></div>
@@ -2003,7 +2003,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.18.7";
+const APP_VERSION = "5.18.8";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2185,9 +2185,9 @@ function archiveForecast(name, date, day){
 function card(spot,r,f){
   const rank=calculateRank(spot,r,f);
   // Bestes Surf-Fenster: mindestens 2 zusammenhängende Stunden, hohe Welle und hoher,
-  // möglichst gleichmäßiger Grundwind. Median der verfügbaren Modelle dämpft Ausreißer.
+  // möglichst gleichmäßiger Grundwind. Median der aktiven Hauptmodelle dämpft Ausreißer.
   const hourWindModel = h => {
-    const values=Object.values(h.models||{}).filter(m=>Number.isFinite(m.wind)).sort((a,b)=>a.wind-b.wind);
+    const values=Object.entries(h.models||{}).filter(([label,m])=>CORE_WIND_MODELS.has(label)&&Number.isFinite(m.wind)).map(([,m])=>m).sort((a,b)=>a.wind-b.wind);
     return values.length ? values[Math.floor(values.length/2)] : null;
   };
   const hourWind = h => { const m=hourWindModel(h); return m ? m.wind : NaN; };
@@ -2213,7 +2213,7 @@ function card(spot,r,f){
   }
   const bestPointWindow=bestHours.size ? `${pad(Math.min(...bestHours))}:00–${pad((Math.max(...bestHours)+1)%24)}:00` : "kein Fenster ≥ 2 h mit Wind- und Wellendaten";
   const km = Math.round(distanceKm(HOME.lat,HOME.lon,spot.lat,spot.lon));
-  const badge = `<details class="score-details" ontoggle="this.parentElement.classList.toggle('open',this.open)"><summary class="score ${r.good.length ? (r.score>=30?"good":"") : "bad"}">${r.good.length ? `${fmt(rank.score,1)} Pkt` : "Kein Treffer"}</summary><div class="score-popover"><div class="region">Stundensumme · Windfaktor × Wellenfaktor × Richtungsfaktor. Hauptwindrichtung ${esc(spot.mainDir||"–")} zählt ×2 erst ab 3 zusammenhängenden Stunden aus dieser Richtung.</div><div class="score-scroll"><table><thead><tr><th>Std.</th><th>Modell</th><th>Wind</th><th>Richtung</th><th>Welle</th><th>Wind ×</th><th>Welle ×</th><th>Richtung ×</th><th>Punkte</th><th>Warum?</th></tr></thead><tbody>${rank.hourly.map(h=>{const c=h.chosen,v=c||h.info;return `<tr${c?"":' class="muted"'}><td>${pad(h.hour)}:00</td><td>${v?esc(v.label):"–"}</td><td>${v?fmt(v.wind):"–"}</td><td>${v?esc(v.dir):"–"}</td><td>${v&&Number.isFinite(v.wave)?fmt(v.wave,1):"–"}</td><td>${c?fmt(c.windFactor,2):"–"}</td><td>${c?fmt(c.waveFactor,2):"–"}</td><td>${c?"×"+c.directionFactor:"–"}</td><td class="${h.points?"positive":"muted"}">${fmt(h.points,2)}</td><td class="muted">${c? (c.mainQualified?"Hauptrichtung ≥3 h":"Basisbeitrag"):esc(h.reason)}</td></tr>`}).join("")}</tbody><tfoot><tr><th colspan="8">Summe</th><th>${fmt(rank.score,2)}</th><th></th></tr></tfoot></table></div><div class="region">Nur Stunden, die Wind-, Wellen- und ggf. Spotrichtungsfilter erfüllen, tragen Punkte bei. Pro Stunde zählt das mittlere Modell (mittlerer Windwert aller aktiven Modelle), wie in der Stundenleiste. Wellenfaktor = 1 + Wellenhöhe in m; unbekannte Welle = 1, sofern der Filter sie zulässt.</div></div></details>`;
+  const badge = `<details class="score-details" ontoggle="this.parentElement.classList.toggle('open',this.open)"><summary class="score ${r.good.length ? (r.score>=30?"good":"") : "bad"}">${r.good.length ? `${fmt(rank.score,1)} Pkt` : "Kein Treffer"}</summary><div class="score-popover"><div class="region">Stundensumme · Windfaktor × Wellenfaktor × Richtungsfaktor. Hauptwindrichtung ${esc(spot.mainDir||"–")} zählt ×2 erst ab 3 zusammenhängenden Stunden aus dieser Richtung.</div><div class="score-scroll"><table><thead><tr><th>Std.</th><th>Modell</th><th>Wind</th><th>Richtung</th><th>Welle</th><th>Wind ×</th><th>Welle ×</th><th>Richtung ×</th><th>Punkte</th><th>Warum?</th></tr></thead><tbody>${rank.hourly.map(h=>{const c=h.chosen,v=c||h.info;return `<tr${c?"":' class="muted"'}><td>${pad(h.hour)}:00</td><td>${v?esc(v.label):"–"}</td><td>${v?fmt(v.wind):"–"}</td><td>${v?esc(v.dir):"–"}</td><td>${v&&Number.isFinite(v.wave)?fmt(v.wave,1):"–"}</td><td>${c?fmt(c.windFactor,2):"–"}</td><td>${c?fmt(c.waveFactor,2):"–"}</td><td>${c?"×"+c.directionFactor:"–"}</td><td class="${h.points?"positive":"muted"}">${fmt(h.points,2)}</td><td class="muted">${c? (c.mainQualified?"Hauptrichtung ≥3 h":"Basisbeitrag"):esc(h.reason)}</td></tr>`}).join("")}</tbody><tfoot><tr><th colspan="8">Summe</th><th>${fmt(rank.score,2)}</th><th></th></tr></tfoot></table></div><div class="region">Für Punkte zählt je Stunde das mittlere Modell (mittlerer Windwert aller aktiven Modelle). Wellenfaktor = 1 + Wellenhöhe in m; unbekannte Welle = 1, sofern der Filter sie zulässt.</div></div></details>`;
   const best = r.windows[0];
   const peakHour = r.peak ? r.day.find(h=>h.hour===r.peak.hour) : null;
   const peakModels = peakHour ? Object.entries(peakHour.allModels||peakHour.models||{}).filter(([label,m])=>Number.isFinite(m.wind) || Number.isFinite(m.gust)).map(([label,m])=>`<tr><td>${esc(label)}</td><td>${Number.isFinite(m.wind)?fmt(m.wind)+" kn":"–"}</td><td>${Number.isFinite(m.gust)?fmt(m.gust)+" kn":"–"}</td><td>${Number.isFinite(m.dir)?compass(m.dir):"–"}</td></tr>`).join("") : "";
@@ -2265,7 +2265,7 @@ function card(spot,r,f){
     return wx+entries.map(([label,m]) => { const on = !!act[label];
       return `<tr${on?"":' class="off"'}><td></td><td>${esc(label)}${m===selected?" · Stundenanzeige":on?"":" · nicht gewertet"}</td><td>${Number.isFinite(m.wind)?fmt(m.wind)+" kn":"–"}</td><td>${Number.isFinite(m.gust)?fmt(m.gust)+" kn":"–"}</td><td>${Number.isFinite(m.dir)?compass(m.dir):"–"}</td></tr>`; }).join("")+ar;
   }).join("");
-  if(f.date === dateISO(addDays(todayNoon(),1))) archiveForecast(spot.name, f.date, r.day);
+  if(f.date === dateISO(addDays(todayNoon(),1))) archiveForecast(spot.name, f.date, r.day.map(h=>({...h,wind:hourWind(h),dir:hourWindModel(h)?.dir})));
   const windRange = v => v.length ? (Math.round(Math.min(...v))===Math.round(Math.max(...v)) ? fmt(v[0],0) : fmt(Math.min(...v),0)+"–"+fmt(Math.max(...v),0)) : "n. v.";
   const dayWaves = r.day.map(h => h.wave).filter(Number.isFinite);
   const waveRows = r.day.map(h => {
@@ -2278,7 +2278,7 @@ function card(spot,r,f){
   return `<article class="spot">
     <div class="spotTop"><div><div class="spot-title-row"><h3><a class="spot-map-link" onclick="return openMaps(${spot.lat},${spot.lon})" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${spot.lat},${spot.lon}`)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(spot.name)} in Google Maps öffnen">${esc(spot.name)}</a></h3><a class="webcam-link${spot.cam ? " set" : ""}" href="${esc(webcamUrl(spot))}" target="_blank" rel="noopener noreferrer" aria-label="${spot.cam ? "Webcam von" : "Webcams suchen für"} ${esc(spot.name)} öffnen" title="${spot.cam ? "Eigene Webcam öffnen" : "Webcams suchen (Google)"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10l6-3v10l-6-3"/><rect x="3" y="6" width="11" height="12" rx="2"/><circle cx="8.5" cy="12" r="2.2"/></svg></a></div><div class="region area" title="${esc(spot.area)}">${km} km · ${esc(shortArea(spot.area))}</div>${hasBestWaveDirection(spot,r,f) ? `<div class="wave-star">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)}</div>` : (spot.waveStar && $("devmode").checked ? `<div class="wave-star inactive">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)} · heute nicht aktiv</div>` : "")}</div><div class="spotRight">${badge}${roseSvg}</div></div>
     <div class="metrics">
-      <details class="metric metric-wind-details" style="${windBoxStyle(dayWinds)}"><summary><b>${windRange(dayWinds)}<small class="u">kn</small></b><span>Wind · Einzelwerte ↗</span></summary><div class="wind-range-panel"><div class="region">Je Stunde: Temperatur, Niederschlag und Segel, darunter alle Modelle. „Stundenanzeige“ ist das mittlere Modell, grau = nicht gewertet (im Dev-Modus abgewählt oder Messwert)${arch ? ", „Prognose“ = gespeicherte Vorhersage vom Vortag" : ""}.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wind</th><th>Böen</th><th>Richtung</th></tr></thead><tbody>${windRows}</tbody></table></div></div></details>
+      <details class="metric metric-wind-details" style="${windBoxStyle(dayWinds)}"><summary><b>${windRange(dayWinds)}<small class="u">kn</small></b><span>Wind · Einzelwerte ↗</span></summary><div class="wind-range-panel"><div class="region">Je Stunde: Temperatur, Niederschlag und Segel, darunter alle Modelle. „Stundenanzeige“ ist das mittlere der aktiven Hauptmodelle ICON/GFS/ECMWF; andere Modelle dienen dem Vergleich${arch ? ", „Prognose“ = gespeicherte Vorhersage vom Vortag" : ""}.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wind</th><th>Böen</th><th>Richtung</th></tr></thead><tbody>${windRows}</tbody></table></div></div></details>
       <div class="metric win-box"><b>${winMain}</b><span>Beste Zeit</span>${winSail ? `<small class="sail">⛵ ${esc(winSail)}</small>` : ""}${winMore ? `<small>auch ${winMore}</small>` : ""}</div>
       <details class="metric metric-wave-details"><summary><b>${r.waveKnown ? rng(dayWaves,1)+'<small class="u">m</small>' : "n. v."}</b><span>Welle · Einzelwerte ↗</span></summary><div class="wave-range-panel"><div class="region">Stündliche Wellenhöhe je Modell. Verwendet wird ${waveSrcOf(spot.name)==="bm" ? "für diesen Spot Best Match" : "DWD EWAM (~5 km, bis ca. 3 Tage)"}; fehlt der Wert, springt das andere Modell ein.</div>${$("devmode").checked ? `<div class="dir-editor-tools">Wellenquelle für diesen Spot: <button type="button" class="${waveSrcOf(spot.name)==="ewam"?"active":""}" onclick="setSpotWave('${jsq(spot.name)}','ewam')">DWD EWAM</button><button type="button" class="${waveSrcOf(spot.name)==="bm"?"active":""}" onclick="setSpotWave('${jsq(spot.name)}','bm')">Best Match</button></div>` : ""}<div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wellenhöhe</th><th>Verwendet</th></tr></thead><tbody>${waveRows}</tbody></table></div></div></details>
       <div class="metric"><b>${fmt(dayWinds.length ? dayWinds.reduce((a,b)=>a+b,0)/dayWinds.length : NaN)}${r.waveKnown ? "\u202f·\u202f"+fmt(r.meanWave) : ""}</b><span>Ø Wind kn${r.waveKnown ? " · Welle m" : ""}</span></div>
@@ -2347,7 +2347,7 @@ function paintResults(results,errors,selectedCount,f,focusSpot=""){
 const MS_TO_KN = 1.943844;
 const WEEK_SCALE = [[2,"#ffffff"],[4,"#9ecae1"],[6,"#3182bd"],[8,"#74c476"],[10,"#31a354"],[12,"#ffe933"],[14,"#fdae4b"],[17,"#f4631e"],[21,"#e31a1c"],[29,"#ad1769"],[Infinity,"#66007a"]];
 const weekColor = kn => (WEEK_SCALE.find(([lim]) => kn/MS_TO_KN < lim) || WEEK_SCALE[WEEK_SCALE.length-1])[1];
-const WEEK_MODELS = new Set(["ICON","GFS","ECMWF"]);
+const CORE_WIND_MODELS = new Set(["ICON","GFS","ECMWF"]);
 // beste 3 zusammenhängende Stunden = höchster Median aus drei aufeinanderfolgenden Stundenwerten
 function best3Median(rows){
   const byH = new Map(rows.filter(r => Number.isFinite(r.wind)).map(r => [r.hour, r.wind]));
@@ -2365,7 +2365,7 @@ function weekModel(){
   const t = todayNoon(), nowH = new Date().getHours(), days = [];
   const weeklyRaw = lastRaw.map(d => ({...d, rows:d.rows?.map(row => ({
     ...row,
-    models:Object.fromEntries(Object.entries(row.models||{}).filter(([label]) => WEEK_MODELS.has(label)))
+    models:Object.fromEntries(Object.entries(row.models||{}).filter(([label]) => CORE_WIND_MODELS.has(label)))
   }))}));
   for(let i=0; i<=MAX_DAYS; i++){
     const date = dateISO(addDays(t,i));

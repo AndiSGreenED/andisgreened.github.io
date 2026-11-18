@@ -2,7 +2,10 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.18.7** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.18.8** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+
+## 5.18.8
+- Wochenbalken, Stundenstreifen und Windbereich einer Spotkarte verwenden dieselbe Modellbasis (aktive Hauptmodelle ICON/GFS/ECMWF), damit der angezeigte Best-Spot zum Balkenwert passt.
 
 ## 5.18.7
 - Außenabstände des Wochenverlaufs erneut halbiert; kompakte Suchansicht gilt jetzt auf allen Mobilgeräten, auch bei höherem Viewport.
