@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.18.8</title>
+<title>ANDIsGREENed 5.18.9</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -2003,7 +2003,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.18.8";
+const APP_VERSION = "5.18.9";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2395,8 +2395,8 @@ function weekRender(m){
     const cls = "wk" + (d.date === sel ? " sel" : "");
     if(!d.n) return `<button type="button" class="${cls}" data-date="${d.date}"><b>–</b><span>${lab}</span><small>&nbsp;</small></button>`;
     const h = Math.round(6 + Math.min(1, d.kn/MAXKN) * 62);
-    const tip = `${lab}: ${Math.round(d.kn)} kn · bester richtungspassender Spot: ${d.name} (ab ${pad(d.start)} Uhr)`;
-    return `<button type="button" class="${cls}" data-date="${d.date}" data-spot="${esc(d.name)}" title="${esc(tip)}"><b>${Math.round(d.kn)}</b><i style="height:${h}px;background:${weekColor(d.kn)}"></i><span>${lab}</span><small>${esc(d.name.length>8 ? d.name.slice(0,8)+"…" : d.name)}</small></button>`;
+    const tip = `${lab}: ${Math.round(d.kn)} kn · höchster 3-Stunden-Median ab ${pad(d.start)} Uhr`;
+    return `<button type="button" class="${cls}" data-date="${d.date}" data-spot="${esc(d.name)}" title="${esc(tip)}"><b>${Math.round(d.kn)}</b><i style="height:${h}px;background:${weekColor(d.kn)}"></i><span>${lab}</span></button>`;
   }).join("");
   const lows = [0, ...WEEK_SCALE.slice(0,-1).map(([lim]) => lim*MS_TO_KN)];
   const leg = WEEK_SCALE.map(([,c],i) => `<div><i style="background:${c}"></i><em>${Math.round(lows[i])}${i===WEEK_SCALE.length-1?"+":""}</em></div>`).join("");
