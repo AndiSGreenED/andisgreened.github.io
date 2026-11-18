@@ -1,6 +1,12 @@
 name: Forecast benchmark
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/forecast-benchmark.yml"
+      - "scripts/forecast-benchmark.mjs"
+      - "scripts/forecast-benchmark.test.mjs"
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
