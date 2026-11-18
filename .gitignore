@@ -3,3 +3,4 @@ apk/android/
 *.jks
 *.keystore
 keystore_*.txt
+.benchmark/

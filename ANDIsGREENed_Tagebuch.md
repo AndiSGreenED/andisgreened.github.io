@@ -2,7 +2,20 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.18.9** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.18.10** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+
+## Laufender Modellbenchmark (ohne App-Versionssprung)
+- Täglicher GitHub-Actions-Benchmark für DWD/Bright-Sky-Messungen und Open-Meteo-Windmodelle eingerichtet.
+- Zwischengespeicherte Regionalmittel liegen in einem GitHub-Actions-Artefakt mit sieben Tagen Aufbewahrung und gelangen nicht in die Git-Historie. Öffentlich committed werden nur aggregierte Fehlerkennzahlen nach Modell, Region und Vorlaufzeit.
+- Anfragen sind sequenziell auf mindestens 1,1 Sekunden Abstand begrenzt. Gewertet werden nur historische/aktuelle DWD-Windwerte von Stationen bis 25 km, mit mindestens 80 % Datenabdeckung.
+- Erste Modellwahl erfolgt erst nach ausreichender Messreihe; fehlende Beobachtungsabdeckung wird nicht als Modellfehler ausgelegt.
+
+## 5.18.10
+- 312 Basispositionen mit mehr als 500 m Abweichung auf den DailyDose-Kartenmarker gesetzt; eine gespeicherte Einzelposition ebenfalls korrigiert.
+- Grobe Wind- und Wellenzellen für erkannte Binnengewässer, Flüsse und Lagunen ausgeschlossen; zusätzlich deren Spotname, Gebiet und Typ berücksichtigt.
+- Zellabstände für 468 eindeutige Positionen geprüft: ICON max. 7,98 km, GFS 18,47 km, ECMWF 34,63 km; Best-Match-Wellenzelle bei 94 von 404 Küsten-Spots mehr als 10 km entfernt (max. 22,56 km). Zellabstand ist kein Prognosefehlermaß.
+- Best Match lieferte Zellkoordinaten für 468 Positionen; DWD EWAM wurde wegen fehlender Modelldaten nur teilweise geprüft (14 von 312 abgefragten Positionen ohne Daten).
+- Gemeinsam genutzte Kartenquellen mit abweichenden Teilspot-Punkten und Spots ohne auswertbaren Kartenmarker unverändert gelassen.
 
 ## 5.18.9
 - Spotnamen aus den Wochenbalken entfernt; der Tooltip zeigt stattdessen den Wert und die Startzeit des besten 3-Stunden-Fensters. Klick-Zuordnung bleibt erhalten.
