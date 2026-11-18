@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.18.4</title>
+<title>ANDIsGREENed 5.18.5</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -1995,7 +1995,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.18.4";
+const APP_VERSION = "5.18.5";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2311,12 +2311,20 @@ function restoreCards(st){
   cards.forEach(c => [...c.querySelectorAll("details")].forEach((d,i) => { if(st.open.includes(nameOf(c)+"|"+i)){ d.open = true; if(d.classList.contains("score-details")) d.parentElement.classList.add("open"); } }));
   if(st.anchor){ const c = cards.find(x => nameOf(x) === st.anchor.name); if(c) window.scrollBy(0, c.getBoundingClientRect().top - st.anchor.top); }
 }
-function paintResults(results,errors,selectedCount,f){
+function focusSpotCard(name){
+  if(!name) return;
+  const cards = $("cards");
+  const spot = [...cards.querySelectorAll(".spot")].find(c => (c.querySelector("h3")?.textContent || "").trim() === name);
+  if(spot){ cards.prepend(spot); spot.scrollIntoView({behavior:"smooth",block:"start"}); }
+}
+function paintResults(results,errors,selectedCount,f,focusSpot=""){
   const keepUi = uiState || captureCards(); uiState = null;
   const relevant = results.filter(x => x.res.good.length > 0);
+  const focused = results.find(x => x.spot.name === focusSpot);
+  if(focused && !relevant.includes(focused)) relevant.push(focused);
   const longest = r => r.windows.reduce((m,w)=>Math.max(m,w.end-w.start),0);
   const modelSupport = (r,spot) => { const am = getActiveModels(spot.name); return Math.max(0,...Object.entries(r.modelStats||{}).filter(([label])=>am.has(label)).map(([,m])=>m.good)); };
-  relevant.sort((a,b) => rankScore(b.spot,b.res,f)-rankScore(a.spot,a.res,f) || b.res.good.length-a.res.good.length || longest(b.res)-longest(a.res) || modelSupport(b.res,b.spot)-modelSupport(a.res,a.spot));
+  relevant.sort((a,b) => Number(b.spot.name===focusSpot)-Number(a.spot.name===focusSpot) || rankScore(b.spot,b.res,f)-rankScore(a.spot,a.res,f) || b.res.good.length-a.res.good.length || longest(b.res)-longest(a.res) || modelSupport(b.res,b.spot)-modelSupport(a.res,a.spot));
   $("cards").innerHTML = relevant.map(x => card(x.spot,x.res,f)).join("") || `<div class="empty">${!results.length && errors.length ? "Keine Daten geladen. Verbindung prüfen und erneut versuchen." : "Kein Spot erfüllt gleichzeitig Windrichtung, Windstärke und Wellenfilter."}</div>`;
   if(errors.length) $("cards").insertAdjacentHTML("beforeend", `<div class="empty">${errors.length} Spots ohne Daten. Beispiel:<br>${esc(errors[0])}</div>`);
   else if(!results.length) $("cards").innerHTML = "<div class='empty'>Keine Spots im gewählten Umkreis.</div>";
@@ -2380,7 +2388,7 @@ function weekRender(m){
     if(!d.n) return `<button type="button" class="${cls}" data-date="${d.date}"><b>–</b><span>${lab}</span><small>&nbsp;</small></button>`;
     const h = Math.round(6 + Math.min(1, d.kn/MAXKN) * 62);
     const tip = `${lab}: ${Math.round(d.kn)} kn · bester richtungspassender Spot: ${d.name} (ab ${pad(d.start)} Uhr)`;
-    return `<button type="button" class="${cls}" data-date="${d.date}" title="${esc(tip)}"><b>${Math.round(d.kn)}</b><i style="height:${h}px;background:${weekColor(d.kn)}"></i><span>${lab}</span><small>${esc(d.name.length>8 ? d.name.slice(0,8)+"…" : d.name)}</small></button>`;
+    return `<button type="button" class="${cls}" data-date="${d.date}" data-spot="${esc(d.name)}" title="${esc(tip)}"><b>${Math.round(d.kn)}</b><i style="height:${h}px;background:${weekColor(d.kn)}"></i><span>${lab}</span><small>${esc(d.name.length>8 ? d.name.slice(0,8)+"…" : d.name)}</small></button>`;
   }).join("");
   const lows = [0, ...WEEK_SCALE.slice(0,-1).map(([lim]) => lim*MS_TO_KN)];
   const leg = WEEK_SCALE.map(([,c],i) => `<div><i style="background:${c}"></i><em>${Math.round(lows[i])}${i===WEEK_SCALE.length-1?"+":""}</em></div>`).join("");
@@ -2395,15 +2403,18 @@ function paintWeek(){
 }
 function restoreWeek(){ try{ const m = JSON.parse(localStorage.getItem(WEEK_KEY) || "null"); if(m && Array.isArray(m.days)) weekRender(m); }catch(e){} }
 function markWeekSel(){ const sel = $("date").value; document.querySelectorAll("#week .wk").forEach(b => b.classList.toggle("sel", b.dataset.date === sel)); }
-function goToDate(iso){
-  if($("date").value === iso) return;
+function goToDate(iso,spotName=""){
+  if($("date").value === iso){
+    if(spotName && lastResults && lastFilters){ paintResults(lastResults,lastErrors,lastSelectedCount,lastFilters,spotName); focusSpotCard(spotName); }
+    return;
+  }
   saveCurrentDayHour();
   $("date").value = iso;
   try{ localStorage.setItem(DAY_KEY, iso); }catch(e){}
   refreshDate(); restoreDayHour(iso); refreshDate();
-  run().catch(e => { $("status").textContent = "Fehler: " + (e && e.message || e); });
+  run(false,spotName).catch(e => { $("status").textContent = "Fehler: " + (e && e.message || e); });
 }
-$("week").addEventListener("click", e => { const b = e.target.closest(".wk"); if(b && b.dataset.date) goToDate(b.dataset.date); });
+$("week").addEventListener("click", e => { const b = e.target.closest(".wk"); if(b && b.dataset.date) goToDate(b.dataset.date,b.dataset.spot||""); });
 
 // Entfernung: nur noch der Schieber (ganz rechts = alle Spots); der Wert liegt im versteckten Feld "distance"
 function syncDistUi(){
@@ -2465,7 +2476,7 @@ async function showWhereAmI(){
 }
 $("whereami").addEventListener("click", () => { showWhereAmI().catch(e => { toast("Karte: " + (e && e.message || e)); }); });
 
-async function run(force=false){
+async function run(force=false,focusSpot=""){
   const btn = $("apply");
   btn.disabled = true; btn.textContent = "Lade Vorhersagen …";
   await CACHE_READY;
@@ -2486,7 +2497,8 @@ async function run(force=false){
     lastRaw = data; lastResults = results; lastErrors = errors; lastSelectedCount = selected.length; lastFilters = f;
     lastSuccessfulLoadAt = Number.isFinite(CACHE_STATS.oldest) ? CACHE_STATS.oldest : Date.now(); // Datenstand, nicht Anzeigezeit
     try { localStorage.setItem("andisgreened-last-success", String(lastSuccessfulLoadAt)); } catch(e) {}
-    const relevant = paintResults(results,errors,selected.length,f);
+    const relevant = paintResults(results,errors,selected.length,f,focusSpot);
+    if(focusSpot) focusSpotCard(focusSpot);
     const hits = results.filter(x => x.res.good.length > 0).length;
     const sun = relevant[0]?.res.sun;
     const hm = h => `${pad(Math.floor(h))}:${pad(Math.round((h%1)*60)%60)}`;

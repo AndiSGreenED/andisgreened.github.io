@@ -2,7 +2,10 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.18.4** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.18.5** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+
+## 5.18.5
+- Wochenbalken-Klick wählt den Tag aus, sortiert den angezeigten Best-Spot an den Anfang und scrollt zu dessen Karte.
 
 ## 5.18.4
 - Wochenbalken nutzen nur die durchgehend verfügbaren Hauptmodelle ICON, GFS und ECMWF. Dadurch bleiben sie beim Wechsel des gewählten Tages stabil; tagabhängig geladene Zusatzmodelle änderten zuvor die Balkenwerte.
