@@ -2,7 +2,10 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.18.6** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.18.7** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+
+## 5.18.7
+- Außenabstände des Wochenverlaufs erneut halbiert; kompakte Suchansicht gilt jetzt auf allen Mobilgeräten, auch bei höherem Viewport.
 
 ## 5.18.6
 - Wochenbalken um ca. 2 mm gekürzt; Abstände darüber und darunter halbiert. Bei kleinen Displays wird das Suchfeld kompakter dargestellt, damit der Suchen-Knopf vollständig sichtbar bleibt.
