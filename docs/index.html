@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.18.3</title>
+<title>ANDIsGREENed 5.18.4</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -1995,7 +1995,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.18.3";
+const APP_VERSION = "5.18.4";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2331,6 +2331,7 @@ function paintResults(results,errors,selectedCount,f){
 const MS_TO_KN = 1.943844;
 const WEEK_SCALE = [[2,"#ffffff"],[4,"#9ecae1"],[6,"#3182bd"],[8,"#74c476"],[10,"#31a354"],[12,"#ffe933"],[14,"#fdae4b"],[17,"#f4631e"],[21,"#e31a1c"],[29,"#ad1769"],[Infinity,"#66007a"]];
 const weekColor = kn => (WEEK_SCALE.find(([lim]) => kn/MS_TO_KN < lim) || WEEK_SCALE[WEEK_SCALE.length-1])[1];
+const WEEK_MODELS = new Set(["ICON","GFS","ECMWF"]);
 // beste 3 zusammenhängende Stunden = höchster Median aus drei aufeinanderfolgenden Stundenwerten
 function best3Median(rows){
   const byH = new Map(rows.filter(r => Number.isFinite(r.wind)).map(r => [r.hour, r.wind]));
@@ -2346,11 +2347,15 @@ const WEEK_KEY = "andisgreened-week-v2";
 function weekModel(){
   if(!lastRaw || !lastFilters) return null;
   const t = todayNoon(), nowH = new Date().getHours(), days = [];
+  const weeklyRaw = lastRaw.map(d => ({...d, rows:d.rows?.map(row => ({
+    ...row,
+    models:Object.fromEntries(Object.entries(row.models||{}).filter(([label]) => WEEK_MODELS.has(label)))
+  }))}));
   for(let i=0; i<=MAX_DAYS; i++){
     const date = dateISO(addDays(t,i));
     const f = {...lastFilters, date, startHour:null, usedir:true, minwind:0, maxwind:Infinity, minwave:0, maxwave:Infinity};
     const vals = [];
-    lastRaw.forEach(d => {
+    weeklyRaw.forEach(d => {
       if(!d.rows) return;
       let day = scoreRows(d.rows,f,d.spot).day;
       if(i === 0) day = day.filter(r => r.hour >= nowH); // heute nur noch die kommenden Stunden
