@@ -6,7 +6,7 @@ name: APK bauen
 on:
   push:
     branches: [main]
-    paths: ["apk/**", ".github/workflows/build-apk.yml"]
+    paths: ["apk/**", "docs/index.html", ".github/workflows/build-apk.yml"]
   workflow_dispatch:
     inputs:
       modus:

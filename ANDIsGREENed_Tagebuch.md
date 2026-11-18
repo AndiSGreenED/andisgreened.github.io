@@ -2,9 +2,13 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.18.10** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.18.11** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
 
-## Laufender Modellbenchmark (ohne App-Versionssprung)
+## 5.18.11
+- Ein Veröffentlichungsbuild bündelt die geprüften Spotpositionen und Binnenwasser-/Zellkorrekturen aus 5.18.10 mit dem gestarteten Modellbenchmark.
+- Keine spekulative Windmodell- oder Wellenquellen-Umschaltung; die Auswahl folgt nach ausreichenden Messwerten aus dem täglichen Benchmark.
+
+## Laufender Modellbenchmark
 - Täglicher GitHub-Actions-Benchmark für DWD/Bright-Sky-Messungen und Open-Meteo-Windmodelle eingerichtet.
 - Zwischengespeicherte Regionalmittel liegen in einem GitHub-Actions-Artefakt mit sieben Tagen Aufbewahrung und gelangen nicht in die Git-Historie. Öffentlich committed werden nur aggregierte Fehlerkennzahlen nach Modell, Region und Vorlaufzeit.
 - Anfragen sind sequenziell auf mindestens 1,1 Sekunden Abstand begrenzt. Gewertet werden nur historische/aktuelle DWD-Windwerte von Stationen bis 25 km, mit mindestens 80 % Datenabdeckung.
