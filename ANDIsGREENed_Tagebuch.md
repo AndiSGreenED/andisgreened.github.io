@@ -2,7 +2,11 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.18.5** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.18.6** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+
+## 5.18.6
+- Wochenbalken um ca. 2 mm gekürzt; Abstände darüber und darunter halbiert. Bei kleinen Displays wird das Suchfeld kompakter dargestellt, damit der Suchen-Knopf vollständig sichtbar bleibt.
+- Schaltfläche „Hier“ heißt jetzt „Karte“.
 
 ## 5.18.5
 - Wochenbalken-Klick wählt den Tag aus, sortiert den angezeigten Best-Spot an den Anfang und scrollt zu dessen Karte.
