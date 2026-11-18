@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.18.2</title>
+<title>ANDIsGREENed 5.18.3</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -1995,7 +1995,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.18.2";
+const APP_VERSION = "5.18.3";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2342,26 +2342,24 @@ function best3Median(rows){
   });
   return best;
 }
-const WEEK_KEY = "andisgreened-week-v1";
+const WEEK_KEY = "andisgreened-week-v2";
 function weekModel(){
   if(!lastRaw || !lastFilters) return null;
   const t = todayNoon(), nowH = new Date().getHours(), days = [];
   for(let i=0; i<=MAX_DAYS; i++){
     const date = dateISO(addDays(t,i));
-    const f = {...lastFilters, date, startHour:null, usedir:false, minwind:0, maxwind:Infinity, minwave:0, maxwave:Infinity};
+    const f = {...lastFilters, date, startHour:null, usedir:true, minwind:0, maxwind:Infinity, minwave:0, maxwave:Infinity};
     const vals = [];
     lastRaw.forEach(d => {
       if(!d.rows) return;
       let day = scoreRows(d.rows,f,d.spot).day;
       if(i === 0) day = day.filter(r => r.hour >= nowH); // heute nur noch die kommenden Stunden
+      day = day.filter(r => Number.isFinite(r.dir) && d.spot.dirs.includes(compass(r.dir)));
       const b = best3Median(day);
       if(b) vals.push({kn:b.kn, start:b.start, name:d.spot.name});
     });
-    vals.sort((a,b) => a.kn-b.kn);
-    const n = vals.length;
-    if(!n){ days.push({date, n:0}); continue; }
-    const med = n % 2 ? vals[(n-1)/2].kn : (vals[n/2-1].kn + vals[n/2].kn) / 2, hi = vals[n-1];
-    days.push({date, n, med, lo:vals[0].kn, hi:hi.kn, hiName:hi.name, hiStart:hi.start});
+    const best = vals.reduce((winner,v) => !winner || v.kn>winner.kn ? v : winner, null);
+    days.push(best ? {date, n:1, kn:best.kn, name:best.name, start:best.start} : {date, n:0});
   }
   return {at:Date.now(), days};
 }
@@ -2375,9 +2373,9 @@ function weekRender(m){
     const lab = d.date === today ? "Heute" : wd[new Date(d.date+"T12:00:00").getDay()];
     const cls = "wk" + (d.date === sel ? " sel" : "");
     if(!d.n) return `<button type="button" class="${cls}" data-date="${d.date}"><b>–</b><span>${lab}</span><small>&nbsp;</small></button>`;
-    const h = Math.round(6 + Math.min(1, d.med/MAXKN) * 62);
-    const tip = `${lab}: Median ${Math.round(d.med)} kn über ${d.n} Spots · stärkster: ${d.hiName} ${Math.round(d.hi)} kn (ab ${pad(d.hiStart)} Uhr)`;
-    return `<button type="button" class="${cls}" data-date="${d.date}" title="${esc(tip)}"><b>${Math.round(d.med)}</b><i style="height:${h}px;background:${weekColor(d.med)}"></i><span>${lab}</span><small>${Math.round(d.lo)}–${Math.round(d.hi)}</small></button>`;
+    const h = Math.round(6 + Math.min(1, d.kn/MAXKN) * 62);
+    const tip = `${lab}: ${Math.round(d.kn)} kn · bester richtungspassender Spot: ${d.name} (ab ${pad(d.start)} Uhr)`;
+    return `<button type="button" class="${cls}" data-date="${d.date}" title="${esc(tip)}"><b>${Math.round(d.kn)}</b><i style="height:${h}px;background:${weekColor(d.kn)}"></i><span>${lab}</span><small>${esc(d.name.length>8 ? d.name.slice(0,8)+"…" : d.name)}</small></button>`;
   }).join("");
   const lows = [0, ...WEEK_SCALE.slice(0,-1).map(([lim]) => lim*MS_TO_KN)];
   const leg = WEEK_SCALE.map(([,c],i) => `<div><i style="background:${c}"></i><em>${Math.round(lows[i])}${i===WEEK_SCALE.length-1?"+":""}</em></div>`).join("");

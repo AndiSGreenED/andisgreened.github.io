@@ -2,7 +2,10 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.18.2** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **5.18.3** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+
+## 5.18.3
+- Wochenverlauf zeigt je Tag den stärksten 3-Stunden-Median eines Spots mit passender Windrichtung statt des Medians über alle Spots; der ausgewählte Spot wird benannt.
 
 ---
 
