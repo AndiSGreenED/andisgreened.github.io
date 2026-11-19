@@ -564,7 +564,7 @@ details.sub[open]>summary{margin-bottom:6px}
   </details>
   </div>
   <details class="sub"><summary>Datenquellen und Infos</summary>
-  <p class="note">Es werden nur Spots mit mindestens einer passenden Stunde angezeigt. Für die Trefferwertung zählt je Stunde das mittlere aller aktiven Modelle. Wochenbalken, Stundenleiste, Windbereich und Windrose zeigen zur Vergleichbarkeit nur das mittlere der aktiven Hauptmodelle ICON, GFS und ECMWF. Ranking-Score = Summe stündlicher Beiträge aus Windfaktor × Wellenfaktor × Richtungsfaktor. Die Hauptwindrichtung erhält ×2 ab 3 zusammenhängenden Stunden aus dieser Richtung. Richtungen mit Wellenstern ★ erhalten zusätzlich ×2, als „möglich“ markierte Richtungen ×0,5.</p>
+  <p class="note">Es werden nur Spots mit mindestens einer passenden Stunde angezeigt. Für die Trefferwertung zählt je Stunde das mittlere aller aktiven Modelle. Wochenbalken, Stundenleiste, Windbereich und Windrose zeigen zur Vergleichbarkeit nur das mittlere der aktiven Hauptmodelle ICON, GFS und ECMWF. Für den Ranking-Score zählen nur zusammenhängende Trefferfenster ab 3 Stunden; eine Stunde ohne Treffer unterbricht das Fenster. Innerhalb dieser Fenster werden die stündlichen Beiträge aus Windfaktor × Wellenfaktor × Richtungsfaktor addiert. Die Hauptwindrichtung erhält ×2 ab 3 zusammenhängenden Stunden aus dieser Richtung. Der Wellenstern ★ erhält pro Stunde im exakten Winkelbereich ×2, ohne eigene 3-h-Serie. Als „möglich“ markierte Richtungen zählen ×0,5.</p>
   <p class="note legal"><a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a> · Wetterdaten: <a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0), DWD/Bright Sky</p>
   </details>
   <div class="diagrow"><button type="button" id="diag">Verbindung prüfen</button><span class="note" id="appver"></span></div>
@@ -695,7 +695,7 @@ const SPOTS_RAW = [
 ,{name:"Wassenaar Wassenaarseslag",area:"Südholland, Niederlande",lat:52.1635,lon:4.3483,dirs:["SW","NO"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=282",verified:false,wf:"https://www.windfinder.com/forecast/wassenaarseslag"}
 ,{name:"Egmond aan Zee",area:"Nordholland, Niederlande",lat:52.62,lon:4.62,dirs:["S","SSW","SW","N","NNO"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Egmond+aan+Zee",verified:false,wf:"https://www.windfinder.com/forecast/egmond_aan_zee"}
 ,{name:"Katwijk aan Zee",area:"Südholland, Niederlande",lat:52.1985,lon:4.3866,dirs:["SW"],type:"Wave + Brandung",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_a=Katwijk+aan+Zee",verified:false,wf:"https://www.windfinder.com/forecast/katwijk_aan_zee"}
-,{name:"Kühlungsborn",area:"Mecklenburgische Ostseeküste",lat:54.1536,lon:11.7268,dirs:["W","WNW","ONO","O"],type:"Flachwasser + kleine Welle",waveStar:{label:"Beste Welle",min:290,max:300,display:"295° ±5°"},dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=121",verified:false,wf:"https://www.windfinder.com/forecast/kuehlungsborn-uptalsboom"},
+,{name:"Kühlungsborn",area:"Mecklenburgische Ostseeküste",lat:54.1536,lon:11.7268,dirs:["W","WNW","ONO","O"],type:"Flachwasser + kleine Welle",waveStar:{label:"Beste Welle bei 295–300°",min:295,max:300,display:"295–300°"},dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=121",verified:false,wf:"https://www.windfinder.com/forecast/kuehlungsborn-uptalsboom"},
 {name:"Bülk Klärwerk",area:"Kieler Förde",lat:54.4497,lon:10.1946,dirs:["SW","S","SO","O","NO"],type:"Flachwasser + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=110",verified:false,wf:"https://www.windfinder.com/forecast/buelk"},
 {name:"Grönwohld",area:"Eckernförder Bucht",lat:54.4755,lon:10.028,dirs:["W","WNW","NO","ONO"],type:"Kleine Welle + Kabbelwelle",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=339",verified:false,wf:"https://www.windfinder.com/forecast/groenwohld"},
 {name:"Dänisch Nienhof Hohenhain",area:"Kieler Bucht",lat:54.4828,lon:10.1022,dirs:["W","WNW","NO","ONO"],type:"Kleine Welle + Flachwasser",dd:"https://www.dailydose.de/spotguide/spotguide.php?spot_id=160",verified:false,wf:"https://www.windfinder.com/forecast/daenisch_nienhof"},
@@ -1152,7 +1152,11 @@ let dirtySpots = new Set(), seenUpdates = {}, starMode = new Set();
 try { dirtySpots = new Set(JSON.parse(localStorage.getItem(DIRTY_KEY)||"[]")); } catch(e) {}
 try { seenUpdates = JSON.parse(localStorage.getItem(SEEN_KEY)||"{}") || {}; } catch(e) {}
 const jsq = s => esc(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'");
-const starDirsOf = sp => sp.waveStar ? DIR16.filter((d,i) => angleInRange(i*22.5, sp.waveStar.min, sp.waveStar.max)) : [];
+const starDirsOf = sp => sp.waveStar ? DIR16.filter((d,i) => {
+  const from = i*22.5-11.25, to = i*22.5+11.25;
+  return [i*22.5,from,to].some(deg=>angleInRange(deg,sp.waveStar.min,sp.waveStar.max)) ||
+    [sp.waveStar.min,sp.waveStar.max].some(deg=>angleInRange(deg,from,to));
+}) : [];
 const WIND_LEVEL_COLORS = [["#0e202a","#2c4752"],["#17465a","#28728b"],["#185b69","#2b9aa6"],["#376044","#7aa64d"],["#77602a","#c4a342"],["#85472d","#d87948"],["#7b3039","#d75b68"]];
 const windLevelOf = kn => !Number.isFinite(kn) || kn < 20 ? 0 : Math.min(6, 1 + Math.floor((kn-20)/4));
 function windBoxStyle(winds){
@@ -1165,14 +1169,18 @@ const AREA_SHORT = [[/,\s*(Deutschland|Germany)$/,""],[/,\s*(Niederlande|Netherl
 function shortArea(a){ let s = String(a||""); AREA_SHORT.forEach(([re,to]) => { s = s.replace(re,to); }); return s; }
 function windRoseSvg(sp, degs){
   // Windrose: möglich schwach, beste kräftig, Stern sehr kräftig; roter Bereich = Wind im besten Fenster
-  const c = 50, R = 46, st = new Set(starDirsOf(sp));
+  const c = 50, R = 46;
   const pt = (deg, r) => { const a = (deg - 90) * Math.PI / 180; return [(c + r*Math.cos(a)).toFixed(2), (c + r*Math.sin(a)).toFixed(2)]; };
   const wedge = (from, to, r) => { const [x1,y1] = pt(from, r), [x2,y2] = pt(to, r), large = ((to-from+360)%360) > 180 ? 1 : 0; return `M${c},${c} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z`; };
+  const starFullDirs = new Set(DIR16.filter((d,i) => sp.waveStar &&
+    angleInRange(i*22.5-11.25,sp.waveStar.min,sp.waveStar.max) &&
+    angleInRange(i*22.5+11.25,sp.waveStar.min,sp.waveStar.max)));
   const secs = DIR16.map((d,i) => {
     const weak = (sp.weakDirs || []).includes(d) && sp.mainDir !== d;
-    const fill = st.has(d) && sp.dirs.includes(d) ? "#ffcf40" : sp.mainDir === d ? "#3fd0a4" : !sp.dirs.includes(d) ? "#0f1f26" : weak ? "#2d6660" : "#4fa79b";
+    const fill = starFullDirs.has(d) && sp.dirs.includes(d) ? "#ffcf40" : sp.mainDir === d ? "#3fd0a4" : !sp.dirs.includes(d) ? "#0f1f26" : weak ? "#2d6660" : "#4fa79b";
     return `<path d="${wedge(i*22.5-11.25, i*22.5+11.25, R)}" fill="${fill}" stroke="#0b1720" stroke-width="1"/>`;
   }).join("");
+  const star = sp.waveStar ? `<path d="${wedge(sp.waveStar.min,sp.waveStar.max,R)}" fill="#ffcf40" fill-opacity=".82" stroke="#ffe7a0" stroke-width="1"/>` : "";
   let wind = "";
   if(degs.length){
     const s = [...degs].map(x => ((x%360)+360)%360).sort((a,b) => a-b);
@@ -1183,7 +1191,7 @@ function windRoseSvg(sp, degs){
       : `<path d="${wedge(from, from+span, R+2)}" fill="rgba(255,59,59,.45)" stroke="#ff3b3b" stroke-width="2.5"/>`;
   }
   const n = pt(0, R-7);
-  return `<svg class="rose" viewBox="0 0 100 100" role="img" aria-label="Windrose: Spot-Richtungen und Wind im besten Fenster"><title>Grün: Richtungen (blass = möglich, hell = gut, kräftig = beste), Gelb: Wellenstern, Rot: Wind im besten Fenster</title><circle cx="50" cy="50" r="49.5" fill="#0b1720"/>${secs}${wind}<circle cx="50" cy="50" r="3" fill="#edf4f7"/><text x="${n[0]}" y="${Number(n[1])+3}" text-anchor="middle" font-size="9" font-weight="800" fill="#edf4f7" stroke="#0b1720" stroke-width="2.5" paint-order="stroke">N</text></svg>`;
+  return `<svg class="rose" viewBox="0 0 100 100" role="img" aria-label="Windrose: Spot-Richtungen und Wind im besten Fenster"><title>Grün: Richtungen (blass = möglich, hell = gut, kräftig = beste), Gelb: exakter Wellensternbereich, Rot: Wind im besten Fenster</title><circle cx="50" cy="50" r="49.5" fill="#0b1720"/>${secs}${star}${wind}<circle cx="50" cy="50" r="3" fill="#edf4f7"/><text x="${n[0]}" y="${Number(n[1])+3}" text-anchor="middle" font-size="9" font-weight="800" fill="#edf4f7" stroke="#0b1720" stroke-width="2.5" paint-order="stroke">N</text></svg>`;
 }
 function setStarText(name, text){
   const sp = SPOTS.find(x => x.name === name); if(!sp || !sp.waveStar) return;
@@ -1284,7 +1292,8 @@ function cycleDir(name, d){
   }
   else if(weak.has(d)){ weak.delete(d); }
   else { main = d; weak.delete(d); }
-  applySpotEdit(sp, dirs, main, starFromDirs(star), [...weak]); repaintSoft();
+  const waveStar = star.size===starDirsOf(sp).length ? sp.waveStar : starFromDirs(star);
+  applySpotEdit(sp, dirs, main, waveStar, [...weak]); repaintSoft();
 }
 function markSpotDirty(name){ dirtySpots.add(name); try{ localStorage.setItem(DIRTY_KEY, JSON.stringify([...dirtySpots])); }catch(e){} updatePublishButton(); }
 function updatePublishButton(){
@@ -1386,7 +1395,7 @@ function calculateRank(spot,r,f){
   // Hauptrichtung ×2 ab 3 zusammenhängenden Stunden, in denen das mittlere Modell aus der Hauptrichtung kommt
   const qualified=new Set();
   { let run=[];
-    const flush=()=>{if(run.length>=3)run.forEach(row=>qualified.add(row.hour));run=[];};
+    const flush=()=>{if(run.length>=3)run.forEach(row=>qualified.add(row));run=[];};
     for(const row of r.day){
       const c=row.medLabel?candidateFor(row,row.medLabel):null;
       if(c&&c.dir===mainDir){if(run.length&&row.hour!==run[run.length-1].hour+1)flush();run.push(row);}else flush();
@@ -1398,14 +1407,14 @@ function calculateRank(spot,r,f){
     if(!candidates.length&&!labels.length&&Number.isFinite(row.wind)&&Number.isFinite(row.dir)&&row.wind>=f.minwind&&row.wind<=f.maxwind&&waveOK(row)&&(!f.usedir||spot.dirs.includes(compass(row.dir)))) candidates=[{label:"Fallback",wind:row.wind,dir:compass(row.dir),deg:row.dir,wave:row.wave}];
     const scored=candidates.map(c=>{
       const wf=windFactor(c.wind), wavf=Number.isFinite(c.wave)?1+Math.max(0,c.wave):1;
-      const mainQualified=c.dir===mainDir&&c.label!=="Fallback"&&qualified.has(row.hour);
+      const mainQualified=c.dir===mainDir&&c.label!=="Fallback"&&qualified.has(row);
       const starHit=!!spot.waveStar&&Number.isFinite(c.deg)&&angleInRange(c.deg,spot.waveStar.min,spot.waveStar.max);
       const weakHit=Array.isArray(spot.weakDirs)&&spot.weakDirs.includes(c.dir)&&c.dir!==mainDir;
       const df=(mainQualified?2:1)*(starHit?2:1)*(weakHit?0.5:1);
       return {...c,windFactor:wf,waveFactor:wavf,directionFactor:df,mainQualified,starHit,points:wf*wavf*df};
     }).sort((a,b)=>b.points-a.points);
     const chosen=scored[0]||null;
-    if(chosen){total+=chosen.points;eligibleHours++;if(chosen.mainQualified)directionBonusHours++;}
+    if(chosen){eligibleHours++;if(chosen.mainQualified)directionBonusHours++;}
     let reason="";
     if(!chosen){
       if(!labels.length || !labels.some(l=>Number.isFinite(row.models?.[l]?.wind))) reason="Keine Winddaten der aktiven Modelle";
@@ -1432,8 +1441,21 @@ function calculateRank(spot,r,f){
     }
     const mi=row.medLabel&&row.models?.[row.medLabel];
     const info=!chosen&&mi&&Number.isFinite(mi.wind)?{label:row.medLabel,wind:mi.wind,dir:Number.isFinite(mi.dir)?compass(mi.dir):"–",wave:row.wave}:null;
-    hourly.push({hour:row.hour,chosen,info,points:chosen?chosen.points:0,eligible:!!chosen,reason});
+    hourly.push({hour:row.hour,chosen,info,points:chosen?chosen.points:0,eligible:!!chosen,scored:false,reason});
   }
+  let run=[];
+  const flush=()=>{
+    if(run.length>=3) for(const h of run){h.scored=true;total+=h.points;}
+    else for(const h of run) h.points=0;
+    run=[];
+  };
+  for(const h of hourly){
+    if(h.eligible){
+      if(run.length&&h.hour!==run[run.length-1].hour+1)flush();
+      run.push(h);
+    }else flush();
+  }
+  flush();
   return {score:total,hourly,eligibleHours,directionBonusHours,qualifiedMainHours:qualified.size};
 }
 function rankScore(spot,r,f){return calculateRank(spot,r,f).score;}
@@ -2223,7 +2245,7 @@ function card(spot,r,f){
   }
   const bestPointWindow=bestHours.size ? `${pad(Math.min(...bestHours))}:00–${pad((Math.max(...bestHours)+1)%24)}:00` : "kein Fenster ≥ 2 h mit Wind- und Wellendaten";
   const km = Math.round(distanceKm(HOME.lat,HOME.lon,spot.lat,spot.lon));
-  const badge = `<details class="score-details" ontoggle="this.parentElement.classList.toggle('open',this.open)"><summary class="score ${r.good.length ? (r.score>=30?"good":"") : "bad"}">${r.good.length ? `${fmt(rank.score,1)} Pkt` : "Kein Treffer"}</summary><div class="score-popover"><div class="region">Stundensumme · Windfaktor × Wellenfaktor × Richtungsfaktor. Hauptwindrichtung ${esc(spot.mainDir||"–")} zählt ×2 erst ab 3 zusammenhängenden Stunden aus dieser Richtung.</div><div class="score-scroll"><table><thead><tr><th>Std.</th><th>Modell</th><th>Wind</th><th>Richtung</th><th>Welle</th><th>Wind ×</th><th>Welle ×</th><th>Richtung ×</th><th>Punkte</th><th>Warum?</th></tr></thead><tbody>${rank.hourly.map(h=>{const c=h.chosen,v=c||h.info;return `<tr${c?"":' class="muted"'}><td>${pad(h.hour)}:00</td><td>${v?esc(v.label):"–"}</td><td>${v?fmt(v.wind):"–"}</td><td>${v?esc(v.dir):"–"}</td><td>${v&&Number.isFinite(v.wave)?fmt(v.wave,1):"–"}</td><td>${c?fmt(c.windFactor,2):"–"}</td><td>${c?fmt(c.waveFactor,2):"–"}</td><td>${c?"×"+c.directionFactor:"–"}</td><td class="${h.points?"positive":"muted"}">${fmt(h.points,2)}</td><td class="muted">${c? (c.mainQualified?"Hauptrichtung ≥3 h":"Basisbeitrag"):esc(h.reason)}</td></tr>`}).join("")}</tbody><tfoot><tr><th colspan="8">Summe</th><th>${fmt(rank.score,2)}</th><th></th></tr></tfoot></table></div><div class="region">Für Punkte zählt je Stunde das mittlere Modell (mittlerer Windwert aller aktiven Modelle). Wellenfaktor = 1 + Wellenhöhe in m; unbekannte Welle = 1, sofern der Filter sie zulässt.</div></div></details>`;
+  const badge = `<details class="score-details" ontoggle="this.parentElement.classList.toggle('open',this.open)"><summary class="score ${r.good.length ? (r.score>=30?"good":"") : "bad"}">${r.good.length ? `${fmt(rank.score,1)} Pkt` : "Kein Treffer"}</summary><div class="score-popover"><div class="region">Fenstersumme · Es zählen nur zusammenhängende Trefferfenster ab 3 h; eine Stunde ohne Treffer unterbricht das Fenster. Hauptwindrichtung ${esc(spot.mainDir||"–")} zählt ×2 erst ab 3 zusammenhängenden Stunden aus dieser Richtung.</div><div class="score-scroll"><table><thead><tr><th>Std.</th><th>Modell</th><th>Wind</th><th>Richtung</th><th>Welle</th><th>Wind ×</th><th>Welle ×</th><th>Richtung ×</th><th>Punkte</th><th>Warum?</th></tr></thead><tbody>${rank.hourly.map(h=>{const c=h.chosen,v=c||h.info;return `<tr${c?"":' class="muted"'}><td>${pad(h.hour)}:00</td><td>${v?esc(v.label):"–"}</td><td>${v?fmt(v.wind):"–"}</td><td>${v?esc(v.dir):"–"}</td><td>${v&&Number.isFinite(v.wave)?fmt(v.wave,1):"–"}</td><td>${c?fmt(c.windFactor,2):"–"}</td><td>${c?fmt(c.waveFactor,2):"–"}</td><td>${c?"×"+c.directionFactor:"–"}</td><td class="${h.points?"positive":"muted"}">${fmt(h.points,2)}</td><td class="muted">${c?(h.scored?(c.mainQualified?"Hauptrichtung ≥3 h":"Fensterbeitrag"):"Fenster < 3 h – nicht gewertet"):esc(h.reason)}</td></tr>`}).join("")}</tbody><tfoot><tr><th colspan="8">Summe</th><th>${fmt(rank.score,2)}</th><th></th></tr></tfoot></table></div><div class="region">Für Punkte zählt je Stunde das mittlere Modell (mittlerer Windwert aller aktiven Modelle). Wellenfaktor = 1 + Wellenhöhe in m; unbekannte Welle = 1, sofern der Filter sie zulässt.</div></div></details>`;
   const best = r.windows[0];
   const peakHour = r.peak ? r.day.find(h=>h.hour===r.peak.hour) : null;
   const peakModels = peakHour ? Object.entries(peakHour.allModels||peakHour.models||{}).filter(([label,m])=>Number.isFinite(m.wind) || Number.isFinite(m.gust)).map(([label,m])=>`<tr><td>${esc(label)}</td><td>${Number.isFinite(m.wind)?fmt(m.wind)+" kn":"–"}</td><td>${Number.isFinite(m.gust)?fmt(m.gust)+" kn":"–"}</td><td>${Number.isFinite(m.dir)?compass(m.dir):"–"}</td></tr>`).join("") : "";
