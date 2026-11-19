@@ -54,5 +54,15 @@ jobs:
             echo "No benchmark changes to publish."
           else
             git commit -m "Update aggregate forecast benchmark"
-            git push
+            for attempt in 1 2 3; do
+              git fetch origin main
+              git rebase origin/main
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+              echo "Push attempt ${attempt} failed; retrying after syncing with main."
+              sleep 2
+            done
+            echo "Could not publish benchmark results after 3 attempts." >&2
+            exit 1
           fi
