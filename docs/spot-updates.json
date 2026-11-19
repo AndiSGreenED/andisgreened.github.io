@@ -24,21 +24,24 @@
   "Kägsdorf": {
    "dirs": [
     "SW",
-    "WSW"
+    "WSW",
+    "W"
    ],
-   "weakDirs": [],
+   "weakDirs": [
+    "W"
+   ],
    "mainDir": "SW",
    "waveStar": {
-    "label": "Beste Welle",
-    "min": 168.75,
-    "max": 281.25,
-    "display": "S–W"
+    "label": "Beste Welle bei SW",
+    "min": 213.75,
+    "max": 236.25,
+    "display": "213,75–236,25°"
    },
    "models": null,
    "wave": null,
    "lat": 54.1435,
    "lon": 11.6656,
-   "at": "2026-11-19T08:54:59.896Z"
+   "at": "2026-11-19T08:57:17.467Z"
   },
   "Gold": {
    "dirs": [
@@ -130,5 +133,5 @@
    "at": "2026-11-18T05:45:41.902Z"
   }
  },
- "updated": "2026-11-19T08:54:59.896Z"
+ "updated": "2026-11-19T08:57:17.467Z"
 }
