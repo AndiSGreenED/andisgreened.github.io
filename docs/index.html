@@ -1225,7 +1225,7 @@ function windRoseSvg(sp, degs){
 }
 function setStarText(name, text){
   const sp = SPOTS.find(x => x.name === name); if(!sp || !sp.waveStar) return;
-  applySpotEdit(sp, sp.dirs, sp.mainDir, {...sp.waveStar, label: (String(text||"").trim() || "Beste Welle").slice(0,60)}, sp.weakDirs); repaintSoft();
+  applySpotEdit(sp, sp.dirs, sp.mainDir, {...sp.waveStar, label: (String(text||"").trim() || "Beste Welle").slice(0,60)}, sp.weakDirs); repaintSoft(name);
 }
 let pendingWaveStarSelection = null;
 function waveStarArc(start,end){
@@ -1252,12 +1252,12 @@ function setWaveStarDegrees(name, minId, maxId){
   const range = waveStarArc(Number(minInput.value),Number(maxInput.value));
   if(!range){ toast("Der Wellenstern muss einen Winkelbereich größer 0° und kleiner 45° haben."); return; }
   applySpotEdit(sp,sp.dirs,sp.mainDir,waveStarForRange(sp,range),sp.weakDirs);
-  repaintSoft();
+  repaintSoft(name);
 }
 function clearWaveStar(name){
   const sp = SPOTS.find(x => x.name === name); if(!sp) return;
   starMode.delete(name);
-  applySpotEdit(sp, sp.dirs, sp.mainDir, null, sp.weakDirs); repaintSoft();
+  applySpotEdit(sp, sp.dirs, sp.mainDir, null, sp.weakDirs); repaintSoft(name);
 }
 function openWaveStarDialog(name,dir){
   const direction = DIR16.indexOf(dir), spot = SPOTS.find(x => x.name === name);
@@ -1286,7 +1286,7 @@ function saveWaveStarDialog(event){
   applySpotEdit(spot,dirs,spot.mainDir,waveStarForRange(spot,range),spot.weakDirs);
   pendingWaveStarSelection = null;
   document.getElementById("wave-star-dialog").close();
-  repaintSoft();
+  repaintSoft(selection.name);
   return false;
 }
 function setSpotPos(name, inputId){
@@ -1350,13 +1350,11 @@ function dirEditorHtml(sp){
   const degreeInputs = `<div class="dir-editor-tools"><span>Wellenstern: exakter Bereich &lt;45°; Start größer als Ende = über Nord</span><input type="number" class="star-degree" id="${minId}" min="0" max="360" step="0.01" value="${sp.waveStar ? sp.waveStar.min : ""}" placeholder="von °" aria-label="Wellenstern von Grad"><input type="number" class="star-degree" id="${maxId}" min="0" max="360" step="0.01" value="${sp.waveStar ? sp.waveStar.max : ""}" placeholder="bis °" aria-label="Wellenstern bis Grad"><button type="button" onclick="setWaveStarDegrees('${n}','${minId}','${maxId}')">Gradbereich setzen</button>${sp.waveStar ? `<button type="button" onclick="clearWaveStar('${n}')">Stern entfernen</button>` : ""}</div>`;
   return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Richtung antippen, Winkelbereich im Dialog festlegen; erneut antippen entfernt den Stern." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div>${degreeInputs}<div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" onclick="return openMaps(${sp.lat},${sp.lon})" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${sid}" placeholder="Google-Maps-Link oder 54,4245, 11,0981"><button type="button" onclick="setSpotPos('${n}','pos-${sid}')">Übernehmen</button><button type="button" onclick="setSpotPosGps('${n}')">📍 Ich steh am Strand 😀</button><button type="button" onclick="restoreSpotPos('${n}')">↩ Position zurücksetzen</button></div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>Zum Verteilen einmalig den GitHub-Schlüssel einfügen (bleibt nur auf diesem Gerät):</span><input type="password" id="tok-${DIR16.length}-${sid}" placeholder="github_pat_…" autocomplete="off"><button type="button" onclick="saveTokenAndPublish('${n}','tok-${DIR16.length}-${sid}')">Schlüssel merken &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
 }
-function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); else starMode.add(name); repaintSoft(); }
-function repaintSoft(){
+function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); else starMode.add(name); repaintSoft(name); }
+function repaintSoft(name=""){
   if(!(lastResults && lastFilters)) return;
+  if(name) lastTouchedSpot = name;
   paintResults(lastResults,lastErrors,lastSelectedCount,lastFilters);
-  const cards = [...document.querySelectorAll("#cards .spot")];
-  const ed = (lastTouchedSpot && cards.find(c => (c.querySelector("h3")?.textContent || "").trim() === lastTouchedSpot)) || document.querySelector("#cards .dir-editor")?.closest(".spot");
-  if(ed) ed.closest(".spot").scrollIntoView({block:"nearest"});
 }
 function applySpotEdit(sp, dirs, mainDir, waveStar, weakDirs, opts={}){
   sp.dirs = DIR16.filter(d => dirs.includes(d));
@@ -1384,7 +1382,7 @@ function cycleDir(name, d){
   else if(weak.has(d)){ weak.delete(d); }
   else { main = d; weak.delete(d); }
   const waveStar = star.size===starDirsOf(sp).length ? sp.waveStar : starFromDirs(star);
-  applySpotEdit(sp, dirs, main, waveStar, [...weak]); repaintSoft();
+  applySpotEdit(sp, dirs, main, waveStar, [...weak]); repaintSoft(name);
 }
 function markSpotDirty(name){ dirtySpots.add(name); try{ localStorage.setItem(DIRTY_KEY, JSON.stringify([...dirtySpots])); }catch(e){} updatePublishButton(); }
 function updatePublishButton(){
@@ -2602,7 +2600,7 @@ async function showWhereAmI(){
   });
   L.circleMarker([HOME.lat,HOME.lon], {radius:10, color:"#ffffff", weight:3, fillColor:"#2f7bff", fillOpacity:1}).addTo(whereMap)
     .bindTooltip("Standort", {permanent:true, direction:"top"});
-  if(circle) whereMap.fitBounds(L.latLng(HOME.lat,HOME.lon).toBounds(km*2000)); else whereMap.fitBounds(pts, {padding:[20,20]});
+  if(pts.length > 1) whereMap.fitBounds(pts, {padding:[30,30], maxZoom:14}); else whereMap.setView(pts[0], 10);
   setTimeout(() => whereMap && whereMap.invalidateSize(), 60);
 }
 async function openSpotFromMap(name, edit=false){
