@@ -24,6 +24,23 @@ const starDirsOf = vm.runInNewContext(`${source.slice(starDirsStart, starDirsEnd
   DIR16: ["N", "NNO", "NO", "ONO", "O", "OSO", "SO", "SSO", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"],
   angleInRange
 });
+const bestWaveStart = source.indexOf("function hasBestWaveDirection(");
+const bestWaveEnd = source.indexOf("\n// 5.5.0:", bestWaveStart);
+const hasBestWaveDirection = vm.runInNewContext(`${source.slice(bestWaveStart, bestWaveEnd)}; hasBestWaveDirection`, { angleInRange });
+const setWaveRangeStart = source.indexOf("function setWaveStarDegrees(");
+const setWaveRangeEnd = source.indexOf("\nfunction clearWaveStar(", setWaveRangeStart);
+const applyWaveRange = (spot, values) => {
+  const spots = [spot];
+  const setRange = vm.runInNewContext(`${source.slice(setWaveRangeStart, setWaveRangeEnd)}; setWaveStarDegrees`, {
+    SPOTS: spots,
+    document: { getElementById: id => ({ value: values[id] ?? "" }) },
+    applySpotEdit: (target, dirs, mainDir, waveStar) => { target.waveStar = waveStar; },
+    repaintSoft: () => {},
+    starMode: new Set(),
+    toast: message => { throw new Error(message); }
+  });
+  setRange(spot.name, "min", "max");
+};
 
 const spot = { mainDir: "WNW", dirs: ["WNW"], weakDirs: [], waveStar: null };
 const filters = { minwind: 10, maxwind: 30, minwave: 0, maxwave: 3, usedir: true };
@@ -87,4 +104,20 @@ test("maps a narrow degree-based wave star to its compass sector without widenin
   assert.equal(angleInRange(295, 295, 300), true);
   assert.equal(angleInRange(300, 295, 300), true);
   assert.equal(angleInRange(300.01, 295, 300), false);
+});
+
+test("sets a precise degree range, including ranges that cross north", () => {
+  const spot = { name: "Kühlungsborn", dirs: ["WNW"], mainDir: "WNW", weakDirs: [], waveStar: null };
+  applyWaveRange(spot, { min: "350", max: "10" });
+
+  assert.equal(spot.waveStar.min, 350);
+  assert.equal(spot.waveStar.max, 10);
+  assert.equal(spot.waveStar.display, "350–10°");
+});
+
+test("shows the best-wave badge only for an eligible hour inside the exact range", () => {
+  const spot = { waveStar: { min: 295, max: 300 } };
+
+  assert.equal(hasBestWaveDirection(spot, { good: [{ dir: 294.99 }, { dir: 300.01 }] }), false);
+  assert.equal(hasBestWaveDirection(spot, { good: [{ dir: 295 }] }), true);
 });

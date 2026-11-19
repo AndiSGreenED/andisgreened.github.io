@@ -108,7 +108,7 @@ a.spot-map-link:hover,a.spot-map-link:focus-visible{text-decoration:underline;co
 .dir-editor-tools.posbox span{flex:1 1 100%}
 .dir-editor-tools.posbox a{color:#73d8d0;border:0;padding:0;border-radius:0;font-size:inherit;display:inline;text-decoration:underline}
 .dir-edit-toggle{min-width:96px}
-.wave-star.inactive{opacity:.55;border-style:dashed}
+.wave-star.inactive{display:none}
 .wave-star{display:inline-flex;align-items:center;gap:5px;margin-top:7px;padding:5px 8px;border:1px solid #c9a84c;border-radius:9px;background:#3b3218;color:#ffe7a0;font-size:.78rem;font-weight:800}.source-warning{font-size:.76rem;color:#f3c18c;margin-top:8px}
 .more{margin-top:10px;border-top:1px solid #29414c;padding-top:8px}
 .more>summary,.fold>summary{cursor:pointer;color:#8ce5de;font-size:.82rem;font-weight:700;padding:6px 0;list-style:none}
@@ -432,6 +432,7 @@ details.sub[open]>summary{margin-bottom:6px}
 .dir-editor-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:.8rem;color:#9fb4bc}
 .dir-editor-tools button{padding:5px 9px;font-size:.8rem;border-radius:8px;border:1px solid #3c6470;background:#203d48;color:#edf4f7}
 .dir-editor-tools button.active{background:#e0a100;color:#17232a;border-color:#e0a100;font-weight:800}
+#cards .dir-editor-tools input.star-degree{width:88px;flex:0 1 100px}
 #spotupdbanner{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:9998;padding:12px 14px;border-radius:12px;background:#183740;color:#edf4f7;border:1px solid #73d8d0;box-shadow:0 4px 18px rgba(0,0,0,.45);font-size:.9rem;max-height:60vh;overflow:auto}
 #spotupdbanner ul{margin:6px 0 10px;padding-left:18px}
 #spotupdbanner .row{display:flex;gap:8px}
@@ -1201,6 +1202,27 @@ function setStarText(name, text){
   const sp = SPOTS.find(x => x.name === name); if(!sp || !sp.waveStar) return;
   applySpotEdit(sp, sp.dirs, sp.mainDir, {...sp.waveStar, label: (String(text||"").trim() || "Beste Welle").slice(0,60)}, sp.weakDirs); repaintSoft();
 }
+function setWaveStarDegrees(name, minId, maxId){
+  const sp = SPOTS.find(x => x.name === name);
+  const minInput = document.getElementById(minId), maxInput = document.getElementById(maxId);
+  if(!sp || !minInput || !maxInput || !minInput.value.trim() || !maxInput.value.trim()){ toast("Bitte beide Winkel zwischen 0° und 359,99° eintragen."); return; }
+  const min = Math.round(Number(minInput.value)*100)/100, max = Math.round(Number(maxInput.value)*100)/100;
+  if(!Number.isFinite(min) || !Number.isFinite(max) || min<0 || max<0 || min>=360 || max>=360){ toast("Winkel müssen zwischen 0° und 359,99° liegen."); return; }
+  const angleText = value => String(value).replace(".",",");
+  const display = `${angleText(min)}–${angleText(max)}°`;
+  const oldLabel = sp.waveStar?.label || "";
+  const oldDisplay = sp.waveStar?.display || "";
+  const label = !oldLabel || oldLabel==="Beste Welle" || oldLabel===`Beste Welle bei ${oldDisplay}`
+    ? `Beste Welle bei ${display}` : oldLabel;
+  starMode.delete(name);
+  applySpotEdit(sp, sp.dirs, sp.mainDir, {...(sp.waveStar||{}), label, min, max, display}, sp.weakDirs);
+  repaintSoft();
+}
+function clearWaveStar(name){
+  const sp = SPOTS.find(x => x.name === name); if(!sp) return;
+  starMode.delete(name);
+  applySpotEdit(sp, sp.dirs, sp.mainDir, null, sp.weakDirs); repaintSoft();
+}
 function setSpotPos(name, inputId){
   const sp = SPOTS.find(x => x.name === name); if(!sp) return;
   const v = (document.getElementById(inputId)?.value || "").trim();
@@ -1252,12 +1274,15 @@ function starFromDirs(set){
 }
 function dirEditorHtml(sp){
   const st = new Set(starDirsOf(sp)), n = jsq(sp.name);
+  const sid = esc(sp.name).replace(/[^A-Za-z0-9]/g,"");
+  const minId = `wave-min-${sid}`, maxId = `wave-max-${sid}`;
   const chips = DIR16.map(d => {
     const weak = (sp.weakDirs || []).includes(d);
     const cls = [sp.mainDir===d ? "best" : !sp.dirs.includes(d) ? "off" : weak ? "weak" : "on", st.has(d) ? "star" : ""].join(" ").trim();
     return `<button type="button" class="${cls}" onclick="cycleDir('${n}','${d}')" aria-label="Richtung ${d}">${d}</button>`;
   }).join("");
-  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div><div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" onclick="return openMaps(${sp.lat},${sp.lon})" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}" placeholder="Google-Maps-Link oder 54,4245, 11,0981"><button type="button" onclick="setSpotPos('${n}','pos-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}')">Übernehmen</button><button type="button" onclick="setSpotPosGps('${n}')">📍 Ich steh am Strand 😀</button><button type="button" onclick="restoreSpotPos('${n}')">↩ Position zurücksetzen</button></div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>Zum Verteilen einmalig den GitHub-Schlüssel einfügen (bleibt nur auf diesem Gerät):</span><input type="password" id="tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}" placeholder="github_pat_…" autocomplete="off"><button type="button" onclick="saveTokenAndPublish('${n}','tok-${DIR16.length}-${esc(sp.name).replace(/[^A-Za-z0-9]/g,"")}')">Schlüssel merken &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
+  const degreeInputs = `<div class="dir-editor-tools"><span>Wellenstern: exakter Winkelbereich 0°–359,99° (Start größer als Ende = über Nord)</span><input type="number" class="star-degree" id="${minId}" min="0" max="359.99" step="0.01" value="${sp.waveStar ? sp.waveStar.min : ""}" placeholder="von °" aria-label="Wellenstern von Grad"><input type="number" class="star-degree" id="${maxId}" min="0" max="359.99" step="0.01" value="${sp.waveStar ? sp.waveStar.max : ""}" placeholder="bis °" aria-label="Wellenstern bis Grad"><button type="button" onclick="setWaveStarDegrees('${n}','${minId}','${maxId}')">Gradbereich setzen</button>${sp.waveStar ? `<button type="button" onclick="clearWaveStar('${n}')">Stern entfernen</button>` : ""}</div>`;
+  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div>${degreeInputs}<div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" onclick="return openMaps(${sp.lat},${sp.lon})" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${sid}" placeholder="Google-Maps-Link oder 54,4245, 11,0981"><button type="button" onclick="setSpotPos('${n}','pos-${sid}')">Übernehmen</button><button type="button" onclick="setSpotPosGps('${n}')">📍 Ich steh am Strand 😀</button><button type="button" onclick="restoreSpotPos('${n}')">↩ Position zurücksetzen</button></div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>Zum Verteilen einmalig den GitHub-Schlüssel einfügen (bleibt nur auf diesem Gerät):</span><input type="password" id="tok-${DIR16.length}-${sid}" placeholder="github_pat_…" autocomplete="off"><button type="button" onclick="saveTokenAndPublish('${n}','tok-${DIR16.length}-${sid}')">Schlüssel merken &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
 }
 function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); else starMode.add(name); repaintSoft(); }
 function repaintSoft(){
