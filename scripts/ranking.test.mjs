@@ -44,7 +44,7 @@ const makeWaveStarEditor = spot => {
     starMode,
     toast: message => { throw new Error(message); }
   };
-  const api = vm.runInNewContext(`${source.slice(waveStarArcStart,waveStarFunctionsEnd)}; ({waveStarArc,setWaveStarDegrees,openWaveStarDialog,saveWaveStarDialog,clearWaveStar})`,context);
+  const api = vm.runInNewContext(`${source.slice(waveStarArcStart,waveStarFunctionsEnd)}; ({waveStarArc,waveStarForRange,setWaveStarDegrees,openWaveStarDialog,saveWaveStarDialog,clearWaveStar})`,context);
   return {api,context,elements,dialog,starMode};
 };
 
@@ -134,6 +134,13 @@ test("sets a precise range from fields and normalizes 360 degrees to north", () 
   assert.equal(spot.waveStar.min,350);
   assert.equal(spot.waveStar.max,0);
   assert.equal(spot.waveStar.display,"350–0°");
+});
+
+test("displays exact compass sectors by name and narrow custom sectors in degrees", () => {
+  const {api} = makeWaveStarEditor({name:"Test",dirs:[],mainDir:"-",weakDirs:[],waveStar:null});
+
+  assert.equal(api.waveStarForRange({waveStar:null},{min:213.75,max:236.25}).display,"SW");
+  assert.equal(api.waveStarForRange({waveStar:null},{min:280,max:290}).display,"280–290°");
 });
 
 test("shows the best-wave badge only for an eligible hour inside the exact range", () => {

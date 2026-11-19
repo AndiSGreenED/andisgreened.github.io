@@ -1236,9 +1236,13 @@ function waveStarArc(start,end){
 }
 const waveAngleText = value => String(value).replace(".",",");
 function waveStarForRange(spot,range){
-  const display = `${waveAngleText(range.min)}–${waveAngleText(range.max)}°`;
+  const normalize = value => ((value%360)+360)%360;
+  const standardDirection = DIR16.find((dir,index) =>
+    Math.abs(normalize(range.min)-normalize(index*22.5-11.25))<0.001 &&
+    Math.abs(normalize(range.max)-normalize(index*22.5+11.25))<0.001);
+  const display = standardDirection || `${waveAngleText(range.min)}–${waveAngleText(range.max)}°`;
   const oldLabel = spot.waveStar?.label || "", oldDisplay = spot.waveStar?.display || "";
-  const label = !oldLabel||oldLabel==="Beste Welle"||oldLabel===`Beste Welle bei ${oldDisplay}` ? `Beste Welle bei ${display}` : oldLabel;
+  const label = !oldLabel||oldLabel==="Beste Welle"||oldLabel===`Beste Welle bei ${oldDisplay}` ? "Beste Welle" : oldLabel;
   return {...(spot.waveStar||{}),label,min:range.min,max:range.max,display};
 }
 function setWaveStarDegrees(name, minId, maxId){
