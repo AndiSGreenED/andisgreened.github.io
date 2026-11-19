@@ -2125,7 +2125,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.18.11";
+const APP_VERSION = "5.18.13";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2597,12 +2597,34 @@ async function showWhereAmI(){
     pts.push([s.lat,s.lon]);
     const d = Math.round(distanceKm(HOME.lat,HOME.lon,s.lat,s.lon));
     L.circleMarker([s.lat,s.lon], {radius:7, color:"#06232a", weight:1.5, fillColor:"#ffcf40", fillOpacity:1}).addTo(whereMap)
-      .bindTooltip(s.name).bindPopup(`<b>${esc(s.name)}</b><br>${d} km<br><a href="#" onclick="return openMaps(${s.lat},${s.lon})">In Google Maps öffnen</a>`);
+      .bindTooltip(s.name).on("click", () => openSpotFromMap(s.name));
   });
   L.circleMarker([HOME.lat,HOME.lon], {radius:10, color:"#ffffff", weight:3, fillColor:"#2f7bff", fillOpacity:1}).addTo(whereMap)
     .bindTooltip("Standort", {permanent:true, direction:"top"});
   if(circle) whereMap.fitBounds(L.latLng(HOME.lat,HOME.lon).toBounds(km*2000)); else whereMap.fitBounds(pts, {padding:[20,20]});
   setTimeout(() => whereMap && whereMap.invalidateSize(), 60);
+}
+async function openSpotFromMap(name, edit=false){
+  const sp = SPOTS.find(s => s.name === name);
+  if(!sp) return;
+  const overlay = $("whereov");
+  if(overlay) overlay.style.display = "none";
+  if(edit && !$("devmode").checked){
+    $("devmode").checked = true;
+    syncSpotAdmin();
+  }
+  const hasResult = lastResults && lastFilters && lastResults.some(x => x.spot.name === name);
+  if(hasResult){
+    paintResults(lastResults,lastErrors,lastSelectedCount,lastFilters,name);
+    focusSpotCard(name);
+  }else{
+    await run(false,name);
+  }
+  if(edit && $("devmode").checked){
+    editingMainDirs.add(name);
+    if(lastResults && lastFilters) paintResults(lastResults,lastErrors,lastSelectedCount,lastFilters,name);
+    focusSpotCard(name);
+  }
 }
 $("whereami").addEventListener("click", () => { showWhereAmI().catch(e => { toast("Karte: " + (e && e.message || e)); }); });
 
