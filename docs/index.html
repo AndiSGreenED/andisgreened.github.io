@@ -1354,7 +1354,8 @@ function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); els
 function repaintSoft(){
   if(!(lastResults && lastFilters)) return;
   paintResults(lastResults,lastErrors,lastSelectedCount,lastFilters);
-  const ed = document.querySelector("#cards .dir-editor"); // bearbeitete Karte im Blick behalten (Reihenfolge kann sich ändern)
+  const cards = [...document.querySelectorAll("#cards .spot")];
+  const ed = (lastTouchedSpot && cards.find(c => (c.querySelector("h3")?.textContent || "").trim() === lastTouchedSpot)) || document.querySelector("#cards .dir-editor")?.closest(".spot");
   if(ed) ed.closest(".spot").scrollIntoView({block:"nearest"});
 }
 function applySpotEdit(sp, dirs, mainDir, waveStar, weakDirs, opts={}){
@@ -2125,7 +2126,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.18.13";
+const APP_VERSION = "5.18.14";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
