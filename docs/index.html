@@ -1152,11 +1152,15 @@ let dirtySpots = new Set(), seenUpdates = {}, starMode = new Set();
 try { dirtySpots = new Set(JSON.parse(localStorage.getItem(DIRTY_KEY)||"[]")); } catch(e) {}
 try { seenUpdates = JSON.parse(localStorage.getItem(SEEN_KEY)||"{}") || {}; } catch(e) {}
 const jsq = s => esc(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'");
-const starDirsOf = sp => sp.waveStar ? DIR16.filter((d,i) => {
-  const from = i*22.5-11.25, to = i*22.5+11.25;
-  return [i*22.5,from,to].some(deg=>angleInRange(deg,sp.waveStar.min,sp.waveStar.max)) ||
-    [sp.waveStar.min,sp.waveStar.max].some(deg=>angleInRange(deg,from,to));
-}) : [];
+const starDirsOf = sp => {
+  if(!sp.waveStar) return [];
+  const {min,max} = sp.waveStar;
+  const dirs = DIR16.filter((d,i) => angleInRange(i*22.5,min,max));
+  if(dirs.length) return dirs;
+  const span = ((max-min)%360+360)%360;
+  const midpoint = ((min+span/2)%360+360)%360;
+  return [DIR16[Math.round(midpoint/22.5)%DIR16.length]];
+};
 const WIND_LEVEL_COLORS = [["#0e202a","#2c4752"],["#17465a","#28728b"],["#185b69","#2b9aa6"],["#376044","#7aa64d"],["#77602a","#c4a342"],["#85472d","#d87948"],["#7b3039","#d75b68"]];
 const windLevelOf = kn => !Number.isFinite(kn) || kn < 20 ? 0 : Math.min(6, 1 + Math.floor((kn-20)/4));
 function windBoxStyle(winds){

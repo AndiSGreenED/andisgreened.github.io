@@ -81,6 +81,8 @@ test("maps a narrow degree-based wave star to its compass sector without widenin
   const dirs = starDirsOf({ waveStar: { min: 295, max: 300 } });
 
   assert.deepEqual(Array.from(dirs), ["WNW"]);
+  assert.deepEqual(Array.from(starDirsOf({ waveStar: { min: 213.75, max: 236.25 } })), ["SW"]);
+  assert.deepEqual(Array.from(starDirsOf({ waveStar: { min: 350, max: 10 } })), ["N"]);
   assert.equal(angleInRange(294.99, 295, 300), false);
   assert.equal(angleInRange(295, 295, 300), true);
   assert.equal(angleInRange(300, 295, 300), true);
