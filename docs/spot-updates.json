@@ -119,19 +119,22 @@
   },
   "Heiligenhafen": {
    "dirs": [
+    "N",
     "W",
     "WNW",
     "NW"
    ],
-   "weakDirs": [],
-   "mainDir": "WNW",
+   "weakDirs": [
+    "N"
+   ],
+   "mainDir": "W",
    "waveStar": null,
    "models": null,
    "wave": null,
    "lat": 54.3822,
    "lon": 10.9573,
-   "at": "2026-11-18T05:45:41.902Z"
+   "at": "2026-11-19T17:19:01.115Z"
   }
  },
- "updated": "2026-11-19T09:11:33.907Z"
+ "updated": "2026-11-19T17:19:01.115Z"
 }
