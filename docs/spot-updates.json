@@ -10,16 +10,16 @@
    "weakDirs": [],
    "mainDir": "WNW",
    "waveStar": {
-    "label": "Beste Welle bei 295–300°",
-    "min": 295,
-    "max": 300,
-    "display": "295–300°"
+    "label": "Beste Welle bei 295°",
+    "min": 281.25,
+    "max": 303.75,
+    "display": "WNW"
    },
    "models": null,
    "wave": null,
-   "lat": 54.1536,
-   "lon": 11.7268,
-   "at": "2026-11-19T08:26:54.550Z"
+   "lat": 54.1506,
+   "lon": 11.7768,
+   "at": "2026-11-19T08:54:59.896Z"
   },
   "Kägsdorf": {
    "dirs": [
@@ -30,11 +30,15 @@
    "mainDir": "SW",
    "waveStar": {
     "label": "Beste Welle",
-    "min": 213.75,
-    "max": 236.25,
-    "display": "SW"
+    "min": 168.75,
+    "max": 281.25,
+    "display": "S–W"
    },
-   "at": "2026-11-11T14:48:20.406Z"
+   "models": null,
+   "wave": null,
+   "lat": 54.1435,
+   "lon": 11.6656,
+   "at": "2026-11-19T08:54:59.896Z"
   },
   "Gold": {
    "dirs": [
@@ -126,5 +130,5 @@
    "at": "2026-11-18T05:45:41.902Z"
   }
  },
- "updated": "2026-11-18T05:45:41.902Z"
+ "updated": "2026-11-19T08:54:59.896Z"
 }
