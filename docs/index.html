@@ -1154,9 +1154,9 @@ function toast(msg){
   t.textContent = msg; t.classList.add("show"); clearTimeout(toast._h); toast._h = setTimeout(() => t.classList.remove("show"), 6000);
 }
 async function saveFromCard(name){
-  if(!ghToken()){ needToken.add(name); editingMainDirs.add(name); repaintSoft(); return; }
-  needToken.delete(name); editingMainDirs.delete(name); starMode.delete(name); repaintSoft();
-  toast("Speichere …"); await publishSpotEdits(); toast($("gh-note").textContent); repaintSoft();
+  if(!ghToken()){ needToken.add(name); editingMainDirs.add(name); repaintSoft(name); return; }
+  needToken.delete(name); editingMainDirs.delete(name); starMode.delete(name); repaintSoft(name);
+  toast("Speichere …"); await publishSpotEdits(); toast($("gh-note").textContent); repaintSoft(name);
 }
 function saveTokenAndPublish(name, inputId){
   const v = (document.getElementById(inputId)?.value || "").trim();
@@ -1167,7 +1167,7 @@ function saveTokenAndPublish(name, inputId){
 function toggleMainDirEdit(name){
   if(dirtySpots.has(name)){ saveFromCard(name); return; }
   if(editingMainDirs.has(name)){ editingMainDirs.delete(name); needToken.delete(name); starMode.delete(name); } else editingMainDirs.add(name);
-  if(lastResults && lastFilters) paintResults(lastResults,lastErrors,lastSelectedCount,lastFilters);
+  repaintSoft(name);
 }
 // ---- 5.8.0: Richtungen auf der Karte bearbeiten ----
 const DIR16 = ["N","NNO","NO","ONO","O","OSO","SO","SSO","S","SSW","SW","WSW","W","WNW","NW","NNW"];
@@ -1354,7 +1354,15 @@ function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); els
 function repaintSoft(name=""){
   if(!(lastResults && lastFilters)) return;
   if(name) lastTouchedSpot = name;
+  const anchor = name && [...document.querySelectorAll("#cards .spot")].find(c => (c.querySelector("h3")?.textContent || "").trim() === name);
+  const anchorTop = anchor ? anchor.getBoundingClientRect().top : null;
+  const scrollY = window.scrollY;
+  if(name) paintResults.fresh = true;
   paintResults(lastResults,lastErrors,lastSelectedCount,lastFilters);
+  if(anchor && Number.isFinite(anchorTop)){
+    const updated = [...document.querySelectorAll("#cards .spot")].find(c => (c.querySelector("h3")?.textContent || "").trim() === name);
+    if(updated) window.scrollTo({left:window.scrollX, top:Math.max(0, scrollY + updated.getBoundingClientRect().top - anchorTop), behavior:"auto"});
+  }
 }
 function applySpotEdit(sp, dirs, mainDir, waveStar, weakDirs, opts={}){
   sp.dirs = DIR16.filter(d => dirs.includes(d));
@@ -2124,7 +2132,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.18.14";
+const APP_VERSION = "5.18.15";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
