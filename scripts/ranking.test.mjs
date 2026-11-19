@@ -27,19 +27,25 @@ const starDirsOf = vm.runInNewContext(`${source.slice(starDirsStart, starDirsEnd
 const bestWaveStart = source.indexOf("function hasBestWaveDirection(");
 const bestWaveEnd = source.indexOf("\n// 5.5.0:", bestWaveStart);
 const hasBestWaveDirection = vm.runInNewContext(`${source.slice(bestWaveStart, bestWaveEnd)}; hasBestWaveDirection`, { angleInRange });
-const setWaveRangeStart = source.indexOf("function setWaveStarDegrees(");
-const setWaveRangeEnd = source.indexOf("\nfunction clearWaveStar(", setWaveRangeStart);
-const applyWaveRange = (spot, values) => {
-  const spots = [spot];
-  const setRange = vm.runInNewContext(`${source.slice(setWaveRangeStart, setWaveRangeEnd)}; setWaveStarDegrees`, {
-    SPOTS: spots,
-    document: { getElementById: id => ({ value: values[id] ?? "" }) },
-    applySpotEdit: (target, dirs, mainDir, waveStar) => { target.waveStar = waveStar; },
+const waveStarArcStart = source.lastIndexOf("let pendingWaveStarSelection = null;", source.indexOf("function waveStarArc("));
+const waveStarFunctionsEnd = source.indexOf("\nfunction setSpotPos(", waveStarArcStart);
+const makeWaveStarEditor = spot => {
+  const elements = new Map();
+  const dialog = { open: false, showModal(){ this.open = true; }, close(){ this.open = false; } };
+  elements.set("wave-star-dialog", dialog);
+  for(const id of ["wave-star-dialog-min","wave-star-dialog-max","wave-star-dialog-title","wave-star-dialog-error"]) elements.set(id,{value:"",textContent:""});
+  const starMode = new Set([spot.name]);
+  const context = {
+    SPOTS: [spot],
+    DIR16: ["N", "NNO", "NO", "ONO", "O", "OSO", "SO", "SSO", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"],
+    document: { getElementById: id => elements.get(id) || null },
+    applySpotEdit: (target, dirs, mainDir, waveStar, weakDirs) => Object.assign(target,{dirs:[...dirs],mainDir,waveStar,weakDirs:[...weakDirs]}),
     repaintSoft: () => {},
-    starMode: new Set(),
+    starMode,
     toast: message => { throw new Error(message); }
-  });
-  setRange(spot.name, "min", "max");
+  };
+  const api = vm.runInNewContext(`${source.slice(waveStarArcStart,waveStarFunctionsEnd)}; ({waveStarArc,setWaveStarDegrees,openWaveStarDialog,saveWaveStarDialog,clearWaveStar})`,context);
+  return {api,context,elements,dialog,starMode};
 };
 
 const spot = { mainDir: "WNW", dirs: ["WNW"], weakDirs: [], waveStar: null };
@@ -100,19 +106,34 @@ test("maps a narrow degree-based wave star to its compass sector without widenin
   assert.deepEqual(Array.from(dirs), ["WNW"]);
   assert.deepEqual(Array.from(starDirsOf({ waveStar: { min: 213.75, max: 236.25 } })), ["SW"]);
   assert.deepEqual(Array.from(starDirsOf({ waveStar: { min: 350, max: 10 } })), ["N"]);
+  assert.deepEqual(Array.from(starDirsOf({ waveStar: { min: 10, max: 50 } })), ["NNO"]);
   assert.equal(angleInRange(294.99, 295, 300), false);
   assert.equal(angleInRange(295, 295, 300), true);
   assert.equal(angleInRange(300, 295, 300), true);
   assert.equal(angleInRange(300.01, 295, 300), false);
 });
 
-test("sets a precise degree range, including ranges that cross north", () => {
-  const spot = { name: "Kühlungsborn", dirs: ["WNW"], mainDir: "WNW", weakDirs: [], waveStar: null };
-  applyWaveRange(spot, { min: "350", max: "10" });
+test("accepts narrow clockwise ranges across north and rejects ranges of 45 degrees or more", () => {
+  const { api } = makeWaveStarEditor({name:"Test",dirs:[],mainDir:"-",weakDirs:[]});
 
-  assert.equal(spot.waveStar.min, 350);
-  assert.equal(spot.waveStar.max, 10);
-  assert.equal(spot.waveStar.display, "350–10°");
+  assert.deepEqual({ ...api.waveStarArc(355,5) }, {min:355,max:5,width:10});
+  assert.deepEqual({ ...api.waveStarArc(280,290) }, {min:280,max:290,width:10});
+  assert.equal(api.waveStarArc(5,360), null);
+  assert.equal(api.waveStarArc(0,45), null);
+  assert.equal(api.waveStarArc(5,5), null);
+});
+
+test("sets a precise range from fields and normalizes 360 degrees to north", () => {
+  const spot = { name: "Kühlungsborn", dirs: ["WNW"], mainDir: "WNW", weakDirs: [], waveStar: null };
+  const editor = makeWaveStarEditor(spot);
+  const { api,elements } = editor;
+  elements.set("min",{value:"350"});
+  elements.set("max",{value:"360"});
+  api.setWaveStarDegrees("Kühlungsborn","min","max");
+
+  assert.equal(spot.waveStar.min,350);
+  assert.equal(spot.waveStar.max,0);
+  assert.equal(spot.waveStar.display,"350–0°");
 });
 
 test("shows the best-wave badge only for an eligible hour inside the exact range", () => {
@@ -120,4 +141,59 @@ test("shows the best-wave badge only for an eligible hour inside the exact range
 
   assert.equal(hasBestWaveDirection(spot, { good: [{ dir: 294.99 }, { dir: 300.01 }] }), false);
   assert.equal(hasBestWaveDirection(spot, { good: [{ dir: 295 }] }), true);
+});
+
+test("clicking the selected star direction removes it instead of creating another star", () => {
+  const spot = {name:"Kägsdorf",dirs:["SW"],mainDir:"SW",weakDirs:[],waveStar:{min:213.75,max:236.25}};
+  const editor = makeWaveStarEditor(spot);
+  const start = source.indexOf("function cycleDir(");
+  const end = source.indexOf("\nfunction markSpotDirty(",start);
+  const cycleDir = vm.runInNewContext(`${source.slice(start,end)}; cycleDir`,{
+    SPOTS:editor.context.SPOTS,DIR16:editor.context.DIR16,starMode:editor.starMode,
+    starDirsOf,starFromDirs:()=>null,clearWaveStar:editor.api.clearWaveStar,
+    openWaveStarDialog:editor.api.openWaveStarDialog,applySpotEdit:editor.context.applySpotEdit,
+    repaintSoft:()=>{},alert:()=>{}
+  });
+
+  cycleDir("Kägsdorf","SW");
+  assert.equal(spot.waveStar,null);
+  assert.equal(editor.starMode.has("Kägsdorf"),false);
+  assert.equal(editor.dialog.open,false);
+});
+
+test("star-mode direction selection opens the angle dialog and applies only one narrow range", () => {
+  const spot = {name:"Kühlungsborn",dirs:["W"],mainDir:"W",weakDirs:[],waveStar:null};
+  const editor = makeWaveStarEditor(spot);
+  const start = source.indexOf("function cycleDir(");
+  const end = source.indexOf("\nfunction markSpotDirty(",start);
+  const cycleDir = vm.runInNewContext(`${source.slice(start,end)}; cycleDir`,{
+    SPOTS:editor.context.SPOTS,DIR16:editor.context.DIR16,starMode:editor.starMode,
+    starDirsOf,starFromDirs:()=>null,clearWaveStar:editor.api.clearWaveStar,
+    openWaveStarDialog:editor.api.openWaveStarDialog,applySpotEdit:editor.context.applySpotEdit,
+    repaintSoft:()=>{},alert:()=>{}
+  });
+
+  cycleDir("Kühlungsborn","WNW");
+  assert.equal(spot.waveStar,null);
+  assert.equal(editor.dialog.open,true);
+  assert.equal(editor.elements.get("wave-star-dialog-min").value,"281.25");
+  editor.elements.get("wave-star-dialog-min").value="5";
+  editor.elements.get("wave-star-dialog-max").value="360";
+  editor.api.saveWaveStarDialog({preventDefault(){}});
+  assert.ok(editor.elements.get("wave-star-dialog-error").textContent);
+  assert.equal(spot.waveStar,null);
+  assert.equal(editor.dialog.open,true);
+  editor.elements.get("wave-star-dialog-min").value="295";
+  editor.elements.get("wave-star-dialog-max").value="300";
+  editor.api.saveWaveStarDialog({preventDefault(){}});
+
+  assert.deepEqual(spot.dirs,["W","WNW"]);
+  assert.equal(spot.waveStar.min,295);
+  assert.equal(spot.waveStar.max,300);
+  assert.equal(editor.starMode.has("Kühlungsborn"),true);
+  assert.equal(editor.dialog.open,false);
+
+  cycleDir("Kühlungsborn","WNW");
+  assert.equal(spot.waveStar,null);
+  assert.equal(editor.starMode.has("Kühlungsborn"),false);
 });

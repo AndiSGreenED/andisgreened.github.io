@@ -433,6 +433,15 @@ details.sub[open]>summary{margin-bottom:6px}
 .dir-editor-tools button{padding:5px 9px;font-size:.8rem;border-radius:8px;border:1px solid #3c6470;background:#203d48;color:#edf4f7}
 .dir-editor-tools button.active{background:#e0a100;color:#17232a;border-color:#e0a100;font-weight:800}
 #cards .dir-editor-tools input.star-degree{width:88px;flex:0 1 100px}
+.wave-star-dialog{width:min(420px,calc(100vw - 32px));padding:18px;border:1px solid #c9a84c;border-radius:14px;background:#10232d;color:#edf4f7}
+.wave-star-dialog::backdrop{background:#000a}
+.wave-star-dialog h2{margin:0 0 8px;font-size:1.15rem}
+.wave-star-dialog p{color:#b8cbd3;font-size:.86rem}
+.wave-star-dialog .degree-fields,.wave-star-dialog .dialog-actions{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+.wave-star-dialog label{display:grid;gap:5px;flex:1;min-width:110px;color:#b8cbd3;font-size:.82rem}
+.wave-star-dialog input{width:100%;box-sizing:border-box}
+.wave-star-dialog .dialog-error{min-height:1.2em;color:#ffb19b}
+.wave-star-dialog .dialog-actions button{flex:1}
 #spotupdbanner{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));z-index:9998;padding:12px 14px;border-radius:12px;background:#183740;color:#edf4f7;border:1px solid #73d8d0;box-shadow:0 4px 18px rgba(0,0,0,.45);font-size:.9rem;max-height:60vh;overflow:auto}
 #spotupdbanner ul{margin:6px 0 10px;padding-left:18px}
 #spotupdbanner .row{display:flex;gap:8px}
@@ -580,6 +589,21 @@ details.sub[open]>summary{margin-bottom:6px}
 
 </section>
 </main>
+<dialog id="wave-star-dialog" class="wave-star-dialog" aria-labelledby="wave-star-dialog-title">
+  <form onsubmit="return saveWaveStarDialog(event)">
+    <h2 id="wave-star-dialog-title">Wellenstern einstellen</h2>
+    <p>Winkelbereich im Uhrzeigersinn eingeben. Start größer als Ende führt über Nord; der Bereich muss größer als 0° und kleiner als 45° sein.</p>
+    <div class="degree-fields">
+      <label>Von (°)<input id="wave-star-dialog-min" type="number" min="0" max="360" step="0.01" required></label>
+      <label>Bis (°)<input id="wave-star-dialog-max" type="number" min="0" max="360" step="0.01" required></label>
+    </div>
+    <p id="wave-star-dialog-error" class="dialog-error" role="alert"></p>
+    <div class="dialog-actions">
+      <button type="button" onclick="closeWaveStarDialog()">Abbrechen</button>
+      <button type="submit" style="background:#73d8d0;color:#06232a">Stern setzen</button>
+    </div>
+  </form>
+</dialog>
 <script>
 "use strict";
 let HOME = {lat:53.8655, lon:10.6866};
@@ -1156,10 +1180,11 @@ const jsq = s => esc(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'");
 const starDirsOf = sp => {
   if(!sp.waveStar) return [];
   const {min,max} = sp.waveStar;
-  const dirs = DIR16.filter((d,i) => angleInRange(i*22.5,min,max));
-  if(dirs.length) return dirs;
   const span = ((max-min)%360+360)%360;
   const midpoint = ((min+span/2)%360+360)%360;
+  if(span<45) return [DIR16[Math.round(midpoint/22.5)%DIR16.length]];
+  const dirs = DIR16.filter((d,i) => angleInRange(i*22.5,min,max));
+  if(dirs.length) return dirs;
   return [DIR16[Math.round(midpoint/22.5)%DIR16.length]];
 };
 const WIND_LEVEL_COLORS = [["#0e202a","#2c4752"],["#17465a","#28728b"],["#185b69","#2b9aa6"],["#376044","#7aa64d"],["#77602a","#c4a342"],["#85472d","#d87948"],["#7b3039","#d75b68"]];
@@ -1202,26 +1227,63 @@ function setStarText(name, text){
   const sp = SPOTS.find(x => x.name === name); if(!sp || !sp.waveStar) return;
   applySpotEdit(sp, sp.dirs, sp.mainDir, {...sp.waveStar, label: (String(text||"").trim() || "Beste Welle").slice(0,60)}, sp.weakDirs); repaintSoft();
 }
+let pendingWaveStarSelection = null;
+function waveStarArc(start,end){
+  if(!Number.isFinite(start)||!Number.isFinite(end)||start<0||start>360||end<0||end>360) return null;
+  const normalize = value => Math.round((((value%360)+360)%360)*100)/100;
+  const min = normalize(start), max = normalize(end), width = (max-min+360)%360;
+  return width>0&&width<45 ? {min,max,width} : null;
+}
+const waveAngleText = value => String(value).replace(".",",");
+function waveStarForRange(spot,range){
+  const display = `${waveAngleText(range.min)}–${waveAngleText(range.max)}°`;
+  const oldLabel = spot.waveStar?.label || "", oldDisplay = spot.waveStar?.display || "";
+  const label = !oldLabel||oldLabel==="Beste Welle"||oldLabel===`Beste Welle bei ${oldDisplay}` ? `Beste Welle bei ${display}` : oldLabel;
+  return {...(spot.waveStar||{}),label,min:range.min,max:range.max,display};
+}
 function setWaveStarDegrees(name, minId, maxId){
   const sp = SPOTS.find(x => x.name === name);
   const minInput = document.getElementById(minId), maxInput = document.getElementById(maxId);
-  if(!sp || !minInput || !maxInput || !minInput.value.trim() || !maxInput.value.trim()){ toast("Bitte beide Winkel zwischen 0° und 359,99° eintragen."); return; }
-  const min = Math.round(Number(minInput.value)*100)/100, max = Math.round(Number(maxInput.value)*100)/100;
-  if(!Number.isFinite(min) || !Number.isFinite(max) || min<0 || max<0 || min>=360 || max>=360){ toast("Winkel müssen zwischen 0° und 359,99° liegen."); return; }
-  const angleText = value => String(value).replace(".",",");
-  const display = `${angleText(min)}–${angleText(max)}°`;
-  const oldLabel = sp.waveStar?.label || "";
-  const oldDisplay = sp.waveStar?.display || "";
-  const label = !oldLabel || oldLabel==="Beste Welle" || oldLabel===`Beste Welle bei ${oldDisplay}`
-    ? `Beste Welle bei ${display}` : oldLabel;
-  starMode.delete(name);
-  applySpotEdit(sp, sp.dirs, sp.mainDir, {...(sp.waveStar||{}), label, min, max, display}, sp.weakDirs);
+  if(!sp || !minInput || !maxInput || !minInput.value.trim() || !maxInput.value.trim()){ toast("Bitte beide Winkel zwischen 0° und 360° eintragen."); return; }
+  const range = waveStarArc(Number(minInput.value),Number(maxInput.value));
+  if(!range){ toast("Der Wellenstern muss einen Winkelbereich größer 0° und kleiner 45° haben."); return; }
+  applySpotEdit(sp,sp.dirs,sp.mainDir,waveStarForRange(sp,range),sp.weakDirs);
   repaintSoft();
 }
 function clearWaveStar(name){
   const sp = SPOTS.find(x => x.name === name); if(!sp) return;
   starMode.delete(name);
   applySpotEdit(sp, sp.dirs, sp.mainDir, null, sp.weakDirs); repaintSoft();
+}
+function openWaveStarDialog(name,dir){
+  const direction = DIR16.indexOf(dir), spot = SPOTS.find(x => x.name === name);
+  const dialog = document.getElementById("wave-star-dialog");
+  if(direction<0||!spot||!dialog) return;
+  pendingWaveStarSelection = {name,dir};
+  const min = ((direction*22.5-11.25+360)%360), max = (direction*22.5+11.25)%360;
+  document.getElementById("wave-star-dialog-title").textContent = `Wellenstern für ${dir}`;
+  document.getElementById("wave-star-dialog-min").value = String(min);
+  document.getElementById("wave-star-dialog-max").value = String(max);
+  document.getElementById("wave-star-dialog-error").textContent = "";
+  dialog.showModal();
+}
+function closeWaveStarDialog(){
+  pendingWaveStarSelection = null;
+  document.getElementById("wave-star-dialog").close();
+}
+function saveWaveStarDialog(event){
+  event.preventDefault();
+  const selection = pendingWaveStarSelection;
+  const spot = selection && SPOTS.find(x => x.name === selection.name);
+  if(!selection||!spot) return false;
+  const range = waveStarArc(Number(document.getElementById("wave-star-dialog-min").value),Number(document.getElementById("wave-star-dialog-max").value));
+  if(!range){ document.getElementById("wave-star-dialog-error").textContent = "Winkelbereich muss größer 0° und kleiner 45° sein."; return false; }
+  const dirs = [...spot.dirs,selection.dir];
+  applySpotEdit(spot,dirs,spot.mainDir,waveStarForRange(spot,range),spot.weakDirs);
+  pendingWaveStarSelection = null;
+  document.getElementById("wave-star-dialog").close();
+  repaintSoft();
+  return false;
 }
 function setSpotPos(name, inputId){
   const sp = SPOTS.find(x => x.name === name); if(!sp) return;
@@ -1281,8 +1343,8 @@ function dirEditorHtml(sp){
     const cls = [sp.mainDir===d ? "best" : !sp.dirs.includes(d) ? "off" : weak ? "weak" : "on", st.has(d) ? "star" : ""].join(" ").trim();
     return `<button type="button" class="${cls}" onclick="cycleDir('${n}','${d}')" aria-label="Richtung ${d}">${d}</button>`;
   }).join("");
-  const degreeInputs = `<div class="dir-editor-tools"><span>Wellenstern: exakter Winkelbereich 0°–359,99° (Start größer als Ende = über Nord)</span><input type="number" class="star-degree" id="${minId}" min="0" max="359.99" step="0.01" value="${sp.waveStar ? sp.waveStar.min : ""}" placeholder="von °" aria-label="Wellenstern von Grad"><input type="number" class="star-degree" id="${maxId}" min="0" max="359.99" step="0.01" value="${sp.waveStar ? sp.waveStar.max : ""}" placeholder="bis °" aria-label="Wellenstern bis Grad"><button type="button" onclick="setWaveStarDegrees('${n}','${minId}','${maxId}')">Gradbereich setzen</button>${sp.waveStar ? `<button type="button" onclick="clearWaveStar('${n}')">Stern entfernen</button>` : ""}</div>`;
-  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Tippen setzt/entfernt den Stern (zusammenhängende Richtungen)." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div>${degreeInputs}<div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" onclick="return openMaps(${sp.lat},${sp.lon})" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${sid}" placeholder="Google-Maps-Link oder 54,4245, 11,0981"><button type="button" onclick="setSpotPos('${n}','pos-${sid}')">Übernehmen</button><button type="button" onclick="setSpotPosGps('${n}')">📍 Ich steh am Strand 😀</button><button type="button" onclick="restoreSpotPos('${n}')">↩ Position zurücksetzen</button></div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>Zum Verteilen einmalig den GitHub-Schlüssel einfügen (bleibt nur auf diesem Gerät):</span><input type="password" id="tok-${DIR16.length}-${sid}" placeholder="github_pat_…" autocomplete="off"><button type="button" onclick="saveTokenAndPublish('${n}','tok-${DIR16.length}-${sid}')">Schlüssel merken &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
+  const degreeInputs = `<div class="dir-editor-tools"><span>Wellenstern: exakter Bereich &lt;45°; Start größer als Ende = über Nord</span><input type="number" class="star-degree" id="${minId}" min="0" max="360" step="0.01" value="${sp.waveStar ? sp.waveStar.min : ""}" placeholder="von °" aria-label="Wellenstern von Grad"><input type="number" class="star-degree" id="${maxId}" min="0" max="360" step="0.01" value="${sp.waveStar ? sp.waveStar.max : ""}" placeholder="bis °" aria-label="Wellenstern bis Grad"><button type="button" onclick="setWaveStarDegrees('${n}','${minId}','${maxId}')">Gradbereich setzen</button>${sp.waveStar ? `<button type="button" onclick="clearWaveStar('${n}')">Stern entfernen</button>` : ""}</div>`;
+  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Richtung antippen, Winkelbereich im Dialog festlegen; erneut antippen entfernt den Stern." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div>${degreeInputs}<div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" onclick="return openMaps(${sp.lat},${sp.lon})" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${sid}" placeholder="Google-Maps-Link oder 54,4245, 11,0981"><button type="button" onclick="setSpotPos('${n}','pos-${sid}')">Übernehmen</button><button type="button" onclick="setSpotPosGps('${n}')">📍 Ich steh am Strand 😀</button><button type="button" onclick="restoreSpotPos('${n}')">↩ Position zurücksetzen</button></div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>Zum Verteilen einmalig den GitHub-Schlüssel einfügen (bleibt nur auf diesem Gerät):</span><input type="password" id="tok-${DIR16.length}-${sid}" placeholder="github_pat_…" autocomplete="off"><button type="button" onclick="saveTokenAndPublish('${n}','tok-${DIR16.length}-${sid}')">Schlüssel merken &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
 }
 function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); else starMode.add(name); repaintSoft(); }
 function repaintSoft(){
@@ -1305,13 +1367,8 @@ function cycleDir(name, d){
   const sp = SPOTS.find(x => x.name === name); if(!sp) return;
   let dirs = [...sp.dirs], main = sp.mainDir, star = new Set(starDirsOf(sp)), weak = new Set(sp.weakDirs || []);
   if(starMode.has(name)){
-    if(star.has(d)){ star.delete(d); }
-    else {
-      const i = DIR16.indexOf(d), adj = star.has(DIR16[(i+1)%16]) || star.has(DIR16[(i+15)%16]);
-      if(!adj) star = new Set();
-      star.add(d); if(!dirs.includes(d)) dirs.push(d);
-    }
-    applySpotEdit(sp, dirs, main, starFromDirs(star), [...weak]); repaintSoft(); return;
+    if(star.has(d)){ clearWaveStar(name); return; }
+    openWaveStarDialog(name,d); return;
   }
   // Reihenfolge: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus
   if(!dirs.includes(d)){ dirs.push(d); weak.add(d); }
