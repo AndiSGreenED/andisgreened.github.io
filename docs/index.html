@@ -1354,6 +1354,8 @@ function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); els
 function repaintSoft(name=""){
   if(!(lastResults && lastFilters)) return;
   if(name) lastTouchedSpot = name;
+  const active = document.activeElement;
+  if(active && active.closest && active.closest("#cards .spot")) active.blur();
   const anchor = name && [...document.querySelectorAll("#cards .spot")].find(c => (c.querySelector("h3")?.textContent || "").trim() === name);
   const anchorTop = anchor ? anchor.getBoundingClientRect().top : null;
   const scrollY = window.scrollY;
@@ -2132,7 +2134,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.18.15";
+const APP_VERSION = "5.18.16";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2450,6 +2452,7 @@ function restoreCards(st){
 }
 function focusSpotCard(name){
   if(!name) return;
+  lastTouchedSpot = name;
   const cards = $("cards");
   const spot = [...cards.querySelectorAll(".spot")].find(c => (c.querySelector("h3")?.textContent || "").trim() === name);
   if(spot){ cards.prepend(spot); spot.scrollIntoView({behavior:"smooth",block:"start"}); }
