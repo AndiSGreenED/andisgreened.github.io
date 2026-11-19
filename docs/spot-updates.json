@@ -6,21 +6,23 @@
     "O",
     "W",
     "WNW",
-    "NNW"
+    "NW"
    ],
-   "weakDirs": [],
+   "weakDirs": [
+    "NW"
+   ],
    "mainDir": "WNW",
    "waveStar": {
-    "label": "Beste Welle",
-    "min": 11.25,
-    "max": 78.75,
-    "display": "NNO–ONO"
+    "label": "Beste Welle bei 295–300",
+    "min": 294,
+    "max": 301,
+    "display": "294–301°"
    },
    "models": null,
    "wave": null,
    "lat": 54.1536,
    "lon": 11.7268,
-   "at": "2026-11-19T09:09:15.046Z"
+   "at": "2026-11-19T09:11:33.907Z"
   },
   "Kägsdorf": {
    "dirs": [
@@ -131,5 +133,5 @@
    "at": "2026-11-18T05:45:41.902Z"
   }
  },
- "updated": "2026-11-19T09:09:15.046Z"
+ "updated": "2026-11-19T09:11:33.907Z"
 }
