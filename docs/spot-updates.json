@@ -33,9 +33,9 @@
    "mainDir": "SW",
    "waveStar": {
     "label": "Beste Welle",
-    "min": 281.25,
-    "max": 258.75,
-    "display": "WNW–WSW"
+    "min": 258.75,
+    "max": 281.25,
+    "display": "W"
    },
    "models": null,
    "wave": null,

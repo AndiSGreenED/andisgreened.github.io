@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 5.18.10</title>
+<title>ANDIsGREENed 6.0.0</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -567,14 +567,14 @@ details.sub[open]>summary{margin-bottom:6px}
   </details>
   <details class="sub"><summary>Spot-Änderungen an alle verteilen</summary>
     <p class="note" style="margin:0 0 6px">Richtungen und Sterne, die du auf den Karten änderst (Dev-Modus → „Bearbeiten“), werden hier ins Repository gespeichert. Alle anderen werden beim nächsten Öffnen gefragt, ob sie die Änderungen übernehmen.</p>
-    <label for="gh-token">GitHub-Schlüssel (nur auf diesem Gerät gespeichert)</label>
+    <label for="gh-token">GitHub-Schlüssel (nur bis zum Schließen dieser Seite im Speicher)</label>
     <input id="gh-token" type="password" autocomplete="off" placeholder="github_pat_…">
     <button type="button" id="gh-publish" style="width:100%;margin-top:6px;min-height:42px">Änderungen ins Repository speichern</button>
     <div class="note" id="gh-note"></div>
   </details>
   </div>
   <details class="sub"><summary>Datenquellen und Infos</summary>
-  <p class="note">Es werden nur Spots mit mindestens einer passenden Stunde angezeigt. Für die Trefferwertung zählt je Stunde das mittlere aller aktiven Modelle. Wochenbalken, Stundenleiste, Windbereich und Windrose zeigen zur Vergleichbarkeit nur das mittlere der aktiven Hauptmodelle ICON, GFS und ECMWF. Für den Ranking-Score zählen nur zusammenhängende Trefferfenster ab 3 Stunden; eine Stunde ohne Treffer unterbricht das Fenster. Innerhalb dieser Fenster werden die stündlichen Beiträge aus Windfaktor × Wellenfaktor × Richtungsfaktor addiert. Die Hauptwindrichtung erhält ×2 ab 3 zusammenhängenden Stunden aus dieser Richtung. Der Wellenstern ★ erhält pro Stunde im exakten Winkelbereich ×2, ohne eigene 3-h-Serie. Als „möglich“ markierte Richtungen zählen ×0,5.</p>
+  <p class="note">Es werden nur Spots mit mindestens einer passenden Stunde angezeigt. Für die Trefferwertung zählt je Stunde der Median aller aktiven Modelle. Wochenbalken, Stundenleiste, Windbereich und Windrose zeigen zur Vergleichbarkeit nur den Median der aktiven Hauptmodelle ICON, GFS und ECMWF. Bei einer geraden Modellanzahl wird der Mittelwert der beiden mittleren Modelle verwendet. Für den Ranking-Score zählen nur zusammenhängende Trefferfenster ab 3 Stunden; eine Stunde ohne Treffer unterbricht das Fenster. Innerhalb dieser Fenster werden die stündlichen Beiträge aus Windfaktor × Wellenfaktor × Richtungsfaktor addiert. Die Hauptwindrichtung erhält ×2 ab 3 zusammenhängenden Stunden aus dieser Richtung. Der Wellenstern ★ erhält pro Stunde im exakten Winkelbereich ×2, ohne eigene 3-h-Serie. Als „möglich“ markierte Richtungen zählen ×0,5.</p>
   <p class="note legal"><a href="datenschutz.html" target="_blank" rel="noopener">Datenschutz</a> · Wetterdaten: <a href="https://open-meteo.com/en/terms" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0), DWD/Bright Sky</p>
   </details>
   <div class="diagrow"><button type="button" id="diag">Verbindung prüfen</button><span class="note" id="appver"></span></div>
@@ -1108,6 +1108,28 @@ const SPOTS_RAW = [
 // Richtungen vereinheitlichen: manche Einträge nutzen englische Kürzel (E, NE, SE ...), die App vergleicht deutsch (O, NO, SO ...).
 const DIRMAP = {NNE:"NNO",NE:"NO",ENE:"ONO",E:"O",ESE:"OSO",SE:"SO",SSE:"SSO"};
 const SPOTS = SPOTS_RAW.filter(Boolean).map(sp => ({...sp, dirs:[...new Set((sp.dirs||[]).map(d => DIRMAP[d] || d))]}));
+function safeHttpsUrl(value, allowedHosts, validPath){
+  if(typeof value !== "string") return null;
+  const raw = value.trim();
+  if(!raw || raw.length > 2048 || /[\u0000-\u0020<>"']/.test(raw)) return null;
+  try{
+    const url = new URL(raw);
+    if(url.protocol !== "https:" || url.username || url.password || url.port || !allowedHosts.includes(url.hostname.toLowerCase())) return null;
+    if(!validPath(url.pathname)) return null;
+    return url.href;
+  }catch(e){ return null; }
+}
+const safeWindfinderUrl = value => safeHttpsUrl(value, ["windfinder.com","www.windfinder.com"], path => /^\/(?:[a-z]{2}\/)?forecast\/[a-z0-9_-]+\/?$/i.test(path));
+const safeDailyDoseUrl = value => safeHttpsUrl(value, ["dailydose.de","www.dailydose.de"], path => /^\/spotguide\/.+$/i.test(path));
+const validDD = value => !!safeDailyDoseUrl(value);
+const validWindfinder = value => !!safeWindfinderUrl(value);
+const validCam = value => !!safeHttpsUrl(value, ["www.google.com","maps.google.com"], () => true) || /^https:\/\/[^\s"'<>]+$/i.test(String(value||"").trim());
+const validWave = w => {
+  if(!w || !Number.isFinite(w.min) || !Number.isFinite(w.max) || typeof w.label !== "string" || typeof w.display !== "string") return false;
+  const min = w.min, max = w.max, width = ((max-min)%360+360)%360;
+  return min>=0 && min<=360 && max>=0 && max<=360 && width>0 && width<45;
+};
+const cleanWave = w => ({label:String(w.label).slice(0,60), min:((Number(w.min)%360)+360)%360, max:((Number(w.max)%360)+360)%360, display:String(w.display).slice(0,60)});
 const MAIN_DIR_KEY = "andisgreened-main-directions-v1";
 let mainDirs = {};
 let editingMainDirs = new Set();
@@ -1116,7 +1138,14 @@ try { mainDirs = JSON.parse(localStorage.getItem(MAIN_DIR_KEY)||"{}") || {}; } c
 const CUSTOM_KEY = "andisgreened-custom-spots-v1";
 let customSpots = [];
 try { customSpots = JSON.parse(localStorage.getItem(CUSTOM_KEY)||"[]") || []; } catch(e) {}
-customSpots = customSpots.filter(c => c && c.name && Number.isFinite(c.lat) && Number.isFinite(c.lon) && Array.isArray(c.dirs) && c.dirs.length);
+customSpots = customSpots.filter(c => c && c.name && Number.isFinite(c.lat) && Number.isFinite(c.lon) && Array.isArray(c.dirs) && c.dirs.length).map(c => {
+  const clean = {...c};
+  if(validWindfinder(c.wf)) clean.wf = safeWindfinderUrl(c.wf); else delete clean.wf;
+  if(validDD(c.dd)) clean.dd = safeDailyDoseUrl(c.dd); else delete clean.dd;
+  if(validCam(c.cam)) clean.cam = String(c.cam).trim(); else delete clean.cam;
+  if(validWave(c.waveStar)) clean.waveStar = cleanWave(c.waveStar); else delete clean.waveStar;
+  return clean;
+});
 customSpots.forEach(c => { if(!SPOTS.some(x => x.name===c.name)){ SPOTS.push({...c, type:c.type||"Eigener Spot", verified:false, custom:true}); if(c.mainDir && !mainDirs[c.name]) mainDirs[c.name] = c.mainDir; } });
 const OVR_KEY = "andisgreened-spot-overrides-v1";
 let spotOverrides = {};
@@ -1124,13 +1153,16 @@ try { spotOverrides = JSON.parse(localStorage.getItem(OVR_KEY)||"{}") || {}; } c
 const BASE_POS = Object.fromEntries(SPOTS.map(sp => [sp.name, [sp.lat, sp.lon]]));
 SPOTS.forEach(sp => { const o = spotOverrides[sp.name]; if(o && !sp.custom){
   if(Array.isArray(o.dirs) && o.dirs.length) sp.dirs = o.dirs;
-  ["area","lat","lon","wf","type","dd","waveStar","weakDirs"].forEach(k => { if(o[k] !== undefined) sp[k] = o[k]; }); } });
+  ["area","lat","lon","type","weakDirs"].forEach(k => { if(o[k] !== undefined) sp[k] = o[k]; });
+  if(validWindfinder(o.wf)) sp.wf = safeWindfinderUrl(o.wf);
+  if(validDD(o.dd)) sp.dd = safeDailyDoseUrl(o.dd);
+  if(validWave(o.waveStar)) sp.waveStar = cleanWave(o.waveStar); else if(o.waveStar === null) sp.waveStar = null;
+} });
 SPOTS.forEach(sp => { sp.mainDir = mainDirs[sp.name] || sp.dirs[0] || ""; });
 // ---- Webcams (5.1.0): eigener Link je Spot, sonst Google-Suche "<Spot> Webcam live" (nie ein toter Link) ----
 const CAM_KEY = "andisgreened-cams-v1";
 let camLinks = {};
 try { camLinks = JSON.parse(localStorage.getItem(CAM_KEY)||"{}") || {}; } catch(e) {}
-const validCam = u => /^https:\/\/[^\s]+$/i.test(String(u||"").trim());
 SPOTS.forEach(sp => { if(validCam(camLinks[sp.name])) sp.cam = camLinks[sp.name]; });
 function setCam(name, url){
   const sp = SPOTS.find(x => x.name.toLowerCase() === String(name||"").trim().toLowerCase());
@@ -1141,13 +1173,10 @@ function setCam(name, url){
   try{ localStorage.setItem(CAM_KEY, JSON.stringify(camLinks)); }catch(e){}
   return null;
 }
-const validWave = w => !!w && Number.isFinite(Number(w.min)) && Number.isFinite(Number(w.max)) && typeof w.label === "string" && typeof w.display === "string";
-const cleanWave = w => ({label:String(w.label).slice(0,60), min:Number(w.min), max:Number(w.max), display:String(w.display).slice(0,60)});
-const validDD = u => typeof u === "string" && /^https:\/\/www\.dailydose\.de\//.test(u);
 const webcamUrl = sp => sp.cam || `https://www.google.com/search?q=${encodeURIComponent(`${sp.name} ${sp.area||""} Webcam live`.replace(/\s+/g," ").trim())}`;
 // 5.12.0: „Speichern“ direkt auf der Karte verteilt die Änderungen an alle
 const needToken = new Set();
-function ghToken(){ let t = ($("gh-token") && $("gh-token").value || "").trim(); if(!t){ try{ t = localStorage.getItem(GH_TOKEN_KEY) || ""; }catch(e){} } return t; }
+function ghToken(){ return ($("gh-token") && $("gh-token").value || "").trim(); }
 function toast(msg){
   let t = document.getElementById("toast");
   if(!t){ t = document.createElement("div"); t.id = "toast"; document.body.appendChild(t); }
@@ -1161,7 +1190,7 @@ async function saveFromCard(name){
 function saveTokenAndPublish(name, inputId){
   const v = (document.getElementById(inputId)?.value || "").trim();
   if(!v){ toast("Bitte den GitHub-Schlüssel einfügen."); return; }
-  $("gh-token").value = v; try{ localStorage.setItem(GH_TOKEN_KEY, v); }catch(e){}
+  $("gh-token").value = v;
   saveFromCard(name);
 }
 function toggleMainDirEdit(name){
@@ -1348,7 +1377,7 @@ function dirEditorHtml(sp){
     return `<button type="button" class="${cls}" onclick="cycleDir('${n}','${d}')" aria-label="Richtung ${d}">${d}</button>`;
   }).join("");
   const degreeInputs = `<div class="dir-editor-tools"><span>Wellenstern: exakter Bereich &lt;45°; Start größer als Ende = über Nord</span><input type="number" class="star-degree" id="${minId}" min="0" max="360" step="0.01" value="${sp.waveStar ? sp.waveStar.min : ""}" placeholder="von °" aria-label="Wellenstern von Grad"><input type="number" class="star-degree" id="${maxId}" min="0" max="360" step="0.01" value="${sp.waveStar ? sp.waveStar.max : ""}" placeholder="bis °" aria-label="Wellenstern bis Grad"><button type="button" onclick="setWaveStarDegrees('${n}','${minId}','${maxId}')">Gradbereich setzen</button>${sp.waveStar ? `<button type="button" onclick="clearWaveStar('${n}')">Stern entfernen</button>` : ""}</div>`;
-  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Richtung antippen, Winkelbereich im Dialog festlegen; erneut antippen entfernt den Stern." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div>${degreeInputs}<div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" onclick="return openMaps(${sp.lat},${sp.lon})" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${sid}" placeholder="Google-Maps-Link oder 54,4245, 11,0981"><button type="button" onclick="setSpotPos('${n}','pos-${sid}')">Übernehmen</button><button type="button" onclick="setSpotPosGps('${n}')">📍 Ich steh am Strand 😀</button><button type="button" onclick="restoreSpotPos('${n}')">↩ Position zurücksetzen</button></div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>Zum Verteilen einmalig den GitHub-Schlüssel einfügen (bleibt nur auf diesem Gerät):</span><input type="password" id="tok-${DIR16.length}-${sid}" placeholder="github_pat_…" autocomplete="off"><button type="button" onclick="saveTokenAndPublish('${n}','tok-${DIR16.length}-${sid}')">Schlüssel merken &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
+  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Richtung antippen, Winkelbereich im Dialog festlegen; erneut antippen entfernt den Stern." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div>${degreeInputs}<div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" onclick="return openMaps(${sp.lat},${sp.lon})" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${sid}" placeholder="Google-Maps-Link oder 54,4245, 11,0981"><button type="button" onclick="setSpotPos('${n}','pos-${sid}')">Übernehmen</button><button type="button" onclick="setSpotPosGps('${n}')">📍 Ich steh am Strand 😀</button><button type="button" onclick="restoreSpotPos('${n}')">↩ Position zurücksetzen</button></div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>GitHub-Schlüssel für diesen Speichervorgang einfügen (nicht dauerhaft gespeichert):</span><input type="password" id="tok-${DIR16.length}-${sid}" placeholder="github_pat_…" autocomplete="off"><button type="button" onclick="saveTokenAndPublish('${n}','tok-${DIR16.length}-${sid}')">Schlüssel verwenden &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
 }
 function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); else starMode.add(name); repaintSoft(name); }
 function repaintSoft(name=""){
@@ -1428,6 +1457,7 @@ async function publishSpotEdits(){
       dirtySpots.clear(); try{ localStorage.setItem(DIRTY_KEY, "[]"); }catch(e){}
       updatePublishButton();
       note.textContent = `Gespeichert: ${names.join(", ")}. Die anderen sehen die Änderung in etwa 2 bis 10 Minuten beim Öffnen der App.`;
+      $("gh-token").value = "";
       return;
     }catch(e){
       note.textContent = "Fehler: " + (e.message || e) + (String(e.message).includes("401") ? " – Schlüssel ungültig oder abgelaufen." : String(e.message).includes("403") || String(e.message).includes("404") ? " – Schlüssel braucht „Contents: Read and write“ für dieses Repository." : "");
@@ -2134,7 +2164,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "5.18.16";
+const APP_VERSION = "6.0.0";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2198,14 +2228,25 @@ function setSpotWave(name, v){
   try{ localStorage.setItem(SPOT_WAVE_KEY, JSON.stringify(spotWave)); }catch(e){}
   markSpotDirty(name); rerunAfterModelChange();
 }
+function medianModelEntry(entries){
+  if(!entries.length) return null;
+  if(entries.length%2) return entries[Math.floor(entries.length/2)];
+  const left=entries[entries.length/2-1], right=entries[entries.length/2];
+  const directions=[left[1].dir,right[1].dir].filter(Number.isFinite), radians=directions.map(d=>d*Math.PI/180);
+  const x=radians.reduce((sum,a)=>sum+Math.cos(a),0), y=radians.reduce((sum,a)=>sum+Math.sin(a),0);
+  const dir=directions.length ? ((Math.atan2(y,x)*180/Math.PI)+360)%360 : NaN;
+  const gusts=[left[1].gust,right[1].gust].filter(Number.isFinite);
+  return ["Median",{wind:(left[1].wind+right[1].wind)/2,dir,gust:gusts.length?gusts.reduce((a,b)=>a+b,0)/gusts.length:NaN}];
+}
 function scoreRows(rows,f,spot){
   const active=getActiveModels(spot && spot.name);
   rows=rows.map(row=>{
     const allModels = row.models || {};
     const models=Object.fromEntries(Object.entries(allModels).filter(([label])=>active.has(label)));
-    // 5.11.0: maßgeblich ist je Stunde das mittlere Modell (Median nach Windstärke), wie in Stundenleiste und Windrose
+    // Maßgeblich ist je Stunde der Median; bei gerader Anzahl wird zwischen den beiden mittleren Werten gemittelt.
     const vals=Object.entries(models).filter(([,v])=>Number.isFinite(v.wind)).sort((a,b)=>a[1].wind-b[1].wind);
-    const mid=vals.length?vals[Math.floor(vals.length/2)]:null;
+    const mid=medianModelEntry(vals);
+    if(mid) models[mid[0]]=mid[1];
     // 5.13.0: Wellenquelle je Spot (Standard DWD EWAM, sonst Best Match), jeweils mit der anderen als Ersatz
     const wm=row.waveModels||{}, ew=wm[WAVE_EWAM], bm=wm[WAVE_BM], pref=waveSrcOf(spot&&spot.name);
     const first=pref==="bm"?[WAVE_BM,bm]:[WAVE_EWAM,ew], second=pref==="bm"?[WAVE_EWAM,ew]:[WAVE_BM,bm];
@@ -2318,8 +2359,9 @@ function card(spot,r,f){
   // Bestes Surf-Fenster: mindestens 2 zusammenhängende Stunden, hohe Welle und hoher,
   // möglichst gleichmäßiger Grundwind. Median der aktiven Hauptmodelle dämpft Ausreißer.
   const hourWindModel = h => {
-    const values=Object.entries(h.models||{}).filter(([label,m])=>CORE_WIND_MODELS.has(label)&&Number.isFinite(m.wind)).map(([,m])=>m).sort((a,b)=>a.wind-b.wind);
-    return values.length ? values[Math.floor(values.length/2)] : null;
+    const values=Object.entries(h.models||{}).filter(([label,m])=>CORE_WIND_MODELS.has(label)&&Number.isFinite(m.wind)).sort((a,b)=>a[1].wind-b[1].wind);
+    const mid=medianModelEntry(values);
+    return mid ? mid[1] : null;
   };
   const hourWind = h => { const m=hourWindModel(h); return m ? m.wind : NaN; };
   let bestHours=new Set(), bestWindowScore=-Infinity, bestWindowLength=0;
@@ -2371,8 +2413,9 @@ function card(spot,r,f){
   const hasWarn = !r.waveKnown || r.modelErrors?.length;
   const q = `${spot.lat},${spot.lon}`;
   // Android: App per Intent in neuem Fenster öffnen, ANDIsGREENed bleibt im Browser stehen; ohne App öffnet sich die Webseite.
-  const wfSlug = (spot.wf||"").split("/").filter(Boolean).pop();
-  const wfApp = spot.wf || "https://www.windfinder.com";
+  const wfApp = safeWindfinderUrl(spot.wf) || "https://www.windfinder.com";
+  const wfSlug = wfApp === "https://www.windfinder.com" ? "" : new URL(wfApp).pathname.split("/").filter(Boolean).pop() || "";
+  const ddUrl = safeDailyDoseUrl(spot.dd) || "https://www.dailydose.de/spotguide/spotsuche.htm";
   const hourStrip = r.day.length ? `<div class="strip">${r.day.map(h => {
     const windModel = hourWindModel(h);
     const baseWind = windModel ? windModel.wind : NaN;
@@ -2426,12 +2469,12 @@ function card(spot,r,f){
       <div>${modelSummary || "Keine getrennten Modellwerte verfügbar."}${$("devmode").checked && spotModels[spot.name] ? `<button type="button" class="win mod" style="cursor:pointer;border:1px solid #73d8d0;background:#143b36;color:#a4f0ce;padding:4px 7px;border-radius:7px" data-spot="${esc(spot.name)}" onclick="resetSpotModels(this.dataset.spot)" title="Eigene Modellwahl dieses Spots verwerfen">↺ Standardmodelle</button>` : ""}</div>
       ${modelErrors}${warn}
       <div class="links">
-        <a href="${spot.dd || "https://www.dailydose.de/spotguide/spotsuche.htm"}" target="_blank" rel="noopener">Spotguide ↗</a>
+        <a href="${esc(ddUrl)}" target="_blank" rel="noopener noreferrer">Spotguide ↗</a>
         <a href="https://www.windguru.cz/" target="_blank" rel="noopener">Windguru ↗</a>
         <a href="https://www.windy.com/${q}?${q},11" target="_blank" rel="noopener">Windy ↗</a>
       </div>
     </details>
-    <div class="links" style="margin-top:10px"><a href="${wfApp}"${IS_ANDROID && wfSlug ? ` onclick="return openWindfinder('${esc(wfSlug)}')"` : ' target="_blank"'} rel="noopener">Windfinder-App öffnen ↗</a></div></article>`;
+    <div class="links" style="margin-top:10px"><a href="${esc(wfApp)}"${IS_ANDROID && wfSlug ? ` onclick="return openWindfinder('${esc(wfSlug)}')"` : ' target="_blank"'} rel="noopener noreferrer">Windfinder-App öffnen ↗</a></div></article>`;
 }
 
 // 5.12.1: Aufgeklappte Bereiche und Scrollposition bleiben beim Neuzeichnen erhalten
@@ -2689,8 +2732,7 @@ function syncStatusSummary(){
   sum.textContent = parts[0];
   if(warn.length){ const w = document.createElement("span"); w.className = "warn"; w.textContent = " ⚠"; w.title = warn.join(" · "); sum.appendChild(w); }
 }
-try{ const t = localStorage.getItem(GH_TOKEN_KEY); if(t) $("gh-token").value = t; }catch(e){}
-$("gh-token").addEventListener("change", () => { try{ const t = $("gh-token").value.trim(); if(t) localStorage.setItem(GH_TOKEN_KEY, t); else localStorage.removeItem(GH_TOKEN_KEY); }catch(e){} });
+try{ localStorage.removeItem(GH_TOKEN_KEY); }catch(e){}
 $("gh-publish").addEventListener("click", publishSpotEdits);
 updatePublishButton();
 setTimeout(checkSpotUpdates, 1500);
@@ -2796,7 +2838,7 @@ function addCustomSpot(c){
   const slug = String(c.slug||"").trim();
   const spot = {name, area:String(c.area||"").trim() || "Eigener Spot", lat, lon, dirs, mainDir:main};
   if(/^[a-z0-9_-]+$/i.test(slug)) spot.wf = "https://www.windfinder.com/forecast/" + slug.toLowerCase();
-  if(typeof c.dd === "string" && /^https:\/\/www\.dailydose\.de\//.test(c.dd)) spot.dd = c.dd;
+  const dd = safeDailyDoseUrl(c.dd); if(dd) spot.dd = dd;
   if(validWave(c.waveStar)) spot.waveStar = cleanWave(c.waveStar);
   if(Array.isArray(c.weakDirs)) spot.weakDirs = c.weakDirs.filter(d => dirs.includes(d) && d !== main);
   if(typeof c.type === "string" && c.type.trim() && c.type !== "Eigener Spot") spot.type = c.type.trim().slice(0,60);
@@ -2817,7 +2859,11 @@ function applyMapsLink(text, fromNameField){
   return true;
 }
 // Windfinder-Weblink auf den Namen am Ende kürzen
-const wfSlugOf = v => { const t = String(v||"").trim(), m = t.match(/windfinder\.com\/(?:[a-z]{2}\/)?forecast\/([^\/?#\s]+)/i); return m ? m[1] : t; };
+const wfSlugOf = v => {
+  const t = String(v||"").trim(), safe = safeWindfinderUrl(t);
+  if(safe) return new URL(safe).pathname.split("/").filter(Boolean).pop() || "";
+  return /^[a-z0-9_-]+$/i.test(t) ? t : "";
+};
 $("ns-wf").addEventListener("change", () => { $("ns-wf").value = wfSlugOf($("ns-wf").value); });
 // Adress-/Ortssuche: OpenStreetMap (Straßen, Adressen) und Open-Meteo (Orte) parallel, Treffer zur Auswahl
 async function searchPlace(q){
@@ -2912,6 +2958,10 @@ function importSpots(text, update){
   }
   for(const raw of list){
     if(!raw || !raw.name){ errs.push("Eintrag ohne Namen."); continue; }
+    const importedWf = raw.wf == null || raw.wf === "" ? null : safeWindfinderUrl(raw.wf);
+    const importedDd = raw.dd == null || raw.dd === "" ? null : safeDailyDoseUrl(raw.dd);
+    if(raw.wf != null && raw.wf !== "" && !importedWf){ errs.push(`Ungültiger Windfinder-Link für „${String(raw.name).slice(0,60)}“. `); continue; }
+    if(raw.dd != null && raw.dd !== "" && !importedDd){ errs.push(`Ungültiger DailyDose-Link für „${String(raw.name).slice(0,60)}“. `); continue; }
     const dirs = [...new Set((raw.dirs||[]).map(d => DIRMAP[d] || d))].filter(d => ALL_DIRS.includes(d));
     const ex = SPOTS.find(x => x.name.toLowerCase() === String(raw.name).trim().toLowerCase());
     if(!ex){ const e = addCustomSpot({...raw, dirs, slug:(raw.wf||"").split("/").filter(Boolean).pop()}); if(e) errs.push(e); else { added++; if(validCam(raw.cam)) setCam(raw.name, raw.cam); if(applySpotModels(String(raw.name).trim(), raw.models)) spotModelCount++; } continue; }
@@ -2920,7 +2970,7 @@ function importSpots(text, update){
     if(!update){ same++; continue; }
     const lat = Number(raw.lat), lon = Number(raw.lon);
     const next = {dirs:dirs.length ? dirs : ex.dirs, area:raw.area || ex.area,
-      lat:Number.isFinite(lat) && Math.abs(lat) <= 90 ? lat : ex.lat, lon:Number.isFinite(lon) && Math.abs(lon) <= 180 ? lon : ex.lon, wf:raw.wf || ex.wf, type:(typeof raw.type === "string" && raw.type.trim()) ? raw.type.trim().slice(0,60) : ex.type, dd:validDD(raw.dd) ? raw.dd : ex.dd, waveStar:validWave(raw.waveStar) ? cleanWave(raw.waveStar) : ex.waveStar};
+      lat:Number.isFinite(lat) && Math.abs(lat) <= 90 ? lat : ex.lat, lon:Number.isFinite(lon) && Math.abs(lon) <= 180 ? lon : ex.lon, wf:importedWf || ex.wf, type:(typeof raw.type === "string" && raw.type.trim()) ? raw.type.trim().slice(0,60) : ex.type, dd:importedDd || ex.dd, waveStar:validWave(raw.waveStar) ? cleanWave(raw.waveStar) : ex.waveStar};
     next.weakDirs = Array.isArray(raw.weakDirs) ? raw.weakDirs.filter(d => next.dirs.includes(d)) : (ex.weakDirs || []).filter(d => next.dirs.includes(d));
     const main = next.dirs.includes(raw.mainDir) ? raw.mainDir : (next.dirs.includes(ex.mainDir) ? ex.mainDir : next.dirs[0]);
     const changed = next.dirs.join() !== ex.dirs.join() || next.area !== ex.area || next.lat !== ex.lat || next.lon !== ex.lon || next.wf !== ex.wf || next.type !== ex.type || next.dd !== ex.dd || JSON.stringify(next.waveStar||null) !== JSON.stringify(ex.waveStar||null) || main !== ex.mainDir || next.weakDirs.join() !== (ex.weakDirs||[]).join();

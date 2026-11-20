@@ -27,6 +27,18 @@ const starDirsOf = vm.runInNewContext(`${source.slice(starDirsStart, starDirsEnd
 const bestWaveStart = source.indexOf("function hasBestWaveDirection(");
 const bestWaveEnd = source.indexOf("\n// 5.5.0:", bestWaveStart);
 const hasBestWaveDirection = vm.runInNewContext(`${source.slice(bestWaveStart, bestWaveEnd)}; hasBestWaveDirection`, { angleInRange });
+const validationStart = source.indexOf("function safeHttpsUrl(");
+const validationEnd = source.indexOf("\nconst MAIN_DIR_KEY", validationStart);
+const validation = vm.runInNewContext(`${source.slice(validationStart, validationEnd)}; ({safeWindfinderUrl,safeDailyDoseUrl,validWave})`, { URL });
+const scoreRowsStart = source.indexOf("function medianModelEntry(");
+const scoreRowsEnd = source.indexOf("\nconst pad =", scoreRowsStart);
+const scoreRows = vm.runInNewContext(`${source.slice(scoreRowsStart, scoreRowsEnd)}; scoreRows`, {
+  getActiveModels: () => new Set(["ICON","GFS","ECMWF"]),
+  WAVE_EWAM: "DWD EWAM (~5 km)",
+  WAVE_BM: "Best Match",
+  waveSrcOf: () => "ewam",
+  compass: dir => String(dir)
+});
 const waveStarArcStart = source.lastIndexOf("let pendingWaveStarSelection = null;", source.indexOf("function waveStarArc("));
 const waveStarFunctionsEnd = source.indexOf("\nfunction setSpotPos(", waveStarArcStart);
 const makeWaveStarEditor = spot => {
@@ -89,6 +101,50 @@ test("keeps a qualifying window but excludes a later two-hour fragment", () => {
   assert.equal(result.score, 6);
   assert.deepEqual(Array.from(result.hourly, hour => hour.points), [2, 2, 2, 0, 0, 0]);
   assert.equal(result.hourly[4].scored, false);
+});
+
+test("uses a statistical median for an even number of active wind models", () => {
+  const result = scoreRows([{
+    hour: 12,
+    time: "2026-11-20T12:00:00",
+    dl: true,
+    models: {
+      ICON: {wind:15,dir:270},
+      GFS: {wind:25,dir:270}
+    }
+  }], {date:"2026-11-20",startHour:null,minwind:0,maxwind:100,minwave:0,maxwave:10,usedir:false}, {name:"Test",dirs:[]});
+
+  assert.equal(result.day[0].wind,20);
+  assert.equal(result.day[0].medLabel,"Median");
+  assert.equal(result.day[0].dir,270);
+});
+
+test("keeps the middle wind model as median for an odd number of active models", () => {
+  const result = scoreRows([{
+    hour: 12,
+    time: "2026-11-20T12:00:00",
+    dl: true,
+    models: {
+      ICON: {wind:15,dir:240},
+      GFS: {wind:20,dir:270},
+      ECMWF: {wind:30,dir:300}
+    }
+  }], {date:"2026-11-20",startHour:null,minwind:0,maxwind:100,minwave:0,maxwave:10,usedir:false}, {name:"Test",dirs:[]});
+
+  assert.equal(result.day[0].wind,20);
+  assert.equal(result.day[0].medLabel,"GFS");
+});
+
+test("rejects unsafe external spot URLs and invalid wave-star widths", () => {
+  assert.equal(validation.safeWindfinderUrl("https://www.windfinder.com/forecast/kaegsdorf"), "https://www.windfinder.com/forecast/kaegsdorf");
+  assert.equal(validation.safeWindfinderUrl('https://www.windfinder.com/forecast/kaegsdorf" onmouseover="alert(1)'), null);
+  assert.equal(validation.safeWindfinderUrl("https://windfinder.com.evil.example/forecast/kaegsdorf"), null);
+  assert.equal(validation.safeWindfinderUrl("javascript:alert(1)"), null);
+  assert.equal(validation.safeDailyDoseUrl("https://www.dailydose.de/spotguide/spotguide.php?spot_id=176"), "https://www.dailydose.de/spotguide/spotguide.php?spot_id=176");
+  assert.equal(validation.safeDailyDoseUrl('https://www.dailydose.de/spotguide/"><img src=x>'), null);
+  assert.equal(validation.validWave({label:"Beste Welle",display:"W",min:258.75,max:281.25}), true);
+  assert.equal(validation.validWave({label:"Beste Welle",display:"WNW–WSW",min:281.25,max:258.75}), false);
+  assert.equal(validation.validWave({label:"Beste Welle",display:"N–O",min:0,max:90}), false);
 });
 
 test("applies the exact wave-star degree range to a single hour, without a star-direction run", () => {
