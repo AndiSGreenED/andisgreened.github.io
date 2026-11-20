@@ -77,6 +77,23 @@ test("weekly bars ignore minimum wind and wave but retain the other filters", ()
   assert.equal(result.days[0].kn,22);
   assert.equal(result.days[0].wave,1.4);
 });
+test("card wind median uses the same active models as ranking", () => {
+  const helperStart = source.indexOf("function getActiveModels(");
+  const helperEnd = source.indexOf("\nfunction renderModelControls()", helperStart);
+  for(const [label,spotName] of [["DMI","DmiOnly"],["Google","GoogleOnly"]]){
+    const context = vm.createContext({
+      spotModels:{[spotName]:[label]},
+      localStorage:{getItem:()=>null},
+      DEFAULT_ACTIVE_MODELS:["ICON","GFS","ECMWF","DMI","DWD","Google"]
+    });
+    vm.runInContext(`${source.slice(helperStart,helperEnd)}; this.api={getActiveModels,getActiveWindEntries}`,context);
+    assert.deepEqual(Array.from(context.api.getActiveWindEntries({
+      ICON:{wind:30},
+      DMI:{wind:18},
+      Google:{wind:12}
+    },spotName), ([name])=>name),[label]);
+  }
+});
 test("weekly bar renders the largest three-hour wave above the bar in a blue label", () => {
   const start = source.indexOf("function weekRender(");
   const end = source.indexOf("\nfunction paintWeek(", start);

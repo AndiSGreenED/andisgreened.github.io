@@ -4,15 +4,21 @@ on:
   push:
     paths:
       - "docs/index.html"
+      - "docs/datenschutz.html"
+      - "docs/manifest.webmanifest"
       - "docs/spot-updates.json"
       - "docs/sw.js"
+      - "apk/**"
       - "scripts/**"
       - ".github/workflows/tests.yml"
   pull_request:
     paths:
       - "docs/index.html"
+      - "docs/datenschutz.html"
+      - "docs/manifest.webmanifest"
       - "docs/spot-updates.json"
       - "docs/sw.js"
+      - "apk/**"
       - "scripts/**"
       - ".github/workflows/tests.yml"
   workflow_dispatch:

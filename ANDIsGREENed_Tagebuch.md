@@ -2,7 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **6.0.5** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **6.0.6** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+
+## 6.0.6
+- Spotkarten, Stundenleisten, Windbereich und Windrose verwenden dieselbe aktive Modellauswahl wie das Ranking statt fest auf ICON, GFS und ECMWF begrenzt zu sein.
+- DMI- oder Google-only-Auswahl wird durch einen Regressionstest abgesichert.
+- Tests laufen jetzt auch bei Änderungen am Webmanifest, Datenschutztext oder an der Android-Konfiguration.
 
 ## 6.0.5
 - Wochenbalken und Tageskacheln verwenden jetzt dieselbe aktive Modellauswahl; ein per Balkenklick ausgezeichneter Spot kann dadurch nicht durch abweichende Modellmediane aus der Trefferliste fallen.
