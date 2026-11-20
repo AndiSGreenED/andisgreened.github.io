@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 6.0.8</title>
+<title>ANDIsGREENed 6.0.9</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -1793,7 +1793,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "6.0.8";
+const APP_VERSION = "6.0.9";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2803,6 +2803,26 @@ if(IS_NATIVE_APP && /^https:$/.test(location.protocol) && location.hostname !== 
     }catch(e){}
   });
 }
+// Privacy-friendly aggregate page views. The opt-out is stored only on this device.
+(() => {
+  const key = "andisgreened-analytics-optout";
+  const params = new URLSearchParams(location.search);
+  if(params.get("analytics") === "off"){
+    try{ localStorage.setItem(key,"1"); }catch(e){}
+  }else if(params.get("analytics") === "on"){
+    try{ localStorage.removeItem(key); }catch(e){}
+  }
+  let optOut=false;
+  try{ optOut=localStorage.getItem(key)==="1"; }catch(e){}
+  const dnt = navigator.doNotTrack==="1" || window.doNotTrack==="1";
+  if(optOut || dnt || /^localhost$|^127(?:\.\d){3}$/.test(location.hostname)) return;
+  window.goatcounter = {allow_local:false};
+  const script=document.createElement("script");
+  script.async=true;
+  script.dataset.goatcounter="https://andisgreened.goatcounter.com/count";
+  script.src="https://andisgreened.goatcounter.com/count.js";
+  document.head.appendChild(script);
+})();
 </script>
 </body>
 </html>

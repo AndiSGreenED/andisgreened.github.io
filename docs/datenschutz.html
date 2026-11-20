@@ -4,7 +4,7 @@
 <style>body{margin:0;background:#0b1720;color:#e4eef2;font:16px/1.6 system-ui,sans-serif}main{max-width:720px;margin:0 auto;padding:24px 18px 48px}h1{font-size:1.6rem}h2{font-size:1.15rem;margin-top:1.6em}a{color:#73d8d0}li{margin:.3em 0}</style></head>
 <body><main>
 <h1>Datenschutz</h1>
-<p><strong>Kurz:</strong> ANDIsGREENed hat keine Konten, keine Werbung, kein Tracking und keine Analyse. Ich (der Entwickler) erhalte keine Daten von dir.</p>
+<p><strong>Kurz:</strong> ANDIsGREENed hat keine Konten, keine Werbung und keine personalisierten Nutzerprofile. Für Seitenaufrufe wird eine cookiefreie, aggregierte Zählung verwendet. APK-Downloads werden über die öffentliche GitHub-Release-Statistik gezählt.</p>
 <h2>Was auf deinem Gerät bleibt</h2>
 <ul>
 <li>Einstellungen, Standort, eigene Spots, Webcam-Links, Wellensterne, Modellwahl und ein optional eingetragener Google-Schlüssel werden nur auf deinem Gerät gespeichert (Browser- bzw. App-Speicher).</li>
@@ -20,6 +20,13 @@
 <li>Google Weather API (nur, wenn du selbst einen eigenen Schlüssel einträgst)</li>
 </ul>
 <p>Die Web-App wird über <a href="https://docs.github.com/de/pages/getting-started-with-github-pages/about-github-pages#data-collection">GitHub Pages</a> ausgeliefert; GitHub protokolliert dabei technisch übliche Zugriffsdaten (z. B. IP-Adresse). Links zu Windfinder, Windy, Webcams usw. öffnen die jeweilige fremde Seite mit deren eigenen Datenschutzregeln.</p>
+<p>Für aggregierte Seitenaufrufe verwendet die Web-App GoatCounter. Dabei werden keine Cookies gesetzt und keine Nutzerprofile angelegt. Die Website sieht beispielsweise die besuchte Seite, Browserdaten und technisch eine IP-Adresse. Das Tracking wird bei aktiviertem <em>Do Not Track</em> oder nach dem lokalen Opt-out deaktiviert.</p>
+<p><button id="analytics-optout" type="button">Meine Geräte von Seitenaufrufen ausschließen</button> <button id="analytics-enable" type="button">Wieder einschließen</button></p>
+<script>
+const key="andisgreened-analytics-optout";
+document.getElementById("analytics-optout").onclick=()=>{try{localStorage.setItem(key,"1");}catch(e){};location.href=location.pathname+"?analytics=off";};
+document.getElementById("analytics-enable").onclick=()=>{try{localStorage.removeItem(key);}catch(e){};location.href=location.pathname+"?analytics=on";};
+</script>
 <p>Wenn du Spotänderungen veröffentlichst, überträgt dein Browser die geänderten Spotdaten (Richtungen, Position, Wellenstern, Modellwahl und Wellenquelle) zusammen mit deinem GitHub-Schlüssel direkt an die GitHub-API. GitHub speichert diese Änderungen öffentlich im Repository <a href="https://github.com/AndiSGreenED/andisgreened.github.io">ANDIsGREENed/andisgreened.github.io</a>. Ohne einen GitHub-Schlüssel findet diese Übertragung nicht statt.</p>
 <h2>Berechtigungen der Android-App</h2>
 <ul><li><strong>Internet</strong> – für die Wetterdaten.</li><li><strong>Standort</strong> – nur wenn du „Meinen Standort verwenden“ antippst.</li></ul>
@@ -27,6 +34,6 @@
 <p>Fragen über die <a href="https://github.com/AndiSGreenED/andisgreened.github.io/issues">Issue-Seite des Projekts</a>.</p>
 <hr>
 <h2 lang="en">Privacy (English)</h2>
-<p lang="en">No accounts, no ads, no tracking, no analytics. All settings, saved spots and your location stay on your device; your location is only used locally to compute distances. The optional GitHub token for publishing spot changes is retained on this device for at most one hour after successful use and then deleted automatically. Publishing sends the edited spot data and token directly to GitHub's API and stores the changes publicly in this repository. The app fetches forecasts directly from Open-Meteo, Bright Sky (DWD), OpenStreetMap Nominatim (address search only) and, if you add your own key, the Google Weather API. These services see your IP address and the coordinates of the spots, not your location. The web app is hosted on GitHub Pages. Android permissions: Internet (forecasts) and Location (only when you tap “use my location”).</p>
+<p lang="en">No accounts, no ads and no personal profiles. Aggregate, cookie-free page views are counted for app usage. APK downloads are counted through the public GitHub release statistics. All settings, saved spots and your location stay on your device; your location is only used locally to compute distances. The optional GitHub token for publishing spot changes is retained on this device for at most one hour after successful use and then deleted automatically. Publishing sends the edited spot data and token directly to GitHub's API and stores the changes publicly in this repository. The app fetches forecasts directly from Open-Meteo, Bright Sky (DWD), OpenStreetMap Nominatim (address search only) and, if you add your own key, the Google Weather API. These services see your IP address and the coordinates of the spots, not your location. The web app uses GoatCounter for aggregate page views and is hosted on GitHub Pages. Android permissions: Internet (forecasts) and Location (only when you tap “use my location”).</p>
 <p><small>Stand: November 2026</small></p>
 </main></body></html>

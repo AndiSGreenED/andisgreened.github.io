@@ -2,7 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **6.0.8** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **6.0.9** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+
+## 6.0.9
+- Cookiefreie, aggregierte Seitenaufrufe werden über GoatCounter erfasst.
+- Geräte können über einen lokalen Opt-out auf der Datenschutzerklärung oder mit `?analytics=off` ausgeschlossen werden.
+- APK-Downloads werden künftig täglich aus der öffentlichen GitHub-Release-Statistik ausgewertet.
 
 ## 6.0.8
 - Gegenläufige mittlere Modellrichtungen werden bei nahezu aufgehobenem Richtungsvektor als unbekannt behandelt.

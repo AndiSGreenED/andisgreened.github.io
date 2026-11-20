@@ -36,6 +36,15 @@ test("native Android intents are restricted to allowed apps and hosts", () => {
   assert.match(native,/if \(!windfinder && !googleMaps\) return false;/);
 });
 
+test("privacy-friendly page analytics has a local opt-out", () => {
+  const page = readFileSync(new URL("../docs/index.html", import.meta.url), "utf8");
+  const privacy = readFileSync(new URL("../docs/datenschutz.html", import.meta.url), "utf8");
+  assert.match(page,/andisgreened-analytics-optout/);
+  assert.match(page,/params\.get\("analytics"\) === "off"/);
+  assert.match(page,/andisgreened\.goatcounter\.com\/count/);
+  assert.match(privacy,/Meine Geräte von Seitenaufrufen ausschließen/);
+});
+
 test("Kägsdorf wave star represents only the narrow west sector", () => {
   const wave = updates.changes.Kägsdorf.waveStar;
   assert.deepEqual({ ...wave }, {label:"Beste Welle",min:258.75,max:281.25,display:"W"});
