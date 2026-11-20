@@ -2,7 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **5.18.11** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **6.0.1** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+
+## 6.0.1
+- Der GitHub-Schlüssel wird im Dev-Modus direkt im geöffneten Spot-Editor angezeigt und bleibt beim Neuzeichnen der Karte im Seitenspeicher erhalten.
+- Die tägliche Prognoseprüfung wertet historische DWD-Messwerte jetzt korrekt aus; zuvor wurden deren interne Felder nicht als Windwerte erkannt und der Kennzahlenstand blieb leer.
+- Beim Veröffentlichen bleibt der Editor nach einem Fehler geöffnet, sodass Schlüssel und Änderung sofort korrigiert bzw. erneut gesendet werden können.
 
 ## 5.18.11
 - Ein Veröffentlichungsbuild bündelt die geprüften Spotpositionen und Binnenwasser-/Zellkorrekturen aus 5.18.10 mit dem gestarteten Modellbenchmark.

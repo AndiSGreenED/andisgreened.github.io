@@ -88,6 +88,17 @@ test("requires matching, sufficiently complete station cohorts", () => {
   assert.equal(complete.sampleCount, 4);
   assert.equal(complete.expectedCount, 4);
   assert.equal(complete.meanWindKnots, 13);
+
+  const observations = new Map(spots.map(spot => [
+    spot.key,
+    new Map([["2026-11-18T10:00:00.000Z", {
+      meanWindKnots: 15,
+      meanDirectionDeg: 270
+    }]])
+  ]));
+  const observedAggregate = aggregateCohort(cohort, observations, "2026-11-18T10:00:00.000Z");
+  assert.equal(observedAggregate.meanWindKnots, 15);
+  assert.equal(observedAggregate.meanDirectionDeg, 270);
 });
 
 test("keeps future regional means pending and expires them after seven days", () => {

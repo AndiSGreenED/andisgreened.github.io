@@ -138,9 +138,13 @@ function meanDirection(directions) {
 }
 
 function meanWind(values) {
-  const speeds = values.map(value => value.speed).filter(Number.isFinite);
+  const readings = values.map(value => ({
+    speed: Number.isFinite(value.speed) ? value.speed : value.meanWindKnots,
+    direction: Number.isFinite(value.direction) ? value.direction : value.meanDirectionDeg
+  }));
+  const speeds = readings.map(value => value.speed).filter(Number.isFinite);
   if (!speeds.length) return null;
-  const directions = values
+  const directions = readings
     .filter(value => Number.isFinite(value.speed) && value.speed >= 2 && Number.isFinite(value.direction))
     .map(value => value.direction);
   return {
