@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 6.0.4</title>
+<title>ANDIsGREENed 6.0.5</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -2231,7 +2231,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "6.0.4";
+const APP_VERSION = "6.0.5";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2595,10 +2595,13 @@ function restoreCards(st){
 }
 function focusSpotCard(name){
   if(!name) return;
-  lastTouchedSpot = name;
   const cards = $("cards");
-  const spot = [...cards.querySelectorAll(".spot")].find(c => (c.querySelector("h3")?.textContent || "").trim() === name);
-  if(spot){ cards.prepend(spot); spot.scrollIntoView({behavior:"smooth",block:"start"}); }
+  const spot = [...cards.querySelectorAll(".spot")].find(c => (c.querySelector("h3")?.textContent || "").trim() === name) || cards.querySelector(".spot");
+  if(spot){
+    lastTouchedSpot = (spot.querySelector("h3")?.textContent || "").trim();
+    cards.prepend(spot);
+    spot.scrollIntoView({behavior:"smooth",block:"start"});
+  }
 }
 function paintResults(results,errors,selectedCount,f,focusSpot=""){
   const keepUi = uiState || captureCards(); uiState = null;
@@ -2610,7 +2613,7 @@ function paintResults(results,errors,selectedCount,f,focusSpot=""){
   if(errors.length) $("cards").insertAdjacentHTML("beforeend", `<div class="empty">${errors.length} Spots ohne Daten. Beispiel:<br>${esc(errors[0])}</div>`);
   else if(!results.length) $("cards").innerHTML = "<div class='empty'>Keine Spots im gewählten Umkreis.</div>";
   $("count").textContent = `${results.filter(x => x.res.good.length > 0).length} von ${selectedCount} Spots passen`;
-  if(keepUi && !paintResults.fresh) restoreCards(keepUi); paintResults.fresh = false;
+  if(keepUi && !paintResults.fresh && !focusSpot) restoreCards(keepUi); paintResults.fresh = false;
   try{ paintWeek(); }catch(e){}
   return relevant;
 }
@@ -2634,19 +2637,15 @@ function best3Median(rows){
   });
   return best;
 }
-const WEEK_KEY = "andisgreened-week-v4";
+const WEEK_KEY = "andisgreened-week-v5";
 function weekModel(){
   if(!lastRaw || !lastFilters) return null;
   const t = todayNoon(), nowH = new Date().getHours(), days = [];
-  const weeklyRaw = lastRaw.map(d => ({...d, rows:d.rows?.map(row => ({
-    ...row,
-    models:Object.fromEntries(Object.entries(row.models||{}).filter(([label]) => CORE_WIND_MODELS.has(label)))
-  }))}));
   for(let i=0; i<=MAX_DAYS; i++){
     const date = dateISO(addDays(t,i));
     const f = {...lastFilters, date, minwind:0, minwave:0};
     const vals = [];
-    weeklyRaw.forEach(d => {
+    lastRaw.forEach(d => {
       if(!d.rows) return;
       let day = scoreRows(d.rows,f,d.spot).good;
       if(i === 0) day = day.filter(r => r.hour >= nowH); // heute nur noch die kommenden Stunden

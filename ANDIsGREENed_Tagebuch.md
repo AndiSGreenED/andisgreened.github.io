@@ -2,7 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **6.0.4** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **6.0.5** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+
+## 6.0.5
+- Wochenbalken und Tageskacheln verwenden jetzt dieselbe aktive Modellauswahl; ein per Balkenklick ausgezeichneter Spot kann dadurch nicht durch abweichende Modellmediane aus der Trefferliste fallen.
+- Beim Datumswechsel wird die alte Karten-Scrollposition nicht mehr auf einen unpassenden Spot übertragen. Fehlt der ausgewählte Spot nach einer aktualisierten Vorhersage, landet die Ansicht am Anfang der aktuellen Ergebnisliste.
+- Der Zwischenspeicher der Wochenbalken wurde für die korrigierte Spotzuordnung erneuert.
 
 ## 6.0.4
 - Mindestwind und Mindestwelle begrenzen die Wochenbalken nicht mehr; Richtung, Spotwahl, Uhrzeit sowie die jeweiligen Maximalwerte bleiben wirksam.

@@ -1,6 +1,6 @@
 {
   "name": "andisgreened-app",
-  "version": "6.0.4",
+  "version": "6.0.5",
   "private": true,
   "description": "ANDIsGREENed Android-App (Capacitor-Hülle)",
   "dependencies": {

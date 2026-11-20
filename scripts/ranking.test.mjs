@@ -32,6 +32,7 @@ test("weekly bars ignore minimum wind and wave but retain the other filters", ()
   const weekEnd = source.indexOf("\nfunction distLabel(", weekStart);
   const NativeDate = Date;
   const seenFilters = [];
+  const seenModels = [];
   const FakeDate = class extends NativeDate {
     constructor(...args){ super(...(args.length ? args : ["2030-06-01T08:00:00Z"])); }
     static now(){ return NativeDate.UTC(2030,5,1,8); }
@@ -44,14 +45,15 @@ test("weekly bars ignore minimum wind and wave but retain the other filters", ()
       MS_TO_KN:1.943844,
       lastFilters:{date:"2030-05-31",startHour:6,usedir:false,minwind:15,maxwind:25,minwave:0.5,maxwave:2},
       lastRaw:[
-        {spot:{name:"Gold",dirs:["W"]},rows:[{models:{ICON:{wind:22}},hour:12}]},
-        {spot:{name:"Treff",dirs:["W"]},rows:[{models:{ICON:{wind:22}},hour:12}]}
+        {spot:{name:"Gold",dirs:["W"]},rows:[{models:{ICON:{wind:22},DMI:{wind:12}},hour:12}]},
+        {spot:{name:"Treff",dirs:["W"]},rows:[{models:{ICON:{wind:22},DMI:{wind:21}},hour:12}]}
       ],
       todayNoon:() => new FakeDate("2030-06-01T12:00:00Z"),
       addDays:(date,count) => { const d = new FakeDate(date); d.setUTCDate(d.getUTCDate()+count); return d; },
       dateISO:date => date.toISOString().slice(0,10),
       scoreRows:(rows,f,spot) => {
         seenFilters.push({name:spot.name,...f});
+        seenModels.push(Object.keys(rows[0].models));
         const three = [12,13,14].map((hour,index) => ({hour,wind:22,wave:[1.1,1.4,0.8][index],time:"2030-06-01T12:00:00",dir:270}));
         return {
           day:three,
@@ -70,6 +72,7 @@ test("weekly bars ignore minimum wind and wave but retain the other filters", ()
       {name:"Treff",startHour:6,usedir:false,minwind:0,maxwind:25,minwave:0,maxwave:2}
     ]
   );
+  assert.deepEqual(seenModels, [["ICON","DMI"],["ICON","DMI"]]);
   assert.equal(result.days[0].name,"Treff");
   assert.equal(result.days[0].kn,22);
   assert.equal(result.days[0].wave,1.4);
