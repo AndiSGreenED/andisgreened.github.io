@@ -137,7 +137,29 @@
    "lat": 54.3822,
    "lon": 10.9573,
    "at": "2026-11-20T09:28:09.409Z"
+  },
+  "Neuteschendorf Blank-Eck": {
+   "dirs": [
+    "NO",
+    "SW",
+    "WSW",
+    "W",
+    "WNW",
+    "NW"
+   ],
+   "weakDirs": [
+    "W",
+    "WNW",
+    "NW"
+   ],
+   "mainDir": "SW",
+   "waveStar": null,
+   "models": null,
+   "wave": null,
+   "lat": 54.3542,
+   "lon": 10.8662,
+   "at": "2026-11-20T10:47:19.480Z"
   }
  },
- "updated": "2026-11-20T10:45:13.003Z"
+ "updated": "2026-11-20T10:47:19.480Z"
 }
