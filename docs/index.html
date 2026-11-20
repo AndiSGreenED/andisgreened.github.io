@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 6.0.3</title>
+<title>ANDIsGREENed 6.0.4</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -384,6 +384,7 @@ details.statusbox #status{margin:6px 0 0}
 #week .wk{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;height:124px;background:#0e202a;border:1px solid #263f4b;border-radius:9px;padding:6px 1px 5px;color:#edf4f7;font-weight:600}
 #week .wk.sel{border-color:#c9a84c;background:#1a2f38}
 #week .wk b{font-size:.95rem;line-height:1}
+#week .wk .wk-wave{font-size:.62rem;font-style:normal;color:#59bfff;line-height:1}
 #week .wk i{display:block;width:68%;border-radius:4px 4px 0 0;border:1px solid rgba(0,0,0,.4)}
 #week .wk span{font-size:.7rem;color:#cfe3ea;line-height:1}
 #week .wk small{font-size:.58rem;color:#7f97a1;line-height:1;white-space:nowrap}
@@ -2230,7 +2231,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "6.0.3";
+const APP_VERSION = "6.0.4";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2622,16 +2623,18 @@ const weekColor = kn => (WEEK_SCALE.find(([lim]) => kn/MS_TO_KN < lim) || WEEK_S
 const CORE_WIND_MODELS = new Set(["ICON","GFS","ECMWF"]);
 // beste 3 zusammenhängende Stunden = höchster Median aus drei aufeinanderfolgenden Stundenwerten
 function best3Median(rows){
-  const byH = new Map(rows.filter(r => Number.isFinite(r.wind)).map(r => [r.hour, r.wind]));
+  const byH = new Map(rows.filter(r => Number.isFinite(r.wind)).map(r => [r.hour, r]));
   let best = null;
-  byH.forEach((w,h) => {
+  byH.forEach((row,h) => {
     if(!byH.has(h+1) || !byH.has(h+2)) return;
-    const v = [w, byH.get(h+1), byH.get(h+2)].sort((a,b) => a-b)[1];
-    if(!best || v > best.kn) best = {kn:v, start:h};
+    const window = [row, byH.get(h+1), byH.get(h+2)];
+    const v = window.map(r => r.wind).sort((a,b) => a-b)[1];
+    const waves = window.map(r => r.wave).filter(Number.isFinite);
+    if(!best || v > best.kn) best = {kn:v, wave:waves.length ? Math.max(...waves) : NaN, start:h};
   });
   return best;
 }
-const WEEK_KEY = "andisgreened-week-v3";
+const WEEK_KEY = "andisgreened-week-v4";
 function weekModel(){
   if(!lastRaw || !lastFilters) return null;
   const t = todayNoon(), nowH = new Date().getHours(), days = [];
@@ -2641,17 +2644,17 @@ function weekModel(){
   }))}));
   for(let i=0; i<=MAX_DAYS; i++){
     const date = dateISO(addDays(t,i));
-    const f = {...lastFilters, date};
+    const f = {...lastFilters, date, minwind:0, minwave:0};
     const vals = [];
     weeklyRaw.forEach(d => {
       if(!d.rows) return;
       let day = scoreRows(d.rows,f,d.spot).good;
       if(i === 0) day = day.filter(r => r.hour >= nowH); // heute nur noch die kommenden Stunden
       const b = best3Median(day);
-      if(b) vals.push({kn:b.kn, start:b.start, name:d.spot.name});
+      if(b) vals.push({kn:b.kn, wave:b.wave, start:b.start, name:d.spot.name});
     });
     const best = vals.reduce((winner,v) => !winner || v.kn>winner.kn ? v : winner, null);
-    days.push(best ? {date, n:1, kn:best.kn, name:best.name, start:best.start} : {date, n:0});
+    days.push(best ? {date, n:1, kn:best.kn, wave:best.wave, name:best.name, start:best.start} : {date, n:0});
   }
   return {at:Date.now(), days};
 }
@@ -2666,8 +2669,9 @@ function weekRender(m){
     const cls = "wk" + (d.date === sel ? " sel" : "");
     if(!d.n) return `<button type="button" class="${cls}" data-date="${d.date}"><b>–</b><span>${lab}</span><small>&nbsp;</small></button>`;
     const h = Math.round(6 + Math.min(1, d.kn/MAXKN) * 62);
-    const tip = `${lab}: ${Math.round(d.kn)} kn · höchster 3-Stunden-Median ab ${pad(d.start)} Uhr`;
-    return `<button type="button" class="${cls}" data-date="${d.date}" data-spot="${esc(d.name)}" title="${esc(tip)}"><b>${Math.round(d.kn)}</b><i style="height:${h}px;background:${weekColor(d.kn)}"></i><span>${lab}</span></button>`;
+    const wave = Number.isFinite(d.wave) ? d.wave.toFixed(1).replace(".",",") : "";
+    const tip = `${lab}: ${Math.round(d.kn)} kn${wave ? ` · größte Welle ${wave} m` : ""} · höchster 3-Stunden-Median ab ${pad(d.start)} Uhr`;
+    return `<button type="button" class="${cls}" data-date="${d.date}" data-spot="${esc(d.name)}" title="${esc(tip)}"><b>${Math.round(d.kn)}</b><em class="wk-wave">${wave || "&nbsp;"}</em><i style="height:${h}px;background:${weekColor(d.kn)}"></i><span>${lab}</span></button>`;
   }).join("");
   const lows = [0, ...WEEK_SCALE.slice(0,-1).map(([lim]) => lim*MS_TO_KN)];
   const leg = WEEK_SCALE.map(([,c],i) => `<div><i style="background:${c}"></i><em>${Math.round(lows[i])}${i===WEEK_SCALE.length-1?"+":""}</em></div>`).join("");

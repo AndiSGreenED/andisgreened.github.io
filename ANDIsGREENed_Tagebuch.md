@@ -2,7 +2,11 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **6.0.3** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **6.0.4** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+
+## 6.0.4
+- Mindestwind und Mindestwelle begrenzen die Wochenbalken nicht mehr; Richtung, Spotwahl, Uhrzeit sowie die jeweiligen Maximalwerte bleiben wirksam.
+- Über jedem Wochenbalken zeigt eine blaue Zahl die größte Welle innerhalb des zugehörigen 3-Stunden-Fensters an.
 
 ## 6.0.3
 - Das Wochenbalkendiagramm berücksichtigt jetzt dieselben Wind-, Wellen-, Richtungs- und Uhrzeitfilter wie die Spotbewertung. Dadurch können nur noch Spots mit tatsächlich drei zusammenhängenden Trefferstunden einen Balken bestimmen.

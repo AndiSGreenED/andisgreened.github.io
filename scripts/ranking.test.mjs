@@ -27,7 +27,7 @@ const starDirsOf = vm.runInNewContext(`${source.slice(starDirsStart, starDirsEnd
 const bestWaveStart = source.indexOf("function hasBestWaveDirection(");
 const bestWaveEnd = source.indexOf("\n// 5.5.0:", bestWaveStart);
 const hasBestWaveDirection = vm.runInNewContext(`${source.slice(bestWaveStart, bestWaveEnd)}; hasBestWaveDirection`, { angleInRange });
-test("weekly bars use only rows that pass the active relevance filters", () => {
+test("weekly bars ignore minimum wind and wave but retain the other filters", () => {
   const weekStart = source.indexOf("const WEEK_SCALE =");
   const weekEnd = source.indexOf("\nfunction distLabel(", weekStart);
   const NativeDate = Date;
@@ -52,7 +52,7 @@ test("weekly bars use only rows that pass the active relevance filters", () => {
       dateISO:date => date.toISOString().slice(0,10),
       scoreRows:(rows,f,spot) => {
         seenFilters.push({name:spot.name,...f});
-        const three = [12,13,14].map(hour => ({hour,wind:22,time:"2030-06-01T12:00:00",dir:270}));
+        const three = [12,13,14].map((hour,index) => ({hour,wind:22,wave:[1.1,1.4,0.8][index],time:"2030-06-01T12:00:00",dir:270}));
         return {
           day:three,
           good:spot.name==="Treff" ? three : [three[0]]
@@ -66,12 +66,38 @@ test("weekly bars use only rows that pass the active relevance filters", () => {
   assert.deepEqual(
     seenFilters.map(f => ({name:f.name,startHour:f.startHour,usedir:f.usedir,minwind:f.minwind,maxwind:f.maxwind,minwave:f.minwave,maxwave:f.maxwave})),
     [
-      {name:"Gold",startHour:6,usedir:false,minwind:15,maxwind:25,minwave:0.5,maxwave:2},
-      {name:"Treff",startHour:6,usedir:false,minwind:15,maxwind:25,minwave:0.5,maxwave:2}
+      {name:"Gold",startHour:6,usedir:false,minwind:0,maxwind:25,minwave:0,maxwave:2},
+      {name:"Treff",startHour:6,usedir:false,minwind:0,maxwind:25,minwave:0,maxwave:2}
     ]
   );
   assert.equal(result.days[0].name,"Treff");
   assert.equal(result.days[0].kn,22);
+  assert.equal(result.days[0].wave,1.4);
+});
+test("weekly bar renders the largest three-hour wave above the bar in a blue label", () => {
+  const start = source.indexOf("function weekRender(");
+  const end = source.indexOf("\nfunction paintWeek(", start);
+  const NativeDate = Date;
+  const FakeDate = class extends NativeDate {
+    constructor(...args){ super(...(args.length ? args : ["2030-06-01T08:00:00Z"])); }
+  };
+  const box = {hidden:true,innerHTML:""};
+  const weekRender = vm.runInNewContext(`(${source.slice(start,end)}\n)`, {
+    $: id => id === "week" ? box : {value:"2030-06-01"},
+    todayNoon:() => new FakeDate("2030-06-01T12:00:00Z"),
+    Date:FakeDate,
+    dateISO:date => date.toISOString().slice(0,10),
+    weekColor:() => "#3182bd",
+    WEEK_SCALE:[[Infinity,"#66007a"]],
+    MS_TO_KN:1.943844,
+    esc:value => String(value),
+    pad:value => String(value).padStart(2,"0")
+  });
+
+  weekRender({days:[{date:"2030-06-01",n:1,kn:22,wave:1.4,name:"Test",start:12}]});
+
+  assert.match(box.innerHTML,/<em class="wk-wave">1,4<\/em><i/);
+  assert.match(source,/#week \.wk \.wk-wave\{[^}]*color:#59bfff/);
 });
 const validationStart = source.indexOf("function safeHttpsUrl(");
 const validationEnd = source.indexOf("\nconst MAIN_DIR_KEY", validationStart);
