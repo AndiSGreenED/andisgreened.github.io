@@ -4,6 +4,14 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const source = readFileSync(new URL("../docs/sw.js", import.meta.url), "utf8");
+const pageSource = readFileSync(new URL("../docs/index.html", import.meta.url), "utf8");
+const cssSource = readFileSync(new URL("../docs/styles.css", import.meta.url), "utf8");
+
+test("loads the extracted stylesheet", () => {
+  assert.match(pageSource, /<link rel="stylesheet" href="styles\.css">/);
+  assert.ok(cssSource.length > 1000);
+  assert.doesNotMatch(pageSource, /<style>/);
+});
 
 function setup({cachedHtml,networkHtml}){
   const listeners = new Map();

@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 
 const source = readFileSync(new URL("../docs/index.html", import.meta.url), "utf8");
+const styles = readFileSync(new URL("../docs/styles.css", import.meta.url), "utf8");
 const start = source.indexOf("function calculateRank(");
 const end = source.indexOf("\nfunction rankScore(", start);
 const angleInRange = (deg, min, max) => {
@@ -117,7 +118,7 @@ test("weekly bar renders the largest three-hour wave above the bar in a blue lab
   weekRender({days:[{date:"2030-06-01",n:1,kn:22,wave:1.4,name:"Test",start:12}]});
 
   assert.match(box.innerHTML,/<em class="wk-wave">1,4<\/em><i/);
-  assert.match(source,/#week \.wk \.wk-wave\{[^}]*color:#59bfff/);
+  assert.match(styles,/#week \.wk \.wk-wave\{[^}]*color:#59bfff/);
 });
 const validationStart = source.indexOf("function safeHttpsUrl(");
 const validationEnd = source.indexOf("\nconst MAIN_DIR_KEY", validationStart);

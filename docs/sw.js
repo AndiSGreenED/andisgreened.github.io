@@ -2,11 +2,11 @@
 // Nur die App-Oberfläche wird zwischengespeichert. Wetter- und Such-APIs (andere Hosts) laufen immer direkt ins Netz.
 // Updates: Die Oberfläche (index.html) wird bei jedem Start im Hintergrund neu geladen. Enthält sie eine andere
 // APP_VERSION als die angezeigte Seite, zeigt die Seite „Neue Version verfügbar“. SW_VERSION nur erhöhen, wenn sich
-// diese Datei, das Manifest oder die Icons ändern.
-const SW_VERSION = "5.8.0";
+// diese Datei, das Stylesheet, das Manifest oder die Icons ändern.
+const SW_VERSION = "5.8.1";
 const CACHE = "andisgreened-shell-" + SW_VERSION;
 const CORE = ["./", "index.html"];
-const EXTRA = ["manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "icons/logo.png"];
+const EXTRA = ["styles.css", "manifest.webmanifest", "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "icons/logo.png"];
 const VERSION_RE = /const APP_VERSION = "([^"]+)"/;
 let lastRevalidate = 0;
 

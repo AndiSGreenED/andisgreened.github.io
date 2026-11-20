@@ -2,7 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **6.0.6** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **6.0.7** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+
+## 6.0.7
+- Das gesamte CSS wurde unverändert aus `docs/index.html` in `docs/styles.css` ausgelagert.
+- Der Service Worker speichert das Stylesheet jetzt gezielt mit der App-Oberfläche im Cache.
+- Die automatisierten Tests prüfen Änderungen an CSS und Stylesheet-Anbindung.
 
 ## 6.0.6
 - Spotkarten, Stundenleisten, Windbereich und Windrose verwenden dieselbe aktive Modellauswahl wie das Ranking statt fest auf ICON, GFS und ECMWF begrenzt zu sein.
