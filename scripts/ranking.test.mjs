@@ -117,6 +117,27 @@ test("uses a statistical median for an even number of active wind models", () =>
   assert.equal(result.day[0].wind,20);
   assert.equal(result.day[0].medLabel,"Median");
   assert.equal(result.day[0].dir,270);
+  assert.equal(result.peak.wind,25);
+  assert.equal(result.peak.modelLabel,"GFS");
+});
+
+test("renders imported spot names as data attributes without inline JavaScript", () => {
+  const start = source.indexOf("function dirEditorHtml(");
+  const end = source.indexOf("\nfunction toggleStarMode(",start);
+  const maliciousName = "x');document.body.dataset.owned='1';//";
+  const render = vm.runInNewContext(`(${source.slice(start,end)})`, {
+    DIR16: ["W"],
+    starDirsOf: () => [],
+    starMode: new Set(),
+    needToken: new Set(),
+    dirtySpots: new Set(),
+    esc: value => String(value).replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]))
+  });
+
+  const html = render({name:maliciousName,dirs:["W"],mainDir:"W",weakDirs:[],waveStar:null,lat:54,lon:11});
+
+  assert.match(html,/data-spot="x&#39;\);document\.body\.dataset\.owned=&#39;1&#39;;\/\//);
+  assert.doesNotMatch(html,/\son(?:click|change)=/i);
 });
 
 test("keeps the middle wind model as median for an odd number of active models", () => {

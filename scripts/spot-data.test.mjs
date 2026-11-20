@@ -14,6 +14,10 @@ test("title and visible app version use the same release number", () => {
   const appVersion = source.match(/const APP_VERSION = "([0-9.]+)"/)?.[1];
   assert.ok(titleVersion);
   assert.equal(titleVersion, appVersion);
+  const manifest = JSON.parse(readFileSync(new URL("../docs/manifest.webmanifest", import.meta.url), "utf8"));
+  const apkPackage = JSON.parse(readFileSync(new URL("../apk/package.json", import.meta.url), "utf8"));
+  assert.equal(manifest.version, appVersion);
+  assert.equal(apkPackage.version, appVersion);
 });
 
 test("all published spot changes contain valid wave-star ranges and URLs", () => {

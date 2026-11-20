@@ -1205,7 +1205,6 @@ const GH_REPO = "AndiSGreenED/andisgreened.github.io", UPD_PATH = "docs/spot-upd
 let dirtySpots = new Set(), seenUpdates = {}, starMode = new Set();
 try { dirtySpots = new Set(JSON.parse(localStorage.getItem(DIRTY_KEY)||"[]")); } catch(e) {}
 try { seenUpdates = JSON.parse(localStorage.getItem(SEEN_KEY)||"{}") || {}; } catch(e) {}
-const jsq = s => esc(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'");
 const starDirsOf = sp => {
   if(!sp.waveStar) return [];
   const {min,max} = sp.waveStar;
@@ -1368,16 +1367,16 @@ function starFromDirs(set){
   return {label:"Beste Welle", min:norm(start*22.5-11.25), max:norm((start+len-1)*22.5+11.25), display:names.length > 1 ? names[0]+"–"+names[names.length-1] : names[0]};
 }
 function dirEditorHtml(sp){
-  const st = new Set(starDirsOf(sp)), n = jsq(sp.name);
+  const st = new Set(starDirsOf(sp));
   const sid = esc(sp.name).replace(/[^A-Za-z0-9]/g,"");
   const minId = `wave-min-${sid}`, maxId = `wave-max-${sid}`;
   const chips = DIR16.map(d => {
     const weak = (sp.weakDirs || []).includes(d);
     const cls = [sp.mainDir===d ? "best" : !sp.dirs.includes(d) ? "off" : weak ? "weak" : "on", st.has(d) ? "star" : ""].join(" ").trim();
-    return `<button type="button" class="${cls}" onclick="cycleDir('${n}','${d}')" aria-label="Richtung ${d}">${d}</button>`;
+    return `<button type="button" class="${cls}" data-spot-action="cycle-dir" data-spot="${esc(sp.name)}" data-dir="${d}" aria-label="Richtung ${d}">${d}</button>`;
   }).join("");
-  const degreeInputs = `<div class="dir-editor-tools"><span>Wellenstern: exakter Bereich &lt;45°; Start größer als Ende = über Nord</span><input type="number" class="star-degree" id="${minId}" min="0" max="360" step="0.01" value="${sp.waveStar ? sp.waveStar.min : ""}" placeholder="von °" aria-label="Wellenstern von Grad"><input type="number" class="star-degree" id="${maxId}" min="0" max="360" step="0.01" value="${sp.waveStar ? sp.waveStar.max : ""}" placeholder="bis °" aria-label="Wellenstern bis Grad"><button type="button" onclick="setWaveStarDegrees('${n}','${minId}','${maxId}')">Gradbereich setzen</button>${sp.waveStar ? `<button type="button" onclick="clearWaveStar('${n}')">Stern entfernen</button>` : ""}</div>`;
-  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" onclick="toggleStarMode('${n}')">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Richtung antippen, Winkelbereich im Dialog festlegen; erneut antippen entfernt den Stern." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" onchange="setStarText('${n}',this.value)">` : ""}</div>${degreeInputs}<div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" onclick="return openMaps(${sp.lat},${sp.lon})" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${sid}" placeholder="Google-Maps-Link oder 54,4245, 11,0981"><button type="button" onclick="setSpotPos('${n}','pos-${sid}')">Übernehmen</button><button type="button" onclick="setSpotPosGps('${n}')">📍 Ich steh am Strand 😀</button><button type="button" onclick="restoreSpotPos('${n}')">↩ Position zurücksetzen</button></div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>GitHub-Schlüssel für diesen Speichervorgang einfügen (nicht dauerhaft gespeichert):</span><input type="password" id="tok-${DIR16.length}-${sid}" placeholder="github_pat_…" autocomplete="off"><button type="button" onclick="saveTokenAndPublish('${n}','tok-${DIR16.length}-${sid}')">Schlüssel verwenden &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
+  const degreeInputs = `<div class="dir-editor-tools"><span>Wellenstern: exakter Bereich &lt;45°; Start größer als Ende = über Nord</span><input type="number" class="star-degree" id="${minId}" min="0" max="360" step="0.01" value="${sp.waveStar ? sp.waveStar.min : ""}" placeholder="von °" aria-label="Wellenstern von Grad"><input type="number" class="star-degree" id="${maxId}" min="0" max="360" step="0.01" value="${sp.waveStar ? sp.waveStar.max : ""}" placeholder="bis °" aria-label="Wellenstern bis Grad"><button type="button" data-spot-action="set-wave-star-degrees" data-spot="${esc(sp.name)}" data-min-id="${minId}" data-max-id="${maxId}">Gradbereich setzen</button>${sp.waveStar ? `<button type="button" data-spot-action="clear-wave-star" data-spot="${esc(sp.name)}">Stern entfernen</button>` : ""}</div>`;
+  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" data-spot-action="toggle-star-mode" data-spot="${esc(sp.name)}">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Richtung antippen, Winkelbereich im Dialog festlegen; erneut antippen entfernt den Stern." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" data-spot-action="set-star-text" data-spot="${esc(sp.name)}">` : ""}</div>${degreeInputs}<div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" data-spot-action="open-maps" data-lat="${sp.lat}" data-lon="${sp.lon}" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${sid}" placeholder="Google-Maps-Link oder 54,4245, 11,0981"><button type="button" data-spot-action="set-spot-pos" data-spot="${esc(sp.name)}" data-input-id="pos-${sid}">Übernehmen</button><button type="button" data-spot-action="set-spot-pos-gps" data-spot="${esc(sp.name)}">📍 Ich steh am Strand 😀</button><button type="button" data-spot-action="restore-spot-pos" data-spot="${esc(sp.name)}">↩ Position zurücksetzen</button></div>${needToken.has(sp.name) ? `<div class="dir-editor-tools tokbox"><span>GitHub-Schlüssel für diesen Speichervorgang einfügen (nicht dauerhaft gespeichert):</span><input type="password" id="tok-${DIR16.length}-${sid}" placeholder="github_pat_…" autocomplete="off"><button type="button" data-spot-action="save-token-publish" data-spot="${esc(sp.name)}" data-input-id="tok-${DIR16.length}-${sid}">Schlüssel verwenden &amp; speichern</button></div>` : (dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – oben „Speichern“ verteilt an alle.</span></div>` : "")}`;
 }
 function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); else starMode.add(name); repaintSoft(name); }
 function repaintSoft(name=""){
@@ -2269,7 +2268,7 @@ function scoreRows(rows,f,spot){
   });
   windows.sort((a,b) => (b.end-b.start)-(a.end-a.start) || a.start-b.start);
   const peak = good.reduce((best,r) => {
-    const candidates = Object.entries(r.models||{}).filter(([label,m]) => Number.isFinite(m.wind) && m.wind>=f.minwind && m.wind<=f.maxwind && (!f.usedir || spot.dirs.includes(compass(m.dir))));
+    const candidates = Object.entries(r.allModels||{}).filter(([label,m]) => active.has(label) && Number.isFinite(m.wind) && m.wind>=f.minwind && m.wind<=f.maxwind && (!f.usedir || spot.dirs.includes(compass(m.dir))));
     const candidate = candidates.reduce((a,entry)=>!a || entry[1].wind>a.model.wind ? {label:entry[0],model:entry[1]} : a,null);
     const value = candidate ? {...r, wind:candidate.model.wind, dir:candidate.model.dir, modelLabel:candidate.label, gust:candidate.model.gust} : r;
     return !best || value.wind>best.wind ? value : best;
@@ -2405,7 +2404,7 @@ function card(spot,r,f){
     const style=`${m.active?"":"opacity:.45;text-decoration:line-through;"}${$("devmode").checked?"cursor:pointer;border:1px solid #45616b;background:#14252c;color:inherit;padding:4px 7px;border-radius:7px;":""}`;
     const label=`${esc(name)}: ${m.good} h · ${fmt(m.min)}–${fmt(m.max)} kn${m.active?"":" · aus"}`;
     return $("devmode").checked
-      ? `<button type="button" class="win mod" style="${style}" title="Nur für diesen Spot aktivieren/deaktivieren" data-model="${esc(name)}" data-spot="${esc(spot.name)}" onclick="toggleModelActive(this.dataset.model,this.dataset.spot)">${label}</button>`
+      ? `<button type="button" class="win mod" style="${style}" title="Nur für diesen Spot aktivieren/deaktivieren" data-spot-action="toggle-model" data-model="${esc(name)}" data-spot="${esc(spot.name)}">${label}</button>`
       : `<span class="win mod" style="${style}" title="Modellstatus im Dev-Modus änderbar">${label}</span>`;
   }).join("");
   const modelErrors = r.modelErrors?.length ? `<div class="warn">Nicht verfügbare Modelle: ${esc(r.modelErrors.join("; "))}</div>` : "";
@@ -2450,14 +2449,14 @@ function card(spot,r,f){
   }).join("");
   const rng = (v,d=0) => v.length ? (Math.round(Math.min(...v)*10**d)/10**d===Math.round(Math.max(...v)*10**d)/10**d ? fmt(v[0],d) : fmt(Math.min(...v),d)+"–"+fmt(Math.max(...v),d)) : "n. v.";
   return `<article class="spot">
-    <div class="spotTop"><div><div class="spot-title-row"><h3><a class="spot-map-link" onclick="return openMaps(${spot.lat},${spot.lon})" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${spot.lat},${spot.lon}`)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(spot.name)} in Google Maps öffnen">${esc(spot.name)}</a></h3><a class="webcam-link${spot.cam ? " set" : ""}" href="${esc(webcamUrl(spot))}" target="_blank" rel="noopener noreferrer" aria-label="${spot.cam ? "Webcam von" : "Webcams suchen für"} ${esc(spot.name)} öffnen" title="${spot.cam ? "Eigene Webcam öffnen" : "Webcams suchen (Google)"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10l6-3v10l-6-3"/><rect x="3" y="6" width="11" height="12" rx="2"/><circle cx="8.5" cy="12" r="2.2"/></svg></a></div><div class="region area" title="${esc(spot.area)}">${km} km · ${esc(shortArea(spot.area))}</div>${hasBestWaveDirection(spot,r,f) ? `<div class="wave-star">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)}</div>` : (spot.waveStar && $("devmode").checked ? `<div class="wave-star inactive">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)} · heute nicht aktiv</div>` : "")}</div><div class="spotRight">${badge}${roseSvg}</div></div>
+    <div class="spotTop"><div><div class="spot-title-row"><h3><a class="spot-map-link" data-spot-action="open-maps" data-lat="${spot.lat}" data-lon="${spot.lon}" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${spot.lat},${spot.lon}`)}" target="_blank" rel="noopener noreferrer" aria-label="${esc(spot.name)} in Google Maps öffnen">${esc(spot.name)}</a></h3><a class="webcam-link${spot.cam ? " set" : ""}" href="${esc(webcamUrl(spot))}" target="_blank" rel="noopener noreferrer" aria-label="${spot.cam ? "Webcam von" : "Webcams suchen für"} ${esc(spot.name)} öffnen" title="${spot.cam ? "Eigene Webcam öffnen" : "Webcams suchen (Google)"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 10l6-3v10l-6-3"/><rect x="3" y="6" width="11" height="12" rx="2"/><circle cx="8.5" cy="12" r="2.2"/></svg></a></div><div class="region area" title="${esc(spot.area)}">${km} km · ${esc(shortArea(spot.area))}</div>${hasBestWaveDirection(spot,r,f) ? `<div class="wave-star">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)}</div>` : (spot.waveStar && $("devmode").checked ? `<div class="wave-star inactive">★ ${esc(spot.waveStar.label)} · ${esc(spot.waveStar.display)} · heute nicht aktiv</div>` : "")}</div><div class="spotRight">${badge}${roseSvg}</div></div>
     <div class="metrics">
       <details class="metric metric-wind-details" style="${windBoxStyle(dayWinds)}"><summary><b>${windRange(dayWinds)}<small class="u">kn</small></b><span>Wind · Einzelwerte ↗</span></summary><div class="wind-range-panel"><div class="region">Je Stunde: Temperatur, Niederschlag und Segel, darunter alle Modelle. „Stundenanzeige“ ist das mittlere der aktiven Hauptmodelle ICON/GFS/ECMWF; andere Modelle dienen dem Vergleich${arch ? ", „Prognose“ = gespeicherte Vorhersage vom Vortag" : ""}.</div><div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wind</th><th>Böen</th><th>Richtung</th></tr></thead><tbody>${windRows}</tbody></table></div></div></details>
       <div class="metric win-box"><b>${winMain}</b><span>Beste Zeit</span>${winSail ? `<small class="sail">⛵ ${esc(winSail)}</small>` : ""}${winMore ? `<small>auch ${winMore}</small>` : ""}</div>
-      <details class="metric metric-wave-details"><summary><b>${r.waveKnown ? rng(dayWaves,1)+'<small class="u">m</small>' : "n. v."}</b><span>Welle · Einzelwerte ↗</span></summary><div class="wave-range-panel"><div class="region">Stündliche Wellenhöhe je Modell. Verwendet wird ${waveSrcOf(spot.name)==="bm" ? "für diesen Spot Best Match" : "DWD EWAM (~5 km, bis ca. 3 Tage)"}; fehlt der Wert, springt das andere Modell ein.</div>${$("devmode").checked ? `<div class="dir-editor-tools">Wellenquelle für diesen Spot: <button type="button" class="${waveSrcOf(spot.name)==="ewam"?"active":""}" onclick="setSpotWave('${jsq(spot.name)}','ewam')">DWD EWAM</button><button type="button" class="${waveSrcOf(spot.name)==="bm"?"active":""}" onclick="setSpotWave('${jsq(spot.name)}','bm')">Best Match</button></div>` : ""}<div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wellenhöhe</th><th>Verwendet</th></tr></thead><tbody>${waveRows}</tbody></table></div></div></details>
+      <details class="metric metric-wave-details"><summary><b>${r.waveKnown ? rng(dayWaves,1)+'<small class="u">m</small>' : "n. v."}</b><span>Welle · Einzelwerte ↗</span></summary><div class="wave-range-panel"><div class="region">Stündliche Wellenhöhe je Modell. Verwendet wird ${waveSrcOf(spot.name)==="bm" ? "für diesen Spot Best Match" : "DWD EWAM (~5 km, bis ca. 3 Tage)"}; fehlt der Wert, springt das andere Modell ein.</div>${$("devmode").checked ? `<div class="dir-editor-tools">Wellenquelle für diesen Spot: <button type="button" class="${waveSrcOf(spot.name)==="ewam"?"active":""}" data-spot-action="set-spot-wave" data-spot="${esc(spot.name)}" data-wave="ewam">DWD EWAM</button><button type="button" class="${waveSrcOf(spot.name)==="bm"?"active":""}" data-spot-action="set-spot-wave" data-spot="${esc(spot.name)}" data-wave="bm">Best Match</button></div>` : ""}<div style="overflow-x:auto"><table><thead><tr><th>Uhrzeit</th><th>Modell</th><th>Wellenhöhe</th><th>Verwendet</th></tr></thead><tbody>${waveRows}</tbody></table></div></div></details>
       <div class="metric"><b>${fmt(dayWinds.length ? dayWinds.reduce((a,b)=>a+b,0)/dayWinds.length : NaN)}${r.waveKnown ? "\u202f·\u202f"+fmt(r.meanWave) : ""}</b><span>Ø Wind kn${r.waveKnown ? " · Welle m" : ""}</span></div>
     </div>
-    <div class="edit-dir"><span>Hauptwindrichtung: <b>${esc(spot.mainDir && spot.mainDir!=="-" ? spot.mainDir : "–")}</b></span>${$("devmode").checked ? `<button type="button" class="dir-edit-toggle" onclick="toggleMainDirEdit('${jsq(spot.name)}')">${dirtySpots.has(spot.name) ? "Speichern" : editingMainDirs.has(spot.name) ? "Fertig" : "Bearbeiten"}</button>` : ""}</div>
+    <div class="edit-dir"><span>Hauptwindrichtung: <b>${esc(spot.mainDir && spot.mainDir!=="-" ? spot.mainDir : "–")}</b></span>${$("devmode").checked ? `<button type="button" class="dir-edit-toggle" data-spot-action="toggle-main-dir-edit" data-spot="${esc(spot.name)}">${dirtySpots.has(spot.name) ? "Speichern" : editingMainDirs.has(spot.name) ? "Fertig" : "Bearbeiten"}</button>` : ""}</div>
     ${$("devmode").checked && editingMainDirs.has(spot.name) ? dirEditorHtml(spot) : ""}
 
     ${!f.usedir ? `<div class="warn dirwarn">⚠ Windrichtung wird NICHT berücksichtigt. ${spot.verified ? "Geprüfte Richtungen" : "Nicht unabhängig geprüfte Richtungen"}: ${esc(dirsLabel(spot))}</div>` : ""}
@@ -2466,7 +2465,7 @@ function card(spot,r,f){
       <summary>Details${hasWarn ? ' <span class="warnmark">⚠</span>' : ""}</summary>
       <div class="region">${spot.verified ? "Richtungen geprüft" : "Richtungen vorläufig"}: ${esc(dirsLabel(spot))} · ${esc(spot.type)}</div>
       <div class="region" style="margin-top:10px">Modellvergleich: passende Stunden · niedrigster bis höchster Tageswert</div>
-      <div>${modelSummary || "Keine getrennten Modellwerte verfügbar."}${$("devmode").checked && spotModels[spot.name] ? `<button type="button" class="win mod" style="cursor:pointer;border:1px solid #73d8d0;background:#143b36;color:#a4f0ce;padding:4px 7px;border-radius:7px" data-spot="${esc(spot.name)}" onclick="resetSpotModels(this.dataset.spot)" title="Eigene Modellwahl dieses Spots verwerfen">↺ Standardmodelle</button>` : ""}</div>
+      <div>${modelSummary || "Keine getrennten Modellwerte verfügbar."}${$("devmode").checked && spotModels[spot.name] ? `<button type="button" class="win mod" style="cursor:pointer;border:1px solid #73d8d0;background:#143b36;color:#a4f0ce;padding:4px 7px;border-radius:7px" data-spot-action="reset-spot-models" data-spot="${esc(spot.name)}" title="Eigene Modellwahl dieses Spots verwerfen">↺ Standardmodelle</button>` : ""}</div>
       ${modelErrors}${warn}
       <div class="links">
         <a href="${esc(ddUrl)}" target="_blank" rel="noopener noreferrer">Spotguide ↗</a>
@@ -2474,12 +2473,41 @@ function card(spot,r,f){
         <a href="https://www.windy.com/${q}?${q},11" target="_blank" rel="noopener">Windy ↗</a>
       </div>
     </details>
-    <div class="links" style="margin-top:10px"><a href="${esc(wfApp)}"${IS_ANDROID && wfSlug ? ` onclick="return openWindfinder('${esc(wfSlug)}')"` : ' target="_blank"'} rel="noopener noreferrer">Windfinder-App öffnen ↗</a></div></article>`;
+    <div class="links" style="margin-top:10px"><a href="${esc(wfApp)}"${IS_ANDROID && wfSlug ? ` data-spot-action="open-windfinder" data-slug="${esc(wfSlug)}"` : ' target="_blank"'} rel="noopener noreferrer">Windfinder-App öffnen ↗</a></div></article>`;
 }
 
 // 5.12.1: Aufgeklappte Bereiche und Scrollposition bleiben beim Neuzeichnen erhalten
 let uiState = null, lastTouchedSpot = "";
-document.addEventListener("click", e => { const c = e.target.closest && e.target.closest("#cards .spot"); if(c){ const t = c.querySelector("h3"); lastTouchedSpot = t ? t.textContent.trim() : ""; } }, true);
+function handleSpotAction(e,target){
+  const name = target.dataset.spot || "";
+  switch(target.dataset.spotAction){
+    case "cycle-dir": cycleDir(name,target.dataset.dir); break;
+    case "set-wave-star-degrees": setWaveStarDegrees(name,target.dataset.minId,target.dataset.maxId); break;
+    case "clear-wave-star": clearWaveStar(name); break;
+    case "toggle-star-mode": toggleStarMode(name); break;
+    case "set-spot-pos": setSpotPos(name,target.dataset.inputId); break;
+    case "set-spot-pos-gps": setSpotPosGps(name); break;
+    case "restore-spot-pos": restoreSpotPos(name); break;
+    case "save-token-publish": saveTokenAndPublish(name,target.dataset.inputId); break;
+    case "toggle-main-dir-edit": toggleMainDirEdit(name); break;
+    case "set-spot-wave": setSpotWave(name,target.dataset.wave); break;
+    case "toggle-model": toggleModelActive(target.dataset.model,name); break;
+    case "reset-spot-models": resetSpotModels(name); break;
+    case "open-windfinder": e.preventDefault(); openWindfinder(target.dataset.slug); break;
+    case "open-maps": if(openMaps(Number(target.dataset.lat),Number(target.dataset.lon)) === false) e.preventDefault(); break;
+    default: return;
+  }
+}
+document.addEventListener("click", e => {
+  const target = e.target.closest && e.target.closest("#cards [data-spot-action]");
+  if(target) handleSpotAction(e,target);
+  const c = e.target.closest && e.target.closest("#cards .spot");
+  if(c){ const t = c.querySelector("h3"); lastTouchedSpot = t ? t.textContent.trim() : ""; }
+}, true);
+document.addEventListener("change", e => {
+  const target = e.target.closest && e.target.closest('#cards [data-spot-action="set-star-text"]');
+  if(target) setStarText(target.dataset.spot,target.value);
+});
 function captureCards(){
   const cards = [...document.querySelectorAll("#cards .spot")]; if(!cards.length) return null;
   const nameOf = c => (c.querySelector("h3")?.textContent || "").trim();
