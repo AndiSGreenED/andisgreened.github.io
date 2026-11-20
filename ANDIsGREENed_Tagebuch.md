@@ -2,7 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **6.0.7** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **6.0.8** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+
+## 6.0.8
+- Gegenläufige mittlere Modellrichtungen werden bei nahezu aufgehobenem Richtungsvektor als unbekannt behandelt.
+- Android-Intents werden auf Windfinder und Google Maps sowie die vorgesehenen Zielpakete begrenzt.
+- Wetterabrufe brechen bei einem Timeout jetzt über `AbortController` ab.
 
 ## 6.0.7
 - Das gesamte CSS wurde unverändert aus `docs/index.html` in `docs/styles.css` ausgelagert.

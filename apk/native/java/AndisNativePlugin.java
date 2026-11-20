@@ -39,7 +39,17 @@ public class AndisNativePlugin extends Plugin {
 
     private boolean launchIntentUri(String uri) {
         try {
+            Uri parsed = Uri.parse(uri);
+            if (!"intent".equalsIgnoreCase(parsed.getScheme())) return false;
             Intent intent = Intent.parseUri(uri, Intent.URI_INTENT_SCHEME);
+            String host = parsed.getHost();
+            String packageName = intent.getPackage();
+            boolean windfinder = ("www.windfinder.com".equals(host) || "windfinder.com".equals(host)) &&
+                (packageName == null || "com.studioeleven.windfinder".equals(packageName) ||
+                 "com.studioeleven.windfinderpaid".equals(packageName));
+            boolean googleMaps = ("www.google.com".equals(host) || "google.com".equals(host)) &&
+                "com.google.android.apps.maps".equals(packageName);
+            if (!windfinder && !googleMaps) return false;
             intent.addCategory(Intent.CATEGORY_BROWSABLE);
             intent.setComponent(null);
             intent.setSelector(null);

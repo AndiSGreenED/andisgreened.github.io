@@ -10,6 +10,7 @@ const load = fetch => vm.runInNewContext(`${source.slice(start,end)}; ({fetchJSO
   fetch,
   setTimeout,
   clearTimeout,
+  AbortController,
   Promise,
   Date,
   Number,
@@ -39,4 +40,19 @@ test("does not cache failed weather requests", async () => {
   await assert.rejects(fetchJSON("https://example.test/forecast"), /Netzwerkfehler/);
   await assert.rejects(fetchJSON("https://example.test/forecast"), /Netzwerkfehler/);
   assert.equal(attempts,2);
+});
+
+test("aborts a weather request when it exceeds the timeout", async () => {
+  let aborted=false;
+  const {fetchJSONRaw} = load(async (_url, options) => {
+    return await new Promise((resolve,reject) => {
+      options.signal.addEventListener("abort", () => {
+        aborted=true;
+        reject(new DOMException("Aborted","AbortError"));
+      });
+    });
+  });
+
+  await assert.rejects(fetchJSONRaw("https://api.open-meteo.com/test",5), /Zeitüberschreitung/);
+  assert.equal(aborted,true);
 });

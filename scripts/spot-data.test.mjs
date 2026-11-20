@@ -28,6 +28,14 @@ test("all published spot changes contain valid wave-star ranges and URLs", () =>
   }
 });
 
+test("native Android intents are restricted to allowed apps and hosts", () => {
+  const native = readFileSync(new URL("../apk/native/java/AndisNativePlugin.java", import.meta.url), "utf8");
+  assert.match(native,/com\.studioeleven\.windfinder/);
+  assert.match(native,/com\.studioeleven\.windfinderpaid/);
+  assert.match(native,/com\.google\.android\.apps\.maps/);
+  assert.match(native,/if \(!windfinder && !googleMaps\) return false;/);
+});
+
 test("Kägsdorf wave star represents only the narrow west sector", () => {
   const wave = updates.changes.Kägsdorf.waveStar;
   assert.deepEqual({ ...wave }, {label:"Beste Welle",min:258.75,max:281.25,display:"W"});

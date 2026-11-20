@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 6.0.7</title>
+<title>ANDIsGREENed 6.0.8</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -1314,11 +1314,15 @@ function queuedFetch(url,ms){
   return task;
 }
 async function fetchJSONRaw(url,ms=15000){
-  // Kein AbortSignal: in eingebetteten Ansichten (postMessage-Proxy) lässt es sich nicht übertragen.
-  let res, timer;
-  const timeout = new Promise((_,rej) => { timer = setTimeout(() => rej(new Error("TIMEOUT")), ms); });
-  try{ res = await Promise.race([fetch(url,{cache:"no-store"}), timeout]); }
-  catch(e){ throw new Error(e.message==="TIMEOUT" ? "Zeitüberschreitung beim Datenabruf." : `Netzwerkfehler (${e.name}: ${e.message}). Möglich: Verbindung, Blocker oder Open-Meteo-Limit.`); }
+  let res, timer, timedOut=false;
+  const controller = typeof AbortController === "function" ? new AbortController() : null;
+  const timeout = new Promise((_,rej) => { timer = setTimeout(() => {
+    timedOut=true;
+    if(controller) controller.abort();
+    rej(new Error("TIMEOUT"));
+  }, ms); });
+  try{ res = await Promise.race([fetch(url,{cache:"no-store",...(controller?{signal:controller.signal}:{})}), timeout]); }
+  catch(e){ throw new Error(timedOut || e.message==="TIMEOUT" ? "Zeitüberschreitung beim Datenabruf." : `Netzwerkfehler (${e.name}: ${e.message}). Möglich: Verbindung, Blocker oder Open-Meteo-Limit.`); }
   finally{ clearTimeout(timer); }
   if(res.status===429){
     const retryAfter = Number(res.headers.get("Retry-After"));
@@ -1789,7 +1793,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "6.0.7";
+const APP_VERSION = "6.0.8";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -1863,7 +1867,7 @@ function medianModelEntry(entries){
   const left=entries[entries.length/2-1], right=entries[entries.length/2];
   const directions=[left[1].dir,right[1].dir].filter(Number.isFinite), radians=directions.map(d=>d*Math.PI/180);
   const x=radians.reduce((sum,a)=>sum+Math.cos(a),0), y=radians.reduce((sum,a)=>sum+Math.sin(a),0);
-  const dir=directions.length ? ((Math.atan2(y,x)*180/Math.PI)+360)%360 : NaN;
+  const dir=directions.length && Math.hypot(x,y)>=1e-8 ? ((Math.atan2(y,x)*180/Math.PI)+360)%360 : NaN;
   const gusts=[left[1].gust,right[1].gust].filter(Number.isFinite);
   return ["Median",{wind:(left[1].wind+right[1].wind)/2,dir,gust:gusts.length?gusts.reduce((a,b)=>a+b,0)/gusts.length:NaN}];
 }

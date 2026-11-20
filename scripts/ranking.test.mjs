@@ -132,6 +132,18 @@ const scoreRows = vm.runInNewContext(`${source.slice(scoreRowsStart, scoreRowsEn
   waveSrcOf: () => "ewam",
   compass: dir => String(dir)
 });
+const medianStart = source.indexOf("function medianModelEntry(");
+const medianEnd = source.indexOf("\nfunction scoreRows(", medianStart);
+const medianModelEntry = vm.runInNewContext(`(${source.slice(medianStart,medianEnd)})`);
+
+test("treats cancelling median directions as unknown", () => {
+  const opposite = medianModelEntry([
+    ["ICON",{wind:18,dir:90}],
+    ["GFS",{wind:20,dir:270}]
+  ]);
+  assert.equal(opposite[1].wind,19);
+  assert.equal(Number.isFinite(opposite[1].dir),false);
+});
 const waveStarArcStart = source.lastIndexOf("let pendingWaveStarSelection = null;", source.indexOf("function waveStarArc("));
 const waveStarFunctionsEnd = source.indexOf("\nfunction setSpotPos(", waveStarArcStart);
 const makeWaveStarEditor = spot => {
