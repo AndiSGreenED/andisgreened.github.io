@@ -12,7 +12,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#102b3a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>ANDIsGREENed 6.0.1</title>
+<title>ANDIsGREENed 6.0.3</title>
 <style>
 :root{font-family:system-ui,sans-serif;color:#edf4f7;background:#0b1720;color-scheme:dark}
 *{box-sizing:border-box}
@@ -567,8 +567,10 @@ details.sub[open]>summary{margin-bottom:6px}
   </details>
   <details class="sub"><summary>Spot-Änderungen an alle verteilen</summary>
     <p class="note" style="margin:0 0 6px">Richtungen und Sterne, die du auf den Karten änderst (Dev-Modus → „Bearbeiten“), werden hier ins Repository gespeichert. Alle anderen werden beim nächsten Öffnen gefragt, ob sie die Änderungen übernehmen.</p>
-    <label for="gh-token">GitHub-Schlüssel (nur bis zum Schließen dieser Seite im Speicher)</label>
-    <input id="gh-token" type="password" autocomplete="off" placeholder="github_pat_…">
+    <div id="gh-token-entry">
+      <label for="gh-token">GitHub-Schlüssel (für 1 Stunde auf diesem Gerät gespeichert)</label>
+      <input id="gh-token" type="password" autocomplete="off" placeholder="github_pat_…">
+    </div>
     <button type="button" id="gh-publish" style="width:100%;margin-top:6px;min-height:42px">Änderungen ins Repository speichern</button>
     <div class="note" id="gh-note"></div>
   </details>
@@ -1176,7 +1178,59 @@ function setCam(name, url){
 const webcamUrl = sp => sp.cam || `https://www.google.com/search?q=${encodeURIComponent(`${sp.name} ${sp.area||""} Webcam live`.replace(/\s+/g," ").trim())}`;
 // 5.12.0: „Speichern“ direkt auf der Karte verteilt die Änderungen an alle
 const needToken = new Set();
-function ghToken(){ return ($("gh-token") && $("gh-token").value || "").trim(); }
+const GH_TOKEN_KEY = "andisgreened-gh-token", GH_TOKEN_TTL = 60 * 60 * 1000;
+let ghTokenCache = null, ghTokenExpiryTimer = null;
+function hasCachedGhToken(){
+  if(ghTokenCache && ghTokenCache.expiresAt > Date.now()) return true;
+  if(ghTokenCache){ ghTokenCache = null; try{ localStorage.removeItem(GH_TOKEN_KEY); }catch(e){} }
+  return false;
+}
+function ghToken(){
+  if(hasCachedGhToken()) return ghTokenCache.token;
+  return ($("gh-token") && $("gh-token").value || "").trim();
+}
+function syncGhTokenUi(){
+  const entry = $("gh-token-entry");
+  if(entry) entry.hidden = hasCachedGhToken();
+}
+function scheduleGhTokenExpiry(){
+  clearTimeout(ghTokenExpiryTimer);
+  if(!hasCachedGhToken()) return;
+  ghTokenExpiryTimer = setTimeout(() => {
+    ghTokenCache = null;
+    try{ localStorage.removeItem(GH_TOKEN_KEY); }catch(e){}
+    syncGhTokenUi();
+    repaintSoft();
+  }, Math.max(0, ghTokenCache.expiresAt - Date.now()));
+}
+function saveGhToken(token){
+  const value = String(token || "").trim();
+  if(!value) return;
+  ghTokenCache = {token:value, expiresAt:Date.now()+GH_TOKEN_TTL};
+  try{ localStorage.setItem(GH_TOKEN_KEY, JSON.stringify(ghTokenCache)); }catch(e){}
+  const input = $("gh-token");
+  if(input) input.value = "";
+  syncGhTokenUi();
+  scheduleGhTokenExpiry();
+}
+function clearGhToken(){
+  clearTimeout(ghTokenExpiryTimer);
+  ghTokenCache = null;
+  try{ localStorage.removeItem(GH_TOKEN_KEY); }catch(e){}
+  syncGhTokenUi();
+}
+function restoreGhToken(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(GH_TOKEN_KEY) || "null");
+    if(saved && typeof saved.token === "string" && saved.token.trim() && Number.isFinite(saved.expiresAt) && saved.expiresAt > Date.now()){
+      ghTokenCache = saved;
+    } else localStorage.removeItem(GH_TOKEN_KEY);
+  }catch(e){
+    try{ localStorage.removeItem(GH_TOKEN_KEY); }catch(ignore){}
+  }
+  syncGhTokenUi();
+  scheduleGhTokenExpiry();
+}
 function toast(msg){
   let t = document.getElementById("toast");
   if(!t){ t = document.createElement("div"); t.id = "toast"; document.body.appendChild(t); }
@@ -1209,7 +1263,7 @@ function toggleMainDirEdit(name){
 }
 // ---- 5.8.0: Richtungen auf der Karte bearbeiten ----
 const DIR16 = ["N","NNO","NO","ONO","O","OSO","SO","SSO","S","SSW","SW","WSW","W","WNW","NW","NNW"];
-const DIRTY_KEY = "andisgreened-spot-dirty-v1", SEEN_KEY = "andisgreened-spot-updates-seen-v1", GH_TOKEN_KEY = "andisgreened-gh-token";
+const DIRTY_KEY = "andisgreened-spot-dirty-v1", SEEN_KEY = "andisgreened-spot-updates-seen-v1";
 const GH_REPO = "AndiSGreenED/andisgreened.github.io", UPD_PATH = "docs/spot-updates.json";
 let dirtySpots = new Set(), seenUpdates = {}, starMode = new Set();
 try { dirtySpots = new Set(JSON.parse(localStorage.getItem(DIRTY_KEY)||"[]")); } catch(e) {}
@@ -1386,7 +1440,8 @@ function dirEditorHtml(sp){
     return `<button type="button" class="${cls}" data-spot-action="cycle-dir" data-spot="${esc(sp.name)}" data-dir="${d}" aria-label="Richtung ${d}">${d}</button>`;
   }).join("");
   const degreeInputs = `<div class="dir-editor-tools"><span>Wellenstern: exakter Bereich &lt;45°; Start größer als Ende = über Nord</span><input type="number" class="star-degree" id="${minId}" min="0" max="360" step="0.01" value="${sp.waveStar ? sp.waveStar.min : ""}" placeholder="von °" aria-label="Wellenstern von Grad"><input type="number" class="star-degree" id="${maxId}" min="0" max="360" step="0.01" value="${sp.waveStar ? sp.waveStar.max : ""}" placeholder="bis °" aria-label="Wellenstern bis Grad"><button type="button" data-spot-action="set-wave-star-degrees" data-spot="${esc(sp.name)}" data-min-id="${minId}" data-max-id="${maxId}">Gradbereich setzen</button>${sp.waveStar ? `<button type="button" data-spot-action="clear-wave-star" data-spot="${esc(sp.name)}">Stern entfernen</button>` : ""}</div>`;
-  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" data-spot-action="toggle-star-mode" data-spot="${esc(sp.name)}">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Richtung antippen, Winkelbereich im Dialog festlegen; erneut antippen entfernt den Stern." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" data-spot-action="set-star-text" data-spot="${esc(sp.name)}">` : ""}</div>${degreeInputs}<div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" data-spot-action="open-maps" data-lat="${sp.lat}" data-lon="${sp.lon}" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${sid}" placeholder="Google-Maps-Link oder 54,4245, 11,0981"><button type="button" data-spot-action="set-spot-pos" data-spot="${esc(sp.name)}" data-input-id="pos-${sid}">Übernehmen</button><button type="button" data-spot-action="set-spot-pos-gps" data-spot="${esc(sp.name)}">📍 Ich steh am Strand 😀</button><button type="button" data-spot-action="restore-spot-pos" data-spot="${esc(sp.name)}">↩ Position zurücksetzen</button></div><div class="dir-editor-tools tokbox"><span>GitHub-Schlüssel zum Verteilen der Änderung (nur im Seitenspeicher):</span><input type="password" id="tok-${sid}" value="${esc(token)}" placeholder="github_pat_…" autocomplete="off" data-spot-action="sync-gh-token" data-spot="${esc(sp.name)}"><button type="button" data-spot-action="save-token-publish" data-spot="${esc(sp.name)}" data-input-id="tok-${sid}">Schlüssel verwenden &amp; speichern</button></div>${dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – mit „Schlüssel verwenden &amp; speichern“ verteilen.</span></div>` : ""}`;
+  const tokenBox = typeof hasCachedGhToken === "function" && hasCachedGhToken() ? "" : `<div class="dir-editor-tools tokbox"><span>GitHub-Schlüssel zum Verteilen der Änderung (für 1 Stunde gespeichert):</span><input type="password" id="tok-${sid}" value="${esc(token)}" placeholder="github_pat_…" autocomplete="off" data-spot-action="sync-gh-token" data-spot="${esc(sp.name)}"><button type="button" data-spot-action="save-token-publish" data-spot="${esc(sp.name)}" data-input-id="tok-${sid}">Schlüssel verwenden &amp; speichern</button></div>`;
+  return `<div class="dir-editor">${chips}</div><div class="dir-editor-tools"><button type="button" class="${starMode.has(sp.name)?"active":""}" data-spot-action="toggle-star-mode" data-spot="${esc(sp.name)}">★ Stern ${starMode.has(sp.name)?"setzen: an":"setzen"}</button><span>${starMode.has(sp.name) ? "Richtung antippen, Winkelbereich im Dialog festlegen; erneut antippen entfernt den Stern." : "Tippen: aus → möglich (×0,5) → gut (×1) → beste (×2) → aus"}</span>${sp.waveStar ? `<input type="text" class="star-text" maxlength="60" value="${esc(sp.waveStar.label||"")}" placeholder="Text zum Stern, z. B. beste Welle bei WNW" aria-label="Text zum Wellenstern" data-spot-action="set-star-text" data-spot="${esc(sp.name)}">` : ""}</div>${degreeInputs}<div class="dir-editor-tools posbox"><span>Position: ${sp.lat}, ${sp.lon} · <a href="https://www.google.com/maps/search/?api=1&query=${sp.lat},${sp.lon}" data-spot-action="open-maps" data-lat="${sp.lat}" data-lon="${sp.lon}" target="_blank" rel="noopener">auf Karte prüfen ↗</a></span><input type="text" id="pos-${sid}" placeholder="Google-Maps-Link oder 54,4245, 11,0981"><button type="button" data-spot-action="set-spot-pos" data-spot="${esc(sp.name)}" data-input-id="pos-${sid}">Übernehmen</button><button type="button" data-spot-action="set-spot-pos-gps" data-spot="${esc(sp.name)}">📍 Ich steh am Strand 😀</button><button type="button" data-spot-action="restore-spot-pos" data-spot="${esc(sp.name)}">↩ Position zurücksetzen</button></div>${tokenBox}${dirtySpots.has(sp.name) ? `<div class="dir-editor-tools"><span>Geändert – mit „Speichern“ verteilen.</span></div>` : ""}`;
 }
 function toggleStarMode(name){ if(starMode.has(name)) starMode.delete(name); else starMode.add(name); repaintSoft(name); }
 function repaintSoft(name=""){
@@ -1441,7 +1496,7 @@ const b64enc = s => btoa(unescape(encodeURIComponent(s)));
 const b64dec = s => decodeURIComponent(escape(atob(String(s).replace(/\s/g,""))));
 const spotState = sp => ({dirs: sp.dirs, weakDirs: sp.weakDirs || [], mainDir: sp.mainDir || "-", waveStar: sp.waveStar || null, models: Array.isArray(spotModels[sp.name]) && spotModels[sp.name].length ? [...spotModels[sp.name]].sort() : null, wave: spotWave[sp.name] || null, lat: sp.lat, lon: sp.lon});
 async function publishSpotEdits(){
-  const note = $("gh-note"), token = ($("gh-token").value || "").trim();
+  const note = $("gh-note"), token = ghToken();
   if(!token){ note.textContent = "Bitte zuerst den GitHub-Schlüssel eintragen."; return false; }
   if(!dirtySpots.size){ note.textContent = "Keine neuen Änderungen. Auf einer Karte „Bearbeiten“ antippen und Richtungen ändern."; return false; }
   const api = `https://api.github.com/repos/${GH_REPO}/contents/${UPD_PATH}`;
@@ -1466,9 +1521,10 @@ async function publishSpotEdits(){
       dirtySpots.clear(); try{ localStorage.setItem(DIRTY_KEY, "[]"); }catch(e){}
       updatePublishButton();
       note.textContent = `Gespeichert: ${names.join(", ")}. Die anderen sehen die Änderung in etwa 2 bis 10 Minuten beim Öffnen der App.`;
-      $("gh-token").value = "";
+      saveGhToken(token);
       return true;
     }catch(e){
+      if(String(e.message).includes("401")) clearGhToken();
       note.textContent = "Fehler: " + (e.message || e) + (String(e.message).includes("401") ? " – Schlüssel ungültig oder abgelaufen." : String(e.message).includes("403") || String(e.message).includes("404") ? " – Schlüssel braucht „Contents: Read and write“ für dieses Repository." : "");
       return false;
     }
@@ -2174,7 +2230,7 @@ const MODEL_CHOICES = [
 ];
 const MODEL_PREF_KEY = "andisgreened-active-models-v2";
 const DEFAULT_ACTIVE_MODELS = ["ICON","GFS","ECMWF","DMI","DWD","Google"];
-const APP_VERSION = "6.0.1";
+const APP_VERSION = "6.0.3";
 const SPOT_MODELS_KEY = "andisgreened-spot-models-v1";
 let spotModels = {};
 try { spotModels = JSON.parse(localStorage.getItem(SPOT_MODELS_KEY)||"{}") || {}; } catch(e) {}
@@ -2546,8 +2602,6 @@ function focusSpotCard(name){
 function paintResults(results,errors,selectedCount,f,focusSpot=""){
   const keepUi = uiState || captureCards(); uiState = null;
   const relevant = results.filter(x => x.res.good.length > 0);
-  const focused = results.find(x => x.spot.name === focusSpot);
-  if(focused && !relevant.includes(focused)) relevant.push(focused);
   const longest = r => r.windows.reduce((m,w)=>Math.max(m,w.end-w.start),0);
   const modelSupport = (r,spot) => { const am = getActiveModels(spot.name); return Math.max(0,...Object.entries(r.modelStats||{}).filter(([label])=>am.has(label)).map(([,m])=>m.good)); };
   relevant.sort((a,b) => Number(b.spot.name===focusSpot)-Number(a.spot.name===focusSpot) || rankScore(b.spot,b.res,f)-rankScore(a.spot,a.res,f) || b.res.good.length-a.res.good.length || longest(b.res)-longest(a.res) || modelSupport(b.res,b.spot)-modelSupport(a.res,a.spot));
@@ -2577,7 +2631,7 @@ function best3Median(rows){
   });
   return best;
 }
-const WEEK_KEY = "andisgreened-week-v2";
+const WEEK_KEY = "andisgreened-week-v3";
 function weekModel(){
   if(!lastRaw || !lastFilters) return null;
   const t = todayNoon(), nowH = new Date().getHours(), days = [];
@@ -2587,13 +2641,12 @@ function weekModel(){
   }))}));
   for(let i=0; i<=MAX_DAYS; i++){
     const date = dateISO(addDays(t,i));
-    const f = {...lastFilters, date, startHour:null, usedir:true, minwind:0, maxwind:Infinity, minwave:0, maxwave:Infinity};
+    const f = {...lastFilters, date};
     const vals = [];
     weeklyRaw.forEach(d => {
       if(!d.rows) return;
-      let day = scoreRows(d.rows,f,d.spot).day;
+      let day = scoreRows(d.rows,f,d.spot).good;
       if(i === 0) day = day.filter(r => r.hour >= nowH); // heute nur noch die kommenden Stunden
-      day = day.filter(r => Number.isFinite(r.dir) && d.spot.dirs.includes(compass(r.dir)));
       const b = best3Median(day);
       if(b) vals.push({kn:b.kn, start:b.start, name:d.spot.name});
     });
@@ -2775,7 +2828,7 @@ function syncStatusSummary(){
   sum.textContent = parts[0];
   if(warn.length){ const w = document.createElement("span"); w.className = "warn"; w.textContent = " ⚠"; w.title = warn.join(" · "); sum.appendChild(w); }
 }
-try{ localStorage.removeItem(GH_TOKEN_KEY); }catch(e){}
+restoreGhToken();
 $("gh-publish").addEventListener("click", publishSpotEdits);
 updatePublishButton();
 setTimeout(checkSpotUpdates, 1500);

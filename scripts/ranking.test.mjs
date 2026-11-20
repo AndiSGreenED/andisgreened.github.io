@@ -27,6 +27,52 @@ const starDirsOf = vm.runInNewContext(`${source.slice(starDirsStart, starDirsEnd
 const bestWaveStart = source.indexOf("function hasBestWaveDirection(");
 const bestWaveEnd = source.indexOf("\n// 5.5.0:", bestWaveStart);
 const hasBestWaveDirection = vm.runInNewContext(`${source.slice(bestWaveStart, bestWaveEnd)}; hasBestWaveDirection`, { angleInRange });
+test("weekly bars use only rows that pass the active relevance filters", () => {
+  const weekStart = source.indexOf("const WEEK_SCALE =");
+  const weekEnd = source.indexOf("\nfunction distLabel(", weekStart);
+  const NativeDate = Date;
+  const seenFilters = [];
+  const FakeDate = class extends NativeDate {
+    constructor(...args){ super(...(args.length ? args : ["2030-06-01T08:00:00Z"])); }
+    static now(){ return NativeDate.UTC(2030,5,1,8); }
+  };
+  const weekModel = vm.runInNewContext(
+    `${source.slice(weekStart,weekEnd)}; weekModel`,
+    {
+      MAX_DAYS:0,
+      Date:FakeDate,
+      MS_TO_KN:1.943844,
+      lastFilters:{date:"2030-05-31",startHour:6,usedir:false,minwind:15,maxwind:25,minwave:0.5,maxwave:2},
+      lastRaw:[
+        {spot:{name:"Gold",dirs:["W"]},rows:[{models:{ICON:{wind:22}},hour:12}]},
+        {spot:{name:"Treff",dirs:["W"]},rows:[{models:{ICON:{wind:22}},hour:12}]}
+      ],
+      todayNoon:() => new FakeDate("2030-06-01T12:00:00Z"),
+      addDays:(date,count) => { const d = new FakeDate(date); d.setUTCDate(d.getUTCDate()+count); return d; },
+      dateISO:date => date.toISOString().slice(0,10),
+      scoreRows:(rows,f,spot) => {
+        seenFilters.push({name:spot.name,...f});
+        const three = [12,13,14].map(hour => ({hour,wind:22,time:"2030-06-01T12:00:00",dir:270}));
+        return {
+          day:three,
+          good:spot.name==="Treff" ? three : [three[0]]
+        };
+      },
+      CORE_WIND_MODELS:new Set(["ICON","GFS","ECMWF"])
+    }
+  );
+
+  const result = weekModel();
+  assert.deepEqual(
+    seenFilters.map(f => ({name:f.name,startHour:f.startHour,usedir:f.usedir,minwind:f.minwind,maxwind:f.maxwind,minwave:f.minwave,maxwave:f.maxwave})),
+    [
+      {name:"Gold",startHour:6,usedir:false,minwind:15,maxwind:25,minwave:0.5,maxwave:2},
+      {name:"Treff",startHour:6,usedir:false,minwind:15,maxwind:25,minwave:0.5,maxwave:2}
+    ]
+  );
+  assert.equal(result.days[0].name,"Treff");
+  assert.equal(result.days[0].kn,22);
+});
 const validationStart = source.indexOf("function safeHttpsUrl(");
 const validationEnd = source.indexOf("\nconst MAIN_DIR_KEY", validationStart);
 const validation = vm.runInNewContext(`${source.slice(validationStart, validationEnd)}; ({safeWindfinderUrl,safeDailyDoseUrl,validWave})`, { URL });
