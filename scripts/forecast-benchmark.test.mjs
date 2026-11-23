@@ -1,15 +1,19 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {
   aggregateCohort,
   aggregateObservationRows,
   buildCohorts,
   buildPendingForecasts,
+  cohortFingerprint,
   normalizeBrightSkyResponse,
+  normalizeDmiObservations,
   parseSpots,
   pendingStatus,
   regionForSpot,
   retryForecastRequest,
+  selectBenchmarkSpots,
   selectCandidateSpots
 } from "./forecast-benchmark.mjs";
 
@@ -57,6 +61,71 @@ test("requires usable forecasts for every region and model", async () => {
     /no usable forecast aggregates/);
   await assert.rejects(buildPendingForecasts(spots.filter(spot => spot.region !== "baltic"), stations, now, valid),
     /baltic: fewer than 3/);
+});
+
+test("adds favorite cohorts without changing regional spot selection", () => {
+  const raw = parseSpots(readFileSync(new URL("../docs/index.html", import.meta.url), "utf8"));
+  const updates = JSON.parse(readFileSync(new URL("../docs/spot-updates.json", import.meta.url), "utf8"));
+  const regional = selectCandidateSpots(raw);
+  const all = selectBenchmarkSpots(raw, updates.changes);
+  assert.deepEqual(all.filter(spot => !spot.favoriteOnly).map(spot => spot.key), regional.map(spot => spot.key));
+  assert.equal(all.filter(spot => spot.favoriteGroup === "favorites_baltic").length, 8);
+  assert.equal(all.filter(spot => spot.favoriteGroup === "favorites_hanstholm").length, 2);
+  const stations = new Map(all.map(spot => [spot.key, { distanceKm: 5 }]));
+  const cohorts = buildCohorts(all, stations);
+  assert.equal(cohorts.get("baltic|near").length, regional.filter(spot => spot.region === "baltic").length);
+  assert.equal(cohorts.get("favorites_baltic|near").length, 8);
+  assert.equal(cohorts.get("favorites_hanstholm|near").length, 2);
+  assert.ok(all.some(spot => spot.favoriteGroup === "favorites_baltic" &&
+    spot.lat === updates.changes.Altenteil.lat && spot.lon === updates.changes.Altenteil.lon));
+  assert.notEqual(cohortFingerprint([{ key: "a" }, { key: "b" }]),
+    cohortFingerprint([{ key: "a" }, { key: "c" }]));
+  assert.equal(cohortFingerprint([{ key: "a" }, { key: "b" }]),
+    cohortFingerprint([{ key: "b" }, { key: "a" }]));
+});
+
+test("collects regional and favorite forecasts independently", async () => {
+  const spots = ["north_sea", "baltic", "inland"].flatMap(region =>
+    [1, 2, 3].map(id => ({
+      key: `${region}-${id}`, region,
+      ...(region === "baltic" ? { favoriteGroup: "favorites_baltic" } : {})
+    }))
+  );
+  spots.push(...[1, 2].map(id => ({
+    key: `dk-${id}`, region: "inland", favoriteOnly: true, favoriteGroup: "favorites_hanstholm"
+  })));
+  const stations = new Map(spots.map(spot => [spot.key, { distanceKm: 5 }]));
+  const target = "2026-11-18T04:00:00.000Z";
+  const requests = [];
+  const forecasts = await buildPendingForecasts(spots, stations, Date.parse("2026-11-18T03:00:00Z"),
+    async (region, cohort, model) => {
+      requests.push(`${region}|${model}`);
+      return new Map(cohort.map(spot => [spot.key, new Map([[target, { speed: 10, direction: 270 }]])]));
+    });
+  assert.equal(requests.length, 25);
+  assert.equal(forecasts.filter(row => row.region === "favorites_baltic").length, 10);
+  assert.equal(forecasts.filter(row => row.region === "favorites_hanstholm").length, 10);
+  assert.ok(forecasts.filter(row => row.region.startsWith("favorites_")).every(row => row.cohortFingerprint));
+  assert.ok(forecasts.every(row => !("key" in row) && !("lat" in row) && !("lon" in row)));
+});
+
+test("converts DMI station wind observations to hourly knots and ignores other stations", () => {
+  const feature = (parameterId, value, observed, stationId = "06021") => ({
+    geometry: { coordinates: [8.6023, 57.1248] },
+    properties: { parameterId, value, observed, stationId }
+  });
+  const data = normalizeDmiObservations({ features: [
+    feature("wind_speed", 5.144444444444445, "2026-11-22T10:00:00Z"),
+    feature("wind_dir", 350, "2026-11-22T10:00:00Z"),
+    feature("wind_speed", 5.144444444444445, "2026-11-22T10:10:00Z"),
+    feature("wind_dir", 10, "2026-11-22T10:10:00Z"),
+    feature("wind_speed", 99, "2026-11-22T10:10:00Z", "other")
+  ] });
+  const hour = data.hourly.get("2026-11-22T10:00:00.000Z");
+  assert.ok(Math.abs(hour.meanWindKnots - 10) < 1e-10);
+  assert.ok(hour.meanDirectionDeg < 1 || hour.meanDirectionDeg > 359);
+  assert.deepEqual(data.coordinates, [8.6023, 57.1248]);
+  assert.throws(() => normalizeDmiObservations({}), /Unexpected DMI/);
 });
 
 test("parses the checked-in SPOTS_RAW literal including nested spot metadata", () => {

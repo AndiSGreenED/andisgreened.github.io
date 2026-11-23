@@ -2,7 +2,12 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **6.0.10** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **6.0.11** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+
+## 6.0.11
+- Der Windbenchmark vergleicht zusätzlich die ausgewählten Ostsee-Favoriten und beide Hanstholm-Spots in getrennten Gruppen; die bisherige regionale Stichprobe bleibt unverändert.
+- Für Hanstholm werden nahe DMI-Windmessungen verwendet. Veröffentlichte Werte bleiben Gruppenkennzahlen; Hanstholm umfasst zwei Spots und eine gemeinsame Messstation.
+- Veröffentlichte Spot-Positionsänderungen werden für die Favoriten berücksichtigt. Ändert sich eine Gruppen-Zusammensetzung, werden ältere Vorhersagemittel nicht mit einer anderen Gruppe verglichen.
 
 ## 6.0.10
 - Der Forecast-Benchmark wiederholt vorübergehende Modellabfragefehler begrenzt und meldet die technische Ursache.

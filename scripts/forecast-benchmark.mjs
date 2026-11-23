@@ -1,15 +1,30 @@
 #!/usr/bin/env node
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { runInNewContext } from "node:vm";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SPOTS_FILE = resolve(ROOT, "docs/index.html");
+const SPOT_UPDATES_FILE = resolve(ROOT, "docs/spot-updates.json");
 const STATE_FILE = resolve(process.env.BENCHMARK_STATE_FILE || resolve(ROOT, ".benchmark/forecast-benchmark-pending.json"));
 const METRICS_FILE = resolve(ROOT, "docs/data/forecast-benchmark.json");
 const BRIGHTSKY_URL = "https://api.brightsky.dev/weather";
 const OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast";
+const DMI_URL = "https://opendataapi.dmi.dk/v2/metObs/collections/observation/items";
+const DMI_STATION = "06021";
+const FAVORITE_GROUPS = {
+  favorites_baltic: {
+    names: ["Altenteil", "Heiligenhafen", "Dazendorf", "Kägsdorf", "Kühlungsborn",
+      "Kellenhusen Südstrand", "Kellenhusen Nordstrand", "Dahmeshöved"],
+    minSpots: 3
+  },
+  favorites_hanstholm: {
+    names: ["Hanstholm Middles", "Hanstholm Fischfabrik"],
+    minSpots: 2
+  }
+};
 const MODEL_IDS = [
   "icon_seamless",
   "gfs_seamless",
@@ -121,6 +136,39 @@ export function selectCandidateSpots(rawSpots, limit = MAX_SPOTS) {
     .sort((a, b) => a.region.localeCompare(b.region) || a.lat - b.lat || a.lon - b.lon);
 }
 
+export function selectBenchmarkSpots(rawSpots, updates = {}) {
+  const selected = selectCandidateSpots(rawSpots);
+  const byKey = new Map(selected.map(spot => [spot.key, spot]));
+  for (const [group, config] of Object.entries(FAVORITE_GROUPS)) {
+    for (const name of config.names) {
+      const matches = rawSpots.filter(spot => spot.name === name);
+      if (matches.length !== 1)
+        throw new Error(`Favorite spot "${name}" must exist exactly once`);
+      const raw = matches[0];
+      const update = updates[name];
+      const hasUpdatedPosition = Number.isFinite(update?.lat) && Number.isFinite(update?.lon);
+      const lat = Number(hasUpdatedPosition ? update.lat : raw.lat);
+      const lon = Number(hasUpdatedPosition ? update.lon : raw.lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon))
+        throw new Error(`Favorite spot "${name}" has invalid coordinates`);
+      const key = spotKey({ lat, lon });
+      let spot = byKey.get(key);
+      if (!spot) {
+        spot = { key, lat, lon, region: regionForSpot(raw), favoriteOnly: true };
+        byKey.set(key, spot);
+      }
+      if (spot.favoriteGroup && spot.favoriteGroup !== group)
+        throw new Error(`Favorite coordinate belongs to multiple groups: ${name}`);
+      spot.favoriteGroup = group;
+    }
+  }
+  return [...byKey.values()];
+}
+
+export function cohortFingerprint(cohort) {
+  return createHash("sha256").update(cohort.map(spot => spot.key).sort().join("|")).digest("hex");
+}
+
 function parseUtcTime(value) {
   const text = String(value);
   const utcText = /(?:Z|[+-]\d\d:\d\d)$/.test(text) ? text : `${text}Z`;
@@ -176,27 +224,36 @@ export function aggregateObservationRows(rows) {
 
 export function buildCohorts(spots, stationData) {
   const cohorts = new Map();
-  for (const region of ["north_sea", "baltic", "inland"]) {
+  const groups = [
+    ...["north_sea", "baltic", "inland"].map(region => ({
+      name: region, minSpots: MIN_REGION_SPOTS,
+      includes: spot => spot.region === region && !spot.favoriteOnly
+    })),
+    ...Object.entries(FAVORITE_GROUPS).map(([name, config]) => ({
+      name, minSpots: config.minSpots, includes: spot => spot.favoriteGroup === name
+    }))
+  ];
+  for (const group of groups) {
     for (const tier of Object.keys(STATION_TIERS)) {
       const members = spots.filter(spot =>
-        spot.region === region &&
+        group.includes(spot) &&
         Number.isFinite(stationData.get(spot.key)?.distanceKm) &&
         stationData.get(spot.key).distanceKm <= STATION_TIERS[tier]
       );
-      if (members.length >= MIN_REGION_SPOTS)
-        cohorts.set(`${region}|${tier}`, members);
+      if (members.length >= group.minSpots)
+        cohorts.set(`${group.name}|${tier}`, members);
     }
   }
   return cohorts;
 }
 
-export function aggregateCohort(cohort, valuesBySpot, timeKey) {
+export function aggregateCohort(cohort, valuesBySpot, timeKey, minSpots = MIN_REGION_SPOTS) {
   const values = cohort.flatMap(spot => {
     const value = valuesBySpot.get(spot.key)?.get(timeKey);
     return value ? [value] : [];
   });
   const coverage = cohort.length ? values.length / cohort.length : 0;
-  if (values.length < MIN_REGION_SPOTS || coverage < MIN_OBSERVATION_COVERAGE) return null;
+  if (values.length < minSpots || coverage < MIN_OBSERVATION_COVERAGE) return null;
   const average = meanWind(values);
   return average ? {
     ...average,
@@ -310,6 +367,60 @@ async function loadObservationDay(spots, date) {
   return stationData;
 }
 
+export function normalizeDmiObservations(response) {
+  if (!Array.isArray(response?.features))
+    throw new Error("Unexpected DMI observation response");
+  if (response.features.length >= 10000)
+    throw new Error("DMI observation response exceeds the page limit");
+  const observations = new Map();
+  let coordinates = null;
+  for (const feature of response.features) {
+    const properties = feature?.properties;
+    if (properties?.stationId !== DMI_STATION ||
+        !["wind_speed", "wind_dir"].includes(properties.parameterId)) continue;
+    const timestamp = parseUtcTime(properties.observed);
+    const value = finiteNumber(properties.value);
+    const point = feature.geometry?.coordinates;
+    if (timestamp === null || value === null || !Array.isArray(point) ||
+        !Number.isFinite(point[0]) || !Number.isFinite(point[1])) continue;
+    if (!coordinates) coordinates = point;
+    const key = new Date(timestamp).toISOString();
+    if (!observations.has(key)) observations.set(key, {});
+    observations.get(key)[properties.parameterId] = value;
+  }
+  const rows = [...observations.entries()].flatMap(([timestamp, data]) =>
+    Number.isFinite(data.wind_speed) && data.wind_speed >= 0
+      ? [{ timestamp, wind_speed: data.wind_speed * 3.6,
+        wind_direction: data.wind_dir > 0 && data.wind_dir <= 360 ? data.wind_dir : null }]
+      : []
+  );
+  return { coordinates, hourly: aggregateObservationRows(rows) };
+}
+
+function distanceKm(lat1, lon1, lat2, lon2) {
+  const radians = degrees => degrees * Math.PI / 180;
+  const dLat = radians(lat2 - lat1), dLon = radians(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(radians(lat1)) * Math.cos(radians(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+async function loadDmiObservationDay(spots, date) {
+  const url = new URL(DMI_URL);
+  const nextDate = utcDate(Date.parse(`${date}T00:00:00Z`) + 24 * 60 * 60 * 1000);
+  url.searchParams.set("stationId", DMI_STATION);
+  url.searchParams.set("datetime", `${date}T00:00:00Z/${nextDate}T00:00:00Z`);
+  url.searchParams.set("limit", "10000");
+  const data = normalizeDmiObservations(await fetchJson(url));
+  if (!data.coordinates || !data.hourly.size)
+    throw new Error(`[DMI] ${date}: no usable Hanstholm wind observations`);
+  const [lon, lat] = data.coordinates;
+  return new Map(spots.map(spot => [spot.key, {
+    distanceKm: distanceKm(spot.lat, spot.lon, lat, lon),
+    hourly: data.hourly
+  }]));
+}
+
 function utcDate(timestamp) {
   return new Date(timestamp).toISOString().slice(0, 10);
 }
@@ -411,12 +522,16 @@ async function fetchModelForecasts(region, cohort, model) {
 
 export async function buildPendingForecasts(spots, stationData, issuedAtMs, fetchForecasts = fetchModelForecasts) {
   const cohorts = buildCohorts(spots, stationData);
-  const regions = ["north_sea", "baltic", "inland"];
+  const regions = [
+    "north_sea", "baltic", "inland",
+    ...Object.keys(FAVORITE_GROUPS).filter(group => spots.some(spot => spot.favoriteGroup === group))
+  ];
   const pending = [];
   for (const region of regions) {
+    const minSpots = FAVORITE_GROUPS[region]?.minSpots ?? MIN_REGION_SPOTS;
     const extended = cohorts.get(`${region}|extended`);
     if (!extended) {
-      throw new Error(`[Open-Meteo] ${region}: fewer than ${MIN_REGION_SPOTS} nearby DWD stations`);
+      throw new Error(`[Open-Meteo] ${region}: fewer than ${minSpots} spots with nearby observations`);
     }
     for (const model of MODEL_IDS) {
       let forecasts;
@@ -436,9 +551,9 @@ export async function buildPendingForecasts(spots, stationData, issuedAtMs, fetc
         for (const stationTier of Object.keys(STATION_TIERS)) {
           const cohort = cohorts.get(`${region}|${stationTier}`);
           if (!cohort) continue;
-          const aggregate = aggregateCohort(cohort, forecasts, targetTime);
+          const aggregate = aggregateCohort(cohort, forecasts, targetTime, minSpots);
           if (!aggregate || aggregate.sampleCount !== aggregate.expectedCount) continue;
-          pending.push({
+          const row = {
             issuedAt: new Date(issuedAtMs).toISOString(),
             targetTime,
             model,
@@ -449,7 +564,9 @@ export async function buildPendingForecasts(spots, stationData, issuedAtMs, fetc
             meanWindKnots: aggregate.meanWindKnots,
             meanDirectionDeg: aggregate.meanDirectionDeg,
             expectedCount: aggregate.expectedCount
-          });
+          };
+          if (FAVORITE_GROUPS[region]) row.cohortFingerprint = cohortFingerprint(cohort);
+          pending.push(row);
         }
       }
       if (pending.length === previousCount)
@@ -462,10 +579,11 @@ export async function buildPendingForecasts(spots, stationData, issuedAtMs, fetc
 
 async function run() {
   const html = await readFile(SPOTS_FILE, "utf8");
-  const spots = selectCandidateSpots(parseSpots(html));
+  const updates = JSON.parse(await readFile(SPOT_UPDATES_FILE, "utf8"));
+  const spots = selectBenchmarkSpots(parseSpots(html), updates.changes);
   if (spots.length < MIN_REGION_SPOTS)
     throw new Error(`Only ${spots.length} candidate spots found`);
-  console.log(`[Benchmark] ${spots.length} deterministic German-region spots selected`);
+  console.log(`[Benchmark] ${spots.length} deterministic regional and favorite spots selected`);
 
   const rawState = await readFile(STATE_FILE, "utf8").catch(error => {
     if (error.code === "ENOENT") return null;
@@ -490,7 +608,12 @@ async function run() {
   const orderedDates = [...neededDates].sort((a, b) => b.localeCompare(a));
   const observationsByDate = new Map();
   for (const date of orderedDates) {
-    observationsByDate.set(date, await loadObservationDay(spots, date));
+    const germanSpots = spots.filter(spot => spot.favoriteGroup !== "favorites_hanstholm");
+    const danishSpots = spots.filter(spot => spot.favoriteGroup === "favorites_hanstholm");
+    const observations = await loadObservationDay(germanSpots, date);
+    for (const [key, value] of await loadDmiObservationDay(danishSpots, date))
+      observations.set(key, value);
+    observationsByDate.set(date, observations);
   }
 
   const metrics = new Map(publicMetrics.metrics.map(metric => [
@@ -514,12 +637,14 @@ async function run() {
       continue;
     }
     const cohort = buildCohorts(spots, stationData).get(`${row.region}|${row.stationTier}`);
-    if (!cohort || cohort.length !== row.expectedCount) {
+    if (!cohort || cohort.length !== row.expectedCount ||
+        (FAVORITE_GROUPS[row.region] && row.cohortFingerprint !== cohortFingerprint(cohort))) {
       remainingPending.push(row);
       continue;
     }
     const valuesBySpot = new Map([...stationData.entries()].map(([key, data]) => [key, data.hourly]));
-    const actual = aggregateCohort(cohort, valuesBySpot, row.targetTime);
+    const actual = aggregateCohort(cohort, valuesBySpot, row.targetTime,
+      FAVORITE_GROUPS[row.region]?.minSpots ?? MIN_REGION_SPOTS);
     if (!actual) {
       remainingPending.push(row);
       continue;
@@ -541,7 +666,7 @@ async function run() {
   const outputMetrics = {
     schemaVersion: 1,
     updatedAt,
-    observationSource: "DWD via Bright Sky",
+    observationSource: "DWD via Bright Sky; DMI for Hanstholm",
     forecastSource: "Open-Meteo",
     metrics: [...metrics.values()].sort((a, b) =>
       a.month.localeCompare(b.month) ||
