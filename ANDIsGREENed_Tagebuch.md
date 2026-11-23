@@ -2,7 +2,11 @@
 
 Änderungsprotokoll der App. Versionierung: **Major.Minor.Patch**
 (Patch = Fehlerbehebung/Kleinigkeit, Minor = neue Funktion, Major = größerer Umbau).
-Aktuelle Version: **6.0.9** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+Aktuelle Version: **6.0.10** (Verteilpaket `ANDIsGREENed_Verteilpaket_5.5.0.zip`, Repository `andisgreened/andisgreened.github.io`)
+
+## 6.0.10
+- Der Forecast-Benchmark wiederholt vorübergehende Modellabfragefehler begrenzt und meldet die technische Ursache.
+- Fehlen Modell- oder Regionsdaten, schlägt der Lauf jetzt ausdrücklich fehl statt unvollständige Ergebnisse als Erfolg zu melden; bestehende Messdaten bleiben erhalten.
 
 ## 6.0.9
 - Cookiefreie, aggregierte Seitenaufrufe werden über GoatCounter erfasst.

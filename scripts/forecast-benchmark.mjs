@@ -219,7 +219,13 @@ async function fetchJson(url) {
   if (lastRequestAt && wait > 0) await sleep(wait);
   lastRequestAt = Date.now();
 
-  const response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+  let response;
+  try {
+    response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+  } catch (error) {
+    const detail = error.cause?.code || error.cause?.message || error.message;
+    throw new Error(`Network request failed for ${new URL(url).hostname}: ${detail}`, { cause: error });
+  }
   if (!response.ok) {
     const retryAfter = response.headers.get("Retry-After");
     const error = new Error(`HTTP ${response.status} for ${new URL(url).hostname}${retryAfter ? ` (Retry-After: ${retryAfter})` : ""}`);
@@ -227,6 +233,21 @@ async function fetchJson(url) {
     throw error;
   }
   return response.json();
+}
+
+export async function retryForecastRequest(request, wait = sleep) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      return await request();
+    } catch (error) {
+      const transient = error.cause?.name === "TypeError" ||
+        error.cause?.name === "TimeoutError" || (error.status >= 500 && error.status <= 599);
+      if (!transient || attempt === 3) throw error;
+      const delay = attempt * 5000;
+      console.warn(`[Open-Meteo] ${error.message}; retry ${attempt}/2 in ${delay / 1000}s`);
+      await wait(delay);
+    }
+  }
 }
 
 function urlForBrightSky(spot, date) {
@@ -366,7 +387,7 @@ async function fetchModelForecasts(region, cohort, model) {
   url.searchParams.set("forecast_days", "8");
   url.searchParams.set("cell_selection", region === "inland" ? "land" : "sea");
 
-  const data = await fetchJson(url);
+  const data = await retryForecastRequest(() => fetchJson(url));
   const locations = Array.isArray(data) ? data : [data];
   if (locations.length !== cohort.length)
     throw new Error(`${model}/${region}: expected ${cohort.length} locations, received ${locations.length}`);
@@ -388,28 +409,24 @@ async function fetchModelForecasts(region, cohort, model) {
   }));
 }
 
-async function buildPendingForecasts(spots, stationData, issuedAtMs) {
+export async function buildPendingForecasts(spots, stationData, issuedAtMs, fetchForecasts = fetchModelForecasts) {
   const cohorts = buildCohorts(spots, stationData);
   const regions = ["north_sea", "baltic", "inland"];
   const pending = [];
-  let successfulRequests = 0;
-
   for (const region of regions) {
     const extended = cohorts.get(`${region}|extended`);
     if (!extended) {
-      console.log(`[Open-Meteo] ${region}: fewer than ${MIN_REGION_SPOTS} nearby DWD stations; skipped`);
-      continue;
+      throw new Error(`[Open-Meteo] ${region}: fewer than ${MIN_REGION_SPOTS} nearby DWD stations`);
     }
     for (const model of MODEL_IDS) {
       let forecasts;
       try {
-        forecasts = await fetchModelForecasts(region, extended, model);
+        forecasts = await fetchForecasts(region, extended, model);
       } catch (error) {
-        console.error(`[Open-Meteo] ${model}/${region} failed: ${error.message}`);
-        continue;
+        throw new Error(`[Open-Meteo] ${model}/${region} failed: ${error.message}`, { cause: error });
       }
-      successfulRequests++;
 
+      const previousCount = pending.length;
       const timeKeys = [...forecasts.values()].find(values => values.size > 0)?.keys() ?? [];
       for (const targetTime of timeKeys) {
         const targetMs = Date.parse(targetTime);
@@ -435,10 +452,11 @@ async function buildPendingForecasts(spots, stationData, issuedAtMs) {
           });
         }
       }
+      if (pending.length === previousCount)
+        throw new Error(`[Open-Meteo] ${model}/${region}: no usable forecast aggregates`);
       console.log(`[Open-Meteo] ${model}/${region}: completed`);
     }
   }
-  if (!successfulRequests) throw new Error("No Open-Meteo model request succeeded");
   return pending;
 }
 

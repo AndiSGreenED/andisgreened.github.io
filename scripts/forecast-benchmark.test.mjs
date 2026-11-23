@@ -4,12 +4,60 @@ import {
   aggregateCohort,
   aggregateObservationRows,
   buildCohorts,
+  buildPendingForecasts,
   normalizeBrightSkyResponse,
   parseSpots,
   pendingStatus,
   regionForSpot,
+  retryForecastRequest,
   selectCandidateSpots
 } from "./forecast-benchmark.mjs";
+
+test("retries transient forecast failures but not rate limits", async () => {
+  let attempts = 0;
+  const waits = [];
+  const result = await retryForecastRequest(async () => {
+    attempts++;
+    if (attempts < 3) throw new Error("connection failed", { cause: new TypeError("fetch failed") });
+    return "ok";
+  }, async delay => waits.push(delay));
+  assert.equal(result, "ok");
+  assert.equal(attempts, 3);
+  assert.deepEqual(waits, [5000, 10000]);
+
+  const rateLimit = Object.assign(new Error("HTTP 429"), { status: 429 });
+  await assert.rejects(retryForecastRequest(async () => { throw rateLimit; }, async () => {
+    assert.fail("rate limit must not be retried");
+  }), /HTTP 429/);
+
+  let failures = 0;
+  await assert.rejects(retryForecastRequest(async () => {
+    failures++;
+    throw new Error("server error", { cause: new TypeError("fetch failed") });
+  }, async () => {}), /server error/);
+  assert.equal(failures, 3);
+});
+
+test("requires usable forecasts for every region and model", async () => {
+  const spots = ["north_sea", "baltic", "inland"].flatMap(region =>
+    [1, 2, 3].map(id => ({ key: `${region}-${id}`, region }))
+  );
+  const stations = new Map(spots.map(spot => [spot.key, { distanceKm: 5 }]));
+  const now = Date.parse("2026-11-18T03:00:00Z");
+  const target = "2026-11-18T04:00:00.000Z";
+  const valid = async (_region, cohort) => new Map(cohort.map(spot => [
+    spot.key, new Map([[target, { speed: 10, direction: 270 }]])
+  ]));
+  assert.equal((await buildPendingForecasts(spots, stations, now, valid)).length, 30);
+  await assert.rejects(buildPendingForecasts(spots, stations, now, async (region, cohort, model) => {
+    if (region === "baltic" && model === "gfs_seamless") throw new Error("network down");
+    return valid(region, cohort);
+  }), /gfs_seamless\/baltic failed: network down/);
+  await assert.rejects(buildPendingForecasts(spots, stations, now, async () => new Map()),
+    /no usable forecast aggregates/);
+  await assert.rejects(buildPendingForecasts(spots.filter(spot => spot.region !== "baltic"), stations, now, valid),
+    /baltic: fewer than 3/);
+});
 
 test("parses the checked-in SPOTS_RAW literal including nested spot metadata", () => {
   const spots = parseSpots(`const SPOTS_RAW = [
