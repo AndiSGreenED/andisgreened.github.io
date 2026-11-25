@@ -530,6 +530,11 @@ export async function buildPendingForecasts(spots, stationData, issuedAtMs, fetc
   for (const region of regions) {
     const minSpots = FAVORITE_GROUPS[region]?.minSpots ?? MIN_REGION_SPOTS;
     const extended = cohorts.get(`${region}|extended`);
+    if (!extended && FAVORITE_GROUPS[region] &&
+        !spots.some(spot => spot.favoriteGroup === region && stationData.has(spot.key))) {
+      console.warn(`[Open-Meteo] ${region}: no observations available, skipping this run`);
+      continue;
+    }
     if (!extended) {
       throw new Error(`[Open-Meteo] ${region}: fewer than ${minSpots} spots with nearby observations`);
     }
@@ -611,8 +616,13 @@ async function run() {
     const germanSpots = spots.filter(spot => spot.favoriteGroup !== "favorites_hanstholm");
     const danishSpots = spots.filter(spot => spot.favoriteGroup === "favorites_hanstholm");
     const observations = await loadObservationDay(germanSpots, date);
-    for (const [key, value] of await loadDmiObservationDay(danishSpots, date))
-      observations.set(key, value);
+    try {
+      for (const [key, value] of await loadDmiObservationDay(danishSpots, date))
+        observations.set(key, value);
+    } catch (error) {
+      // DMI data can lag or have gaps; skip Hanstholm for this date instead of failing the whole run.
+      console.warn(`[DMI] ${date}: skipping Hanstholm spots (${error.message})`);
+    }
     observationsByDate.set(date, observations);
   }
 
