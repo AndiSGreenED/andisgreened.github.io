@@ -14,6 +14,6 @@ ANDIsGREENed shows at a glance which spots near you have the right wind and wave
 • Back up or share spot lists as a file
 
 <b>Free and private</b>
-No accounts, no ads, no tracking. All settings stay on your device. Open source under the MIT license.
+No accounts or ads. App usage is measured with cookieless, aggregate page views without user profiles. You can opt out in the privacy notice. All settings stay on your device. Open source under the MIT license.
 
 Weather data: Open-Meteo (CC BY 4.0), German Weather Service (DWD) via Bright Sky. Place search: Open-Meteo and © OpenStreetMap contributors.
