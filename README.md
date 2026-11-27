@@ -5,7 +5,7 @@ Wind- und Wellencheck für Windsurfer und Wingfoiler: Welche Spots passen heute?
 
 - **Web-App:** https://andisgreened.github.io/ (im Browser „App installieren“ / „Zum Home-Bildschirm“)
 - **Android-App:** [Releases](https://github.com/AndiSGreenED/andisgreened.github.io/releases) – fester Link: [ANDIsGREENed.apk](https://github.com/AndiSGreenED/andisgreened.github.io/releases/download/apk-latest/ANDIsGREENed.apk)
-- **Datenschutz / Privacy:** https://andisgreened.github.io/datenschutz.html – keine Konten, keine Werbung, kein Tracking.
+- **Datenschutz / Privacy:** https://andisgreened.github.io/datenschutz.html – keine Konten, keine Werbung, cookiefreie aggregierte Seitenzählung ohne Nutzerprofile.
 
 ## Aufbau / Structure
 - `docs/` – die App (HTML/JS, GitHub Pages). Version = `APP_VERSION` in `docs/index.html`.
