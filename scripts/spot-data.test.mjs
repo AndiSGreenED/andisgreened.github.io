@@ -48,16 +48,15 @@ test("privacy-friendly page analytics is isolated, opt-in capable and has a fall
     assert.match(source,/optOutRequested/);
     assert.match(source,/optInRequested/);
     assert.match(source,/dnt && !optIn/);
-    assert.match(source,/andisgreened\\.goatcounter\\.com\\/count/);
-    assert.match(source,/gc\\.zgo\\.at\\/count\\.js/);
-    assert.match(source,/no_onload/);
-    assert.match(source,/pixelFallback/);
-    assert.match(source,/setTimeout\\(pixelFallback, 7000\\)/);
-    assert.doesNotMatch(source,/andisgreened\\.goatcounter\\.com\\/count\\.js/);
+    assert.ok(source.includes("andisgreened.goatcounter.com/count"));
+    assert.ok(source.includes("https://gc.zgo.at/count.js"));
+    assert.ok(source.includes("no_onload"));
+    assert.ok(source.includes("pixelFallback"));
+    assert.ok(source.includes("setTimeout(pixelFallback, 7000)"));
+    assert.ok(!source.includes("andisgreened.goatcounter.com/count.js"));
   }
   assert.match(privacy,/Meine Geräte von Seitenaufrufen ausschließen/);
 });
-
 test("Kägsdorf wave star represents only the narrow west sector", () => {
   const wave = updates.changes.Kägsdorf.waveStar;
   assert.deepEqual({ ...wave }, {label:"Beste Welle",min:258.75,max:281.25,display:"W"});
