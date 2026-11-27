@@ -1,6 +1,9 @@
 name: APK Download Statistik
 
 on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/download-stats.yml"]
   schedule:
     - cron: "23 4 * * *"
   workflow_dispatch:
@@ -22,17 +25,28 @@ jobs:
         run: |
           mkdir -p docs/data
           RELEASE="$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/apk-latest")"
+          PREVIOUS="$(cat docs/data/download-stats.json 2>/dev/null || echo '{}')"
           UPDATED="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          printf '%s' "$RELEASE" | jq --arg updated "$UPDATED" --arg excluded "$EXCLUDE_DOWNLOADS" '
+          printf '%s' "$RELEASE" | jq --arg updated "$UPDATED" --arg excluded "$EXCLUDE_DOWNLOADS" --argjson previous "$PREVIOUS" '
             . as $release |
             ([.assets[]? | select(.name | test("\\.apk$"; "i")) | .download_count] | add // 0) as $apk |
             ([$release.assets[]? | select(.name | test("\\.aab$"; "i")) | .download_count] | add // 0) as $aab |
+            (($previous.rawApkDownloads // 0) | tonumber) as $prevRawApk |
+            (($previous.rawAabDownloads // 0) | tonumber) as $prevRawAab |
+            (($previous.downloadedApk // 0) | tonumber) as $prevDownloadedApk |
+            (($previous.downloadedAab // 0) | tonumber) as $prevDownloadedAab |
+            (($previous.excludedApkDownloads // 0) | tonumber) as $prevExcluded |
+            (($excluded | tonumber) - $prevExcluded) as $excludedDelta |
+            (if (($previous.releasePublishedAt // "") != "" and $previous.releasePublishedAt != $release.published_at) or $apk < $prevRawApk then $apk else ($apk - $prevRawApk) end) as $apkDelta |
+            (if (($previous.releasePublishedAt // "") != "" and $previous.releasePublishedAt != $release.published_at) or $aab < $prevRawAab then $aab else ($aab - $prevRawAab) end) as $aabDelta |
             {
               updatedAt: $updated,
               release: "apk-latest",
-              downloadedApk: ([($apk - ($excluded | tonumber)), 0] | max),
-              downloadedAab: $aab,
+              releasePublishedAt: $release.published_at,
+              downloadedApk: ([($prevDownloadedApk + $apkDelta - $excludedDelta), 0] | max),
+              downloadedAab: ($prevDownloadedAab + $aabDelta),
               rawApkDownloads: $apk,
+              rawAabDownloads: $aab,
               excludedApkDownloads: ($excluded | tonumber)
             }
           ' > docs/data/download-stats.json
