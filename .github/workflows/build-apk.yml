@@ -6,7 +6,9 @@ name: APK bauen
 on:
   push:
     branches: [main]
-    paths: ["apk/**", "docs/index.html", "docs/styles.css", ".github/workflows/build-apk.yml"]
+    # Online-APK lädt die aktuelle Website zur Laufzeit. Website-Änderungen brauchen daher keinen neuen APK-Release.
+    # Neue APK-Builds bei Änderungen an der Android-Hülle; eingebettete Store-Builds werden manuell gestartet.
+    paths: ["apk/**"]
   workflow_dispatch:
     inputs:
       modus:
