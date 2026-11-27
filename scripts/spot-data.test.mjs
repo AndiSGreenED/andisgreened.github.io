@@ -40,9 +40,15 @@ test("privacy-friendly page analytics has a local opt-out", () => {
   const page = readFileSync(new URL("../docs/index.html", import.meta.url), "utf8");
   const privacy = readFileSync(new URL("../docs/datenschutz.html", import.meta.url), "utf8");
   assert.match(page,/andisgreened-analytics-optout/);
+  assert.match(page,/andisgreened-analytics-optin/);
   assert.match(page,/params\.get\("analytics"\) === "off"/);
   assert.match(page,/andisgreened\.goatcounter\.com\/count/);
+  assert.match(page,/script\.src="https:\/\/gc\.zgo\.at\/count\.js"/);
+  assert.match(page,/dnt && !optIn/);
+  assert.doesNotMatch(page,/andisgreened\.goatcounter\.com\/count\.js/);
   assert.match(privacy,/Meine Geräte von Seitenaufrufen ausschließen/);
+  assert.match(privacy,/andisgreened-analytics-optin/);
+  assert.match(privacy,/script\.src="https:\/\/gc\.zgo\.at\/count\.js"/);
 });
 
 test("Kägsdorf wave star represents only the narrow west sector", () => {
