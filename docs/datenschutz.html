@@ -20,12 +20,13 @@
 <li>Google Weather API (nur, wenn du selbst einen eigenen Schlüssel einträgst)</li>
 </ul>
 <p>Die Web-App wird über <a href="https://docs.github.com/de/pages/getting-started-with-github-pages/about-github-pages#data-collection">GitHub Pages</a> ausgeliefert; GitHub protokolliert dabei technisch übliche Zugriffsdaten (z. B. IP-Adresse). Links zu Windfinder, Windy, Webcams usw. öffnen die jeweilige fremde Seite mit deren eigenen Datenschutzregeln.</p>
-<p>Für aggregierte Seitenaufrufe verwendet die Web-App GoatCounter. Dabei werden keine Cookies gesetzt und keine Nutzerprofile angelegt. Die Website sieht beispielsweise die besuchte Seite, Browserdaten und technisch eine IP-Adresse. Das Tracking wird bei aktiviertem <em>Do Not Track</em> oder nach dem lokalen Opt-out deaktiviert.</p>
+<p>Für aggregierte Seitenaufrufe verwendet die Web-App GoatCounter. Dabei werden keine Cookies gesetzt und keine Nutzerprofile angelegt. Die Website sieht beispielsweise die besuchte Seite, Browserdaten und technisch eine IP-Adresse. Bei aktiviertem <em>Do Not Track</em> wird standardmäßig nicht gezählt. Über „Wieder einschließen“ kannst du die Zählung auf diesem Gerät ausdrücklich auch bei aktiviertem Do Not Track erlauben. Ein lokaler Opt-out hat immer Vorrang.</p>
 <p><button id="analytics-optout" type="button">Meine Geräte von Seitenaufrufen ausschließen</button> <button id="analytics-enable" type="button">Wieder einschließen</button></p>
 <script>
 const key="andisgreened-analytics-optout";
-document.getElementById("analytics-optout").onclick=()=>{try{localStorage.setItem(key,"1");}catch(e){};location.href=location.pathname+"?analytics=off";};
-document.getElementById("analytics-enable").onclick=()=>{try{localStorage.removeItem(key);}catch(e){};location.href=location.pathname+"?analytics=on";};
+const optInKey="andisgreened-analytics-optin";
+document.getElementById("analytics-optout").onclick=()=>{try{localStorage.setItem(key,"1");localStorage.removeItem(optInKey);}catch(e){};location.href=location.pathname+"?analytics=off";};
+document.getElementById("analytics-enable").onclick=()=>{try{localStorage.removeItem(key);localStorage.setItem(optInKey,"1");}catch(e){};location.href=location.pathname+"?analytics=on";};
 </script>
 <p>Wenn du Spotänderungen veröffentlichst, überträgt dein Browser die geänderten Spotdaten (Richtungen, Position, Wellenstern, Modellwahl und Wellenquelle) zusammen mit deinem GitHub-Schlüssel direkt an die GitHub-API. GitHub speichert diese Änderungen öffentlich im Repository <a href="https://github.com/AndiSGreenED/andisgreened.github.io">ANDIsGREENed/andisgreened.github.io</a>. Ohne einen GitHub-Schlüssel findet diese Übertragung nicht statt.</p>
 <h2>Berechtigungen der Android-App</h2>
