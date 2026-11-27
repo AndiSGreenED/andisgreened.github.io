@@ -2803,24 +2803,35 @@ if(IS_NATIVE_APP && /^https:$/.test(location.protocol) && location.hostname !== 
     }catch(e){}
   });
 }
-// Privacy-friendly aggregate page views. The opt-out is stored only on this device.
+// Privacy-friendly aggregate page views. Opt-out and explicit opt-in are stored only on this device.
 (() => {
-  const key = "andisgreened-analytics-optout";
+  const optOutKey = "andisgreened-analytics-optout";
+  const optInKey = "andisgreened-analytics-optin";
   const params = new URLSearchParams(location.search);
   if(params.get("analytics") === "off"){
-    try{ localStorage.setItem(key,"1"); }catch(e){}
+    try{
+      localStorage.setItem(optOutKey,"1");
+      localStorage.removeItem(optInKey);
+    }catch(e){}
   }else if(params.get("analytics") === "on"){
-    try{ localStorage.removeItem(key); }catch(e){}
+    try{
+      localStorage.removeItem(optOutKey);
+      localStorage.setItem(optInKey,"1");
+    }catch(e){}
   }
-  let optOut=false;
-  try{ optOut=localStorage.getItem(key)==="1"; }catch(e){}
+  let optOut=false, optIn=false;
+  try{
+    optOut = localStorage.getItem(optOutKey)==="1";
+    optIn = localStorage.getItem(optInKey)==="1";
+  }catch(e){}
   const dnt = navigator.doNotTrack==="1" || window.doNotTrack==="1";
-  if(optOut || dnt || /^localhost$|^127(?:\.\d){3}$/.test(location.hostname)) return;
+  if(optOut || (dnt && !optIn) || /^localhost$|^127(?:\.\d){3}$/.test(location.hostname)) return;
   window.goatcounter = {allow_local:false};
   const script=document.createElement("script");
   script.async=true;
   script.dataset.goatcounter="https://andisgreened.goatcounter.com/count";
-  script.src="https://andisgreened.goatcounter.com/count.js";
+  script.src="https://gc.zgo.at/count.js";
+  script.onerror = () => console.warn("GoatCounter konnte nicht geladen werden. Bitte gc.zgo.at und andisgreened.goatcounter.com in Blockern freigeben.");
   document.head.appendChild(script);
 })();
 </script>
