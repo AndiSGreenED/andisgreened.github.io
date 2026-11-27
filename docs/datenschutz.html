@@ -38,28 +38,92 @@ document.getElementById("analytics-enable").onclick=()=>{try{localStorage.remove
 <p lang="en">No accounts, no ads and no personal profiles. Aggregate, cookie-free page views are counted for app usage. APK downloads are counted through the public GitHub release statistics. All settings, saved spots and your location stay on your device; your location is only used locally to compute distances. The optional GitHub token for publishing spot changes is retained on this device for at most one hour after successful use and then deleted automatically. Publishing sends the edited spot data and token directly to GitHub's API and stores the changes publicly in this repository. The app fetches forecasts directly from Open-Meteo, Bright Sky (DWD), OpenStreetMap Nominatim (address search only) and, if you add your own key, the Google Weather API. These services see your IP address and the coordinates of the spots, not your location. The web app uses GoatCounter for aggregate page views and is hosted on GitHub Pages. Android permissions: Internet (forecasts) and Location (only when you tap “use my location”).</p>
 <p><small>Stand: November 2026</small></p>
 <script>
-// GoatCounter: dieselbe cookiefreie, aggregierte Zählung wie in der Web-App.
+// GoatCounter läuft bewusst separat vom App-Skript. Ein Fehler in der App darf die Zählung nicht verhindern.
 (() => {
   const optOutKey = "andisgreened-analytics-optout";
   const optInKey = "andisgreened-analytics-optin";
   const params = new URLSearchParams(location.search);
-  if(params.get("analytics") === "off"){
-    try{ localStorage.setItem(optOutKey,"1"); localStorage.removeItem(optInKey); }catch(e){}
-  }else if(params.get("analytics") === "on"){
-    try{ localStorage.removeItem(optOutKey); localStorage.setItem(optInKey,"1"); }catch(e){}
+  const optOutRequested = params.get("analytics") === "off";
+  const optInRequested = params.get("analytics") === "on";
+  let optOut = false;
+  let optIn = false;
+
+  try {
+    optOut = localStorage.getItem(optOutKey) === "1";
+    optIn = localStorage.getItem(optInKey) === "1";
+  } catch(e) {}
+
+  // Die URL ist eine ausdrückliche Entscheidung für diesen Aufruf, auch wenn localStorage gesperrt ist.
+  if(optOutRequested) {
+    optOut = true;
+    optIn = false;
+    try {
+      localStorage.setItem(optOutKey, "1");
+      localStorage.removeItem(optInKey);
+    } catch(e) {}
+  } else if(optInRequested) {
+    optOut = false;
+    optIn = true;
+    try {
+      localStorage.removeItem(optOutKey);
+      localStorage.setItem(optInKey, "1");
+    } catch(e) {}
   }
-  let optOut=false, optIn=false;
-  try{
-    optOut = localStorage.getItem(optOutKey)==="1";
-    optIn = localStorage.getItem(optInKey)==="1";
-  }catch(e){}
-  const dnt = navigator.doNotTrack==="1" || window.doNotTrack==="1";
-  if(optOut || (dnt && !optIn) || /^localhost$|^127(?:\.\d){3}$/.test(location.hostname)) return;
-  window.goatcounter = {allow_local:false};
-  const script=document.createElement("script");
-  script.async=true;
-  script.dataset.goatcounter="https://andisgreened.goatcounter.com/count";
-  script.src="https://gc.zgo.at/count.js";
+
+  const dnt = navigator.doNotTrack === "1" || window.doNotTrack === "1";
+  if(optOut || (dnt && !optIn) || /^(localhost|127(?:\.\d{1,3}){3})$/.test(location.hostname)) return;
+
+  const goatEndpoint = "https://andisgreened.goatcounter.com/count";
+  let requestSent = false;
+
+  function pixelFallback() {
+    if(requestSent) return;
+    requestSent = true;
+    const path = location.pathname.replace(/index\.html$/i, "") || "/";
+    const query = new URLSearchParams({
+      p: path,
+      t: document.title,
+      rnd: String(Date.now())
+    });
+    window.__andisgreenedGoatPixel = new Image(1, 1);
+    window.__andisgreenedGoatPixel.src = goatEndpoint + "?" + query.toString();
+    console.warn("GoatCounter count.js nicht erreichbar. Direkter Zählaufruf wurde versucht.");
+  }
+
+  // no_onload verhindert eine automatische Doppelzählung, da count() erst nach erfolgreichem Laden aufgerufen wird.
+  window.goatcounter = { no_onload: true };
+  const script = document.createElement("script");
+  script.async = true;
+  script.setAttribute("data-goatcounter", goatEndpoint);
+  script.setAttribute("data-goatcounter-settings", "{\"no_onload\":true}");
+  script.src = "https://gc.zgo.at/count.js";
+
+  const fallbackTimer = window.setTimeout(pixelFallback, 7000);
+  script.onload = () => {
+    window.clearTimeout(fallbackTimer);
+    if(requestSent) return;
+    const gc = window.goatcounter;
+    if(!gc || typeof gc.count !== "function") {
+      pixelFallback();
+      return;
+    }
+    const reason = typeof gc.filter === "function" ? gc.filter() : false;
+    if(reason) {
+      console.info("GoatCounter zählt diesen Aufruf nicht:", reason);
+      return;
+    }
+    requestSent = true;
+    try {
+      gc.count();
+    } catch(e) {
+      requestSent = false;
+      pixelFallback();
+    }
+  };
+  script.onerror = () => {
+    window.clearTimeout(fallbackTimer);
+    pixelFallback();
+  };
   document.head.appendChild(script);
 })();
 </script>

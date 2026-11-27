@@ -36,19 +36,26 @@ test("native Android intents are restricted to allowed apps and hosts", () => {
   assert.match(native,/if \(!windfinder && !googleMaps\) return false;/);
 });
 
-test("privacy-friendly page analytics has a local opt-out", () => {
+test("privacy-friendly page analytics is isolated, opt-in capable and has a fallback", () => {
   const page = readFileSync(new URL("../docs/index.html", import.meta.url), "utf8");
   const privacy = readFileSync(new URL("../docs/datenschutz.html", import.meta.url), "utf8");
-  assert.match(page,/andisgreened-analytics-optout/);
-  assert.match(page,/andisgreened-analytics-optin/);
-  assert.match(page,/params\.get\("analytics"\) === "off"/);
-  assert.match(page,/andisgreened\.goatcounter\.com\/count/);
-  assert.match(page,/script\.src="https:\/\/gc\.zgo\.at\/count\.js"/);
-  assert.match(page,/dnt && !optIn/);
-  assert.doesNotMatch(page,/andisgreened\.goatcounter\.com\/count\.js/);
+  const trackerMarker = page.indexOf("// GoatCounter läuft bewusst separat");
+  const appScriptClose = page.lastIndexOf("</script>", trackerMarker);
+  assert.ok(trackerMarker > appScriptClose, "tracker must be outside the main app script");
+  for(const source of [page, privacy]){
+    assert.match(source,/andisgreened-analytics-optout/);
+    assert.match(source,/andisgreened-analytics-optin/);
+    assert.match(source,/optOutRequested/);
+    assert.match(source,/optInRequested/);
+    assert.match(source,/dnt && !optIn/);
+    assert.match(source,/andisgreened\\.goatcounter\\.com\\/count/);
+    assert.match(source,/gc\\.zgo\\.at\\/count\\.js/);
+    assert.match(source,/no_onload/);
+    assert.match(source,/pixelFallback/);
+    assert.match(source,/setTimeout\\(pixelFallback, 7000\\)/);
+    assert.doesNotMatch(source,/andisgreened\\.goatcounter\\.com\\/count\\.js/);
+  }
   assert.match(privacy,/Meine Geräte von Seitenaufrufen ausschließen/);
-  assert.match(privacy,/andisgreened-analytics-optin/);
-  assert.match(privacy,/script\.src="https:\/\/gc\.zgo\.at\/count\.js"/);
 });
 
 test("Kägsdorf wave star represents only the narrow west sector", () => {
