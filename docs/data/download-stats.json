@@ -1,8 +1,10 @@
 {
-  "updatedAt": "2026-11-27T15:57:26Z",
+  "updatedAt": "2026-11-27T16:29:47Z",
   "release": "apk-latest",
+  "releasePublishedAt": "2026-11-27T16:26:46Z",
   "downloadedApk": 1,
   "downloadedAab": 1,
-  "rawApkDownloads": 1,
+  "rawApkDownloads": 0,
+  "rawAabDownloads": 0,
   "excludedApkDownloads": 0
 }
