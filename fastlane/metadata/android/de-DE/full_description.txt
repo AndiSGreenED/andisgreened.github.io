@@ -14,6 +14,6 @@ ANDIsGREENed zeigt dir auf einen Blick, an welchen Spots in deiner Nähe heute (
 • Spotlisten als Datei sichern oder per Messenger teilen
 
 <b>Frei und privat</b>
-Keine Konten, keine Werbung, kein Tracking. Alle Einstellungen bleiben auf deinem Gerät. Quelloffen unter MIT-Lizenz.
+Keine Konten und keine Werbung. Für die App-Nutzung gibt es eine cookiefreie, aggregierte Seitenzählung ohne Nutzerprofile. Du kannst sie in der Datenschutzerklärung deaktivieren. Alle Einstellungen bleiben auf deinem Gerät. Quelloffen unter MIT-Lizenz.
 
 Wetterdaten: Open-Meteo (CC BY 4.0), Deutscher Wetterdienst über Bright Sky. Ortssuche: Open-Meteo und © OpenStreetMap-Mitwirkende.
