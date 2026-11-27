@@ -20,7 +20,7 @@
 <li>Google Weather API (nur, wenn du selbst einen eigenen Schlüssel einträgst)</li>
 </ul>
 <p>Die Web-App wird über <a href="https://docs.github.com/de/pages/getting-started-with-github-pages/about-github-pages#data-collection">GitHub Pages</a> ausgeliefert; GitHub protokolliert dabei technisch übliche Zugriffsdaten (z. B. IP-Adresse). Links zu Windfinder, Windy, Webcams usw. öffnen die jeweilige fremde Seite mit deren eigenen Datenschutzregeln.</p>
-<p>Für aggregierte Seitenaufrufe verwendet die Web-App GoatCounter. Dabei werden keine Cookies gesetzt und keine Nutzerprofile angelegt. Die Website sieht beispielsweise die besuchte Seite, Browserdaten und technisch eine IP-Adresse. Bei aktiviertem <em>Do Not Track</em> wird standardmäßig nicht gezählt. Über „Wieder einschließen“ kannst du die Zählung auf diesem Gerät ausdrücklich auch bei aktiviertem Do Not Track erlauben. Ein lokaler Opt-out hat immer Vorrang.</p>
+<p>Die Web-App und die Android-App verwenden GoatCounter für aggregierte Seitenaufrufe. Dabei werden keine Cookies gesetzt und keine Nutzerprofile angelegt. GoatCounter verarbeitet die besuchte Seite, Browserdaten und technisch eine IP-Adresse. Bei aktiviertem <em>Do Not Track</em> wird standardmäßig nicht gezählt. Über „Wieder einschließen“ kannst du die Zählung auf diesem Gerät ausdrücklich auch bei aktiviertem Do Not Track erlauben. Ein lokaler Opt-out hat immer Vorrang.</p>
 <p><button id="analytics-optout" type="button">Meine Geräte von Seitenaufrufen ausschließen</button> <button id="analytics-enable" type="button">Wieder einschließen</button></p>
 <script>
 const key="andisgreened-analytics-optout";
@@ -37,4 +37,30 @@ document.getElementById("analytics-enable").onclick=()=>{try{localStorage.remove
 <h2 lang="en">Privacy (English)</h2>
 <p lang="en">No accounts, no ads and no personal profiles. Aggregate, cookie-free page views are counted for app usage. APK downloads are counted through the public GitHub release statistics. All settings, saved spots and your location stay on your device; your location is only used locally to compute distances. The optional GitHub token for publishing spot changes is retained on this device for at most one hour after successful use and then deleted automatically. Publishing sends the edited spot data and token directly to GitHub's API and stores the changes publicly in this repository. The app fetches forecasts directly from Open-Meteo, Bright Sky (DWD), OpenStreetMap Nominatim (address search only) and, if you add your own key, the Google Weather API. These services see your IP address and the coordinates of the spots, not your location. The web app uses GoatCounter for aggregate page views and is hosted on GitHub Pages. Android permissions: Internet (forecasts) and Location (only when you tap “use my location”).</p>
 <p><small>Stand: November 2026</small></p>
+<script>
+// GoatCounter: dieselbe cookiefreie, aggregierte Zählung wie in der Web-App.
+(() => {
+  const optOutKey = "andisgreened-analytics-optout";
+  const optInKey = "andisgreened-analytics-optin";
+  const params = new URLSearchParams(location.search);
+  if(params.get("analytics") === "off"){
+    try{ localStorage.setItem(optOutKey,"1"); localStorage.removeItem(optInKey); }catch(e){}
+  }else if(params.get("analytics") === "on"){
+    try{ localStorage.removeItem(optOutKey); localStorage.setItem(optInKey,"1"); }catch(e){}
+  }
+  let optOut=false, optIn=false;
+  try{
+    optOut = localStorage.getItem(optOutKey)==="1";
+    optIn = localStorage.getItem(optInKey)==="1";
+  }catch(e){}
+  const dnt = navigator.doNotTrack==="1" || window.doNotTrack==="1";
+  if(optOut || (dnt && !optIn) || /^localhost$|^127(?:\.\d){3}$/.test(location.hostname)) return;
+  window.goatcounter = {allow_local:false};
+  const script=document.createElement("script");
+  script.async=true;
+  script.dataset.goatcounter="https://andisgreened.goatcounter.com/count";
+  script.src="https://gc.zgo.at/count.js";
+  document.head.appendChild(script);
+})();
+</script>
 </main></body></html>
